@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:sws/pages/aboutPage.dart';
-import 'package:sws/pages/homePage.dart';
-import 'package:sws/pages/profilePage.dart';
-import 'package:sws/pages/settingsPage.dart';
+import 'package:sws/pages/about_page.dart';
+import 'package:sws/pages/home_page.dart';
+import 'package:sws/pages/profile_page.dart';
+import 'package:sws/pages/settings_page.dart';
 
 class MainNavigatorPage extends StatefulWidget {
   const MainNavigatorPage({super.key});

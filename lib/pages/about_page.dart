@@ -27,7 +27,7 @@ class AboutPage extends StatelessWidget {
               Text(
                 'Разработано с использованием Flutter',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .7),
                 ),
                 textAlign: TextAlign.center,
               ),

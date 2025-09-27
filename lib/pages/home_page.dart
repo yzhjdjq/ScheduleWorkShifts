@@ -200,7 +200,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       margin: const EdgeInsets.all(1),
       decoration: BoxDecoration(
-        color: _seaGreen.withOpacity(0.3),
+        color: _seaGreen.withValues(alpha: .3),
         borderRadius: BorderRadius.circular(4),
       ),
     );

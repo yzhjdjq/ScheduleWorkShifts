@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:sws/pages/mainNavigatorPage.dart';
+import 'package:sws/pages/main_navigator_page.dart';
 
 void main() {
   runApp(const MyApp());
