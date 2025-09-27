@@ -13,23 +13,36 @@ class _HomePageState extends State<HomePage> {
   late int _firstWeekday;
 
   // Цвета для календаря
-  final Color _seaGreen = const Color(0xFF2E8B57);
+  // final Color _seaGreen = const Color(0xFF2E8B57);
   final Color _seaGreenLight = const Color(0xFF3CB371);
   final Color _seaGreenDark = const Color(0xFF228B22);
   final Color _textColor = Colors.white;
 
+  // Цветовая палитра для периодической расцветки (цикл 4 дня)
+  final List<Color> _periodicColors = [
+    Color(0xFFA64000),      // День 1: Оранжевый
+    Colors.red,         // День 2: Красный
+    Colors.yellow,      // День 3: Желтый
+    Colors.green,       // День 4: Зеленый
+  ];
+
+  // Темные версии цветов для выделения текущего дня
+  final List<Color> _periodicColorsDark = [
+    Colors.orange.shade700,     // Темно-оранжевый
+    Colors.red.shade700,        // Темно-красный
+    Colors.yellow.shade700,     // Темно-желтый
+    Colors.green.shade700,      // Темно-зеленый
+  ];
+
   @override
   void initState() {
     super.initState();
-    _currentDate = DateTime.now(); // Инициализируем здесь
+    _currentDate = DateTime.now();
     _calculateCalendarData();
   }
 
   void _calculateCalendarData() {
-    // Количество дней в текущем месяце
     _daysInMonth = DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
-
-    // Первый день месяца (1 = Monday, 7 = Sunday)
     _firstWeekday = DateTime(_currentDate.year, _currentDate.month, 1).weekday;
   }
 
@@ -38,57 +51,89 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Column(
         children: [
-          // Заголовок с текущим месяцем и годом
           _buildCalendarHeader(context),
-
-          // Дни недели
           _buildWeekDaysHeader(),
-
-          // Сетка календаря
-          Expanded(
-            child: _buildCalendarGrid(),
-          ),
+          Expanded(child: _buildCalendarGrid()),
         ],
       ),
     );
   }
 
-  // Заголовок календаря
   Widget _buildCalendarHeader(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: _seaGreenDark,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.chevron_left, color: _textColor),
+                onPressed: _previousMonth,
+              ),
+              Text(
+                _getMonthYearText(),
+                style: TextStyle(
+                  color: _textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.chevron_right, color: _textColor),
+                onPressed: _nextMonth,
+              ),
+            ],
+          ),
+        ),
+        _buildColorLegend(),
+      ],
+    );
+  }
+
+  Widget _buildColorLegend() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: _seaGreenDark,
+      color: _seaGreenLight,
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          IconButton(
-            icon: Icon(Icons.chevron_left, color: _textColor),
-            onPressed: _previousMonth,
-          ),
-          Text(
-            _getMonthYearText(),
-            style: TextStyle(
-              color: _textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.chevron_right, color: _textColor),
-            onPressed: _nextMonth,
-          ),
+          _buildLegendItem('Оранжевый', Colors.orange),
+          _buildLegendItem('Красный', Colors.red),
+          _buildLegendItem('Желтый', Colors.yellow),
+          _buildLegendItem('Зеленый', Colors.green),
         ],
       ),
     );
   }
 
-  // Заголовок дней недели
+  Widget _buildLegendItem(String text, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(fontSize: 10),
+        ),
+      ],
+    );
+  }
+
   Widget _buildWeekDaysHeader() {
     const List<String> weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
     return Container(
       color: _seaGreenLight,
-      padding: EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Row(
         children: weekDays.map((day) => Expanded(
           child: Container(
@@ -111,22 +156,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Сетка календаря
   Widget _buildCalendarGrid() {
-    final int totalCells = 35; // 5 недель × 7 дней
+    final int totalCells = 35;
     final List<Widget> cells = [];
 
-    // Добавляем пустые ячейки перед первым днем месяца
     for (int i = 1; i < _firstWeekday; i++) {
       cells.add(_buildEmptyCell());
     }
 
-    // Добавляем ячейки с днями месяца
     for (int day = 1; day <= _daysInMonth; day++) {
       cells.add(_buildDayCell(day));
     }
 
-    // Добавляем пустые ячейки после последнего дня месяца
     final int remainingCells = totalCells - cells.length;
     for (int i = 0; i < remainingCells; i++) {
       cells.add(_buildEmptyCell());
@@ -135,18 +176,19 @@ class _HomePageState extends State<HomePage> {
     return GridView.count(
       crossAxisCount: 7,
       childAspectRatio: 1.0,
-      padding: EdgeInsets.all(6),
+      padding: const EdgeInsets.all(6),
       children: cells,
     );
   }
 
-  // Ячейка с днем
   Widget _buildDayCell(int day) {
     final bool isToday = _isToday(day);
+    final Color dayColor = _getDayColor(day);
+    final Color dayColorDark = _getDayColorDark(day);
 
     // Базовый decoration
     BoxDecoration decoration = BoxDecoration(
-      color: _seaGreen,
+      color: dayColor,
       borderRadius: BorderRadius.circular(4),
       boxShadow: [
         BoxShadow(
@@ -160,7 +202,7 @@ class _HomePageState extends State<HomePage> {
     // Если сегодняшний день - добавляем особые стили
     if (isToday) {
       decoration = decoration.copyWith(
-        color: _seaGreenDark,
+        color: dayColorDark,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .3),
@@ -183,9 +225,16 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               day.toString(),
               style: TextStyle(
-                color: _textColor,
+                color: _getTextColorForBackground(dayColor), // Автоподбор цвета текста
                 fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                 fontSize: isToday ? 18 : 16,
+                shadows: [
+                  if (_needsTextShadow(dayColor))
+                    Shadow(
+                      color: Colors.black.withValues(alpha: .5),
+                      blurRadius: 2,
+                    ),
+                ],
               ),
             ),
           ),
@@ -195,53 +244,65 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Пустая ячейка
+  // Получение цвета для дня по циклу 4 дня
+  Color _getDayColor(int day) {
+    final int colorIndex = (day - 1) % _periodicColors.length;
+    return _periodicColors[colorIndex];
+  }
+
+  // Получение темного цвета для выделения текущего дня
+  Color _getDayColorDark(int day) {
+    final int colorIndex = (day - 1) % _periodicColorsDark.length;
+    return _periodicColorsDark[colorIndex];
+  }
+
+  // Получение цвета текста в зависимости от фона
+  Color _getTextColorForBackground(Color backgroundColor) {
+    // Вычисляем яркость цвета
+    final double luminance = backgroundColor.computeLuminance();
+    // Если цвет светлый - используем черный текст, если темный - белый
+    return luminance > 0.5 ? Colors.black : Colors.white;
+  }
+
+  // Проверка, нужна ли тень для текста
+  bool _needsTextShadow(Color backgroundColor) {
+    final double luminance = backgroundColor.computeLuminance();
+    return luminance > 0.7; // Тень для очень светлых цветов
+  }
+
   Widget _buildEmptyCell() {
     return Container(
       margin: const EdgeInsets.all(1),
       decoration: BoxDecoration(
-        color: _seaGreen.withValues(alpha: .3),
+        color: Colors.grey.withValues(alpha: .2),
         borderRadius: BorderRadius.circular(4),
       ),
     );
   }
 
-  // Содержимое ячейки (можно кастомизировать)
   Widget _buildCellContent(int day) {
-    // Пример: показываем точку если день кратен 5
-    if (day % 5 == 0) {
-      return Container(
-        width: 6,
-        height: 6,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-      );
-    }
+    // Можно добавить дополнительный контент в зависимости от дня
+    final int dayType = (day - 1) % 4;
 
-    return const SizedBox.shrink();
+    switch (dayType) {
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
-  // Проверка, является ли день сегодняшним
   bool _isToday(int day) {
     final DateTime now = DateTime.now();
-    return day == now.day &&
-        _currentDate.month == now.month &&
-        _currentDate.year == now.year;
+    return day == now.day && _currentDate.month == now.month && _currentDate.year == now.year;
   }
 
-  // Текст с месяцем и годом
   String _getMonthYearText() {
     const List<String> months = [
       'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
       'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
     ];
-
     return '${months[_currentDate.month - 1]} ${_currentDate.year}';
   }
 
-  // Переход к предыдущему месяцу
   void _previousMonth() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month - 1, 1);
@@ -249,7 +310,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Переход к следующему месяцу
   void _nextMonth() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month + 1, 1);
