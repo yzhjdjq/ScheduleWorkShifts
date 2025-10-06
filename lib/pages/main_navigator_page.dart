@@ -39,6 +39,7 @@ class _MainNavigatorPageState extends State<MainNavigatorPage> {
             _currentIndex = index;
           });
         },
+        physics: const NeverScrollableScrollPhysics(),
         children: _pages,
       ),
       // bottomNavigationBar: BottomNavigationBar(
