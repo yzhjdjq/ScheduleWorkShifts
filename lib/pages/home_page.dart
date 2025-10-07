@@ -50,29 +50,30 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Column(
         children: [
-          _buildCalendarHeader(context),
+          _buildCalendarHeader(),
           _buildWeekDaysHeader(),
-          // Ограничиваем высоту календаря и даем возможность уменьшаться
-          Flexible(
-            flex: 3, // 3 части из 4 для календаря
+          Expanded(
+            flex: 3,
             child: _buildCalendarGrid(),
           ),
-          const Divider(color: Colors.grey, indent: 8, endIndent: 8),
-          Flexible(
-            flex: 1, // 1 часть из 4 для статистики
+          const Flexible(
+              child: Divider(color: Colors.grey, indent: 8, endIndent: 8),
+          ),
+          Expanded(
+            flex: 1,
             child: _buildScheduleShiftsStatistics(),
           ),
         ],
-      ),
+      )
     );
   }
 
-  Widget _buildCalendarHeader(BuildContext context) {
+  Widget _buildCalendarHeader() {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(0),
           color: _seaGreenDark,
+          padding: const EdgeInsets.all(0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -80,14 +81,17 @@ class _HomePageState extends State<HomePage> {
                 icon: Icon(Icons.chevron_left, color: _textColor),
                 onPressed: _previousMonth,
               ),
-              GestureDetector(
-                onTap: _nowMonth,
-                child: Text(
-                  _getMonthYearText(),
-                  style: TextStyle(
-                    color: _textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.normal,
+              Expanded(
+                child: GestureDetector(
+                  onTap: _nowMonth,
+                  child: Text(
+                    _getMonthYearText(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _textColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ),
               ),
@@ -106,14 +110,14 @@ class _HomePageState extends State<HomePage> {
   Widget _buildColorLegend() {
     return Container(
       color: _seaGreenLight,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildLegendItem('Оранжевый', Colors.orange),
-          _buildLegendItem('Красный', Colors.red),
-          _buildLegendItem('Желтый', Colors.yellow),
-          _buildLegendItem('Зеленый', Colors.green),
+          Expanded(child: _buildLegendItem('Оранжевый', Colors.orange)),
+          Expanded(child: _buildLegendItem('Красный', Colors.red)),
+          Expanded(child: _buildLegendItem('Желтый', Colors.yellow)),
+          Expanded(child: _buildLegendItem('Зеленый', Colors.green)),
         ],
       ),
     );
@@ -121,19 +125,23 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildLegendItem(String text, Color color) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           width: 12,
           height: 12,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(3),
           ),
         ),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 10),
+        Flexible(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 10),
+          ),
         ),
       ],
     );
@@ -170,7 +178,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCalendarGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Вычисляем максимальную доступную высоту для календаря
         final maxHeight = constraints.maxHeight;
 
         return Container(
@@ -189,19 +196,6 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
-  }
-
-  Widget _buildCalendarCell(int row, int col) {
-    final cellIndex = row * 7 + col;
-    final totalCells = 35;
-
-    // Проверяем, является ли ячейка пустой или содержит день
-    if (cellIndex < _firstWeekday - 1 || cellIndex >= _firstWeekday - 1 + _daysInMonth) {
-      return _buildEmptyCell();
-    }
-
-    final day = cellIndex - _firstWeekday + 2;
-    return _buildDayCell(day);
   }
 
   Widget _buildScheduleShiftsStatistics() {
@@ -242,6 +236,19 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Widget _buildCalendarCell(int row, int col) {
+    final cellIndex = row * 7 + col;
+    final totalCells = 35;
+
+    // Проверяем, является ли ячейка пустой или содержит день
+    if (cellIndex < _firstWeekday - 1 || cellIndex >= _firstWeekday - 1 + _daysInMonth) {
+      return _buildEmptyCell();
+    }
+
+    final day = cellIndex - _firstWeekday + 2;
+    return _buildDayCell(day);
   }
 
   Widget _buildDayCell(int day) {
