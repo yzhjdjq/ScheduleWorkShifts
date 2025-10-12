@@ -1,52 +1,62 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class SettingsPage extends StatefulWidget {
+import 'package:sws/providers/settings_provider.dart';
+import 'package:sws/pages/settings_schedules_page.dart';
+import 'package:sws/pages/settings_shifts_page.dart';
+
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
-
-  @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  bool _notifications = true;
-  bool _darkMode = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView(
-        children: [
-          SwitchListTile(
-            title: const Text('Уведомления'),
-            value: _notifications,
-            onChanged: (value) {
-              setState(() {
-                _notifications = value;
-              });
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Тёмная тема'),
-            value: _darkMode,
-            onChanged: (value) {
-              setState(() {
-                _darkMode = value;
-              });
-            },
-          ),
-          const ListTile(
-            leading: Icon(Icons.language),
-            title: Text('Язык'),
-            subtitle: Text('Русский'),
-            trailing: Icon(Icons.arrow_forward_ios),
-          ),
-          const ListTile(
-            leading: Icon(Icons.storage),
-            title: Text('Хранилище'),
-            subtitle: Text('Использовано 125 МБ'),
-            trailing: Icon(Icons.arrow_forward_ios),
-          ),
-        ],
+      body: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return ListView(
+            padding: const EdgeInsets.all(8),
+            children: [
+              // Флаг: показывать название смены
+              SwitchListTile(
+                title: const Text('Показывать название смены'),
+                value: settings.showShiftName,
+                onChanged: (value) {
+                  settings.showShiftName = value;
+                },
+              ),
+              const Divider(),
+
+              // Подменю: Настройка графиков
+              ListTile(
+                title: const Text('Настройка графиков'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsSchedulesPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+
+              // Подменю: Настройка смен
+              ListTile(
+                title: const Text('Настройка смен'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsShiftsPage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }

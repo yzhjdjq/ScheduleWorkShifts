@@ -28,8 +28,7 @@ class _MainNavigatorPageState extends State<MainNavigatorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getAppBarTitle()),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(_getAppBarTitle())
       ),
       drawer: _buildDrawer(context),
       body: PageView(
@@ -39,37 +38,9 @@ class _MainNavigatorPageState extends State<MainNavigatorPage> {
             _currentIndex = index;
           });
         },
-        physics: const NeverScrollableScrollPhysics(),
+        physics: PageScrollPhysics(),
         children: _pages,
       ),
-      // bottomNavigationBar: BottomNavigationBar(
-      //   currentIndex: _currentIndex,
-      //   onTap: (index) {
-      //     setState(() {
-      //       _currentIndex = index;
-      //       _pageController.jumpToPage(index);
-      //     });
-      //   },
-      //   type: BottomNavigationBarType.fixed,
-      //   items: const [
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.home),
-      //       label: 'Главная',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.person),
-      //       label: 'Профиль',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.settings),
-      //       label: 'Настройки',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.info),
-      //       label: 'О приложении',
-      //     ),
-      //   ],
-      // ),
     );
   }
 

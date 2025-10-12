@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' show ReadContext;
 
 import 'package:sws/widgets/calendar_widget.dart';
 import 'package:sws/widgets/schedule_shifts_statistics.dart';
+import 'package:sws/providers/settings_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -34,6 +36,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final workShifts = context.read<SettingsProvider>().workShifts;
+    final periodicColors = workShifts.map((shift) => shift.color).toList();
+
     return Scaffold(
       body: Column(
         children: [
@@ -44,6 +49,7 @@ class _HomePageState extends State<HomePage> {
               currentDate: _currentDate,
               daysInMonth: _daysInMonth,
               firstWeekday: _firstWeekday,
+              periodicColors: periodicColors,
             ),
           ),
           Expanded(

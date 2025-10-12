@@ -2,40 +2,25 @@ import 'package:flutter/material.dart';
 
 class CalendarWidget extends StatelessWidget {
   final DateTime _currentDate;
-
   final int _daysInMonth;
   final int _firstWeekday;
+  final List<Color> _periodicColors;
 
-  // Цвета для календаря
   final Color _seaGreenLight = const Color(0xFF3CB371);
   final Color _seaGreenDark = const Color(0xFF228B22);
   final Color _textColor =  Colors.white;
 
-  // Цветовая палитра для периодической расцветки (цикл 4 дня)
-  final List<Color> _periodicColors = const <Color>[
-    Colors.orange, // День 1: Оранжевый
-    Colors.red, // День 2: Красный
-    Colors.yellow, // День 3: Желтый
-    Colors.green, // День 4: Зеленый
-  ];
-
-  // Темные версии цветов для выделения текущего дня
-  final List<Color> _periodicColorsDark = <Color>[
-    Colors.orange.shade700, // Темно-оранжевый
-    Colors.red.shade700, // Темно-красный
-    Colors.yellow.shade700, // Темно-желтый
-    Colors.green.shade700, // Темно-зеленый
-  ];
-
-  CalendarWidget({
+  const CalendarWidget({
     super.key,
     required DateTime currentDate,
     required int daysInMonth,
     required int firstWeekday,
+    required List<Color> periodicColors,
   })
       : _currentDate = currentDate,
         _daysInMonth = daysInMonth,
-        _firstWeekday = firstWeekday;
+        _firstWeekday = firstWeekday,
+        _periodicColors = periodicColors;
 
   @override
   Widget build(BuildContext context) {
@@ -146,8 +131,9 @@ class CalendarWidget extends StatelessWidget {
   }
 
   Color _getDayColorDark(int day) {
-    final int colorIndex = (day - 1) % _periodicColorsDark.length;
-    return _periodicColorsDark[colorIndex];
+    final int colorIndex = (day - 1) % _periodicColors.length;
+    final HSLColor color = HSLColor.fromColor(_periodicColors[colorIndex]);
+    return color.withLightness(color.lightness * .75).toColor();
   }
 
   bool _isToday(int day) {
@@ -164,7 +150,6 @@ class _CalendarCellWidget extends StatelessWidget {
   final double _fontSize;
 
   const _CalendarCellWidget({
-    super.key,
     required int day,
     required bool isToday,
     required Color dayColor,
@@ -248,7 +233,7 @@ class _CalendarCellWidget extends StatelessWidget {
 }
 
 class _CalendarCellEmptyWidget extends StatelessWidget {
-  const _CalendarCellEmptyWidget({super.key});
+  const _CalendarCellEmptyWidget();
 
   @override
   Widget build(BuildContext context) {
