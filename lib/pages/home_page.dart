@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> {
 
   // Новые цвета на основе #0E879C
   final Color _primaryColor = const Color(0xFF0E879C);
-  final Color _primaryDark = const Color(0xFF0A6A7A); // Более темный вариант
   final Color _primaryLight = const Color(0xFF4DA8B8); // Более светлый вариант
   final Color _textColor = Colors.white;
 
@@ -289,7 +288,7 @@ class _HomePageState extends State<HomePage> {
                         ? const Icon(Icons.check, color: Colors.green)
                         : null,
                     tileColor: isComparisonActive
-                        ? Colors.green.withOpacity(0.1)
+                        ? Colors.green.withValues(alpha: 0.1)
                         : null,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -323,7 +322,7 @@ class _HomePageState extends State<HomePage> {
                       ? const Icon(Icons.check, color: Colors.green)
                       : null,
                   tileColor: isActive
-                      ? Colors.green.withOpacity(0.1)
+                      ? Colors.green.withValues(alpha: 0.1)
                       : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -760,7 +759,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(width: 8),
                 ...firstShifts.map((shift) =>
                     Expanded(child: _buildLegendItem(shift.name, shift.color))
-                ).toList(),
+                ),
               ],
             ),
           ),
@@ -785,7 +784,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(width: 8),
               ...secondShifts.map((shift) =>
                   Expanded(child: _buildLegendItem(shift.name, shift.color))
-              ).toList(),
+              ),
             ],
           ),
         ],

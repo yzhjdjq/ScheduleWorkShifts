@@ -529,7 +529,7 @@ class WorkingTime {
     if (duration != null) {
       final hours = duration!.inHours;
       final minutes = duration!.inMinutes % 60;
-      return '${hours}ч ${minutes}м';
+      return '$hoursч $minutesм';
     }
     return '0ч 0м';
   }

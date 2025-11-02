@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sws/models/work_shift.dart';
 import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/providers/settings_provider.dart';
@@ -15,9 +14,6 @@ class CalendarWidget extends StatelessWidget {
   final bool _showShiftNames; // Новый параметр
   final ScheduleProvider _scheduleProvider; // Новый параметр
   final SettingsProvider _settingsProvider; // Новый параметр
-
-  final Color _primaryColor = const Color(0xFF0E879C);
-  final Color _primaryLight = const Color(0xFF4DA8B8);
 
   const CalendarWidget({
     super.key,
@@ -169,12 +165,12 @@ class CalendarWidget extends StatelessWidget {
     // Получаем смещение относительно первого рабочего дня для выбранного графика
     final dayOffset =
         _selectedScheduleId != null
-            ? scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId!, day)
+            ? scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, day)
             : scheduleProvider.getDayOffsetForActiveSchedule(day);
 
     // Если день до первого рабочего дня - серый цвет
     if (dayOffset < 0) {
-      return Colors.grey.withOpacity(0.3);
+      return Colors.grey.withValues(alpha: 0.3);
     }
 
     // Применяем периодическую раскраску с учетом смещения
@@ -188,12 +184,12 @@ class CalendarWidget extends StatelessWidget {
     // Получаем смещение относительно первого рабочего дня для выбранного графика
     final dayOffset =
         _selectedScheduleId != null
-            ? scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId!, day)
+            ? scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, day)
             : scheduleProvider.getDayOffsetForActiveSchedule(day);
 
     // Если день до первого рабочего дня - темно-серый цвет
     if (dayOffset < 0) {
-      return Colors.grey.withOpacity(0.5);
+      return Colors.grey.withValues(alpha: 0.5);
     }
 
     // Применяем периодическую раскраску с учетом смещения (темнее)
@@ -465,12 +461,12 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
 
   Color _getComparisonColor(int scheduleIndex, int dayOffset) {
     if (_comparisonColors.length <= scheduleIndex || _comparisonColors[scheduleIndex].isEmpty) {
-      return Colors.grey.withOpacity(0.3);
+      return Colors.grey.withValues(alpha: 0.3);
     }
 
     // Если день до первого рабочего дня - серый цвет
     if (dayOffset < 0) {
-      return Colors.grey.withOpacity(0.3);
+      return Colors.grey.withValues(alpha: 0.3);
     }
 
     final int colorIndex = dayOffset % _comparisonColors[scheduleIndex].length;

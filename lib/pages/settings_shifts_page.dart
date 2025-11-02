@@ -40,7 +40,7 @@ class SettingsShiftsPage extends StatelessWidget {
                   settings.updateStaticShiftColor(shift.id, savedShift.color);
                   Navigator.pop(context);
                 },
-                child: Text(isNewShift ? 'Создать' : 'Сохранить'),
+                child: const Text('Сохранить'),
               ),
             ],
           );
