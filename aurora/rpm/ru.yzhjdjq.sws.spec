@@ -5,7 +5,7 @@
 
 Name: %{orgName}.%{appName}%{?flavor}
 Summary: Schedule of work shifts
-Version: 0.1.0
+Version: 0.2.0
 Release: 1
 License: Proprietary
 Source0: %{name}-%{version}.tar.zst

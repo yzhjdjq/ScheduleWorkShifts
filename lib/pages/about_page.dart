@@ -23,19 +23,19 @@ class AboutPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Версия 1.0.0',
+                'Версия 0.2.0',
                 style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 20),
               Text(
-                'Разработано с использованием Flutter',
+                'График рабочих смен',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              const Text('© 2024 ru.yzhjdjq.sws'),
+              const Text('© 2025 ru.yzhjdjq.sws'),
             ],
           ),
         ),

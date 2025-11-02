@@ -8,7 +8,6 @@ import 'package:sws/widgets/schedule_shifts_statistics.dart';
 import 'package:sws/providers/settings_provider.dart';
 import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/pages/about_page.dart';
-import 'package:sws/pages/profile_page.dart';
 import 'package:sws/pages/settings_page.dart';
 import 'package:sws/pages/create_schedule_page.dart';
 
@@ -20,6 +19,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const String _appVersion  = '0.2.0';
+
   late DateTime _currentDate;
   late int _daysInMonth;
   late int _firstWeekday;
@@ -494,17 +495,6 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           _buildDrawerItem(
-            icon: Icons.person,
-            title: 'Профиль',
-            onTap: () {
-              Navigator.pop(context); // Закрыть Drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
-            },
-          ),
-          _buildDrawerItem(
             icon: Icons.settings,
             title: 'Настройки',
             onTap: () {
@@ -524,15 +514,6 @@ class _HomePageState extends State<HomePage> {
                 context,
                 MaterialPageRoute(builder: (context) => const AboutPage()),
               );
-            },
-          ),
-          const Divider(),
-          _buildDrawerItem(
-            icon: Icons.exit_to_app,
-            title: 'Выйти',
-            onTap: () {
-              Navigator.pop(context);
-              _showLogoutDialog(context);
             },
           ),
         ],
@@ -571,7 +552,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 5),
           Text(
-            'Версия 0.1.0',
+            'Версия $_appVersion',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 12,
