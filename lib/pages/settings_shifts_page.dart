@@ -40,7 +40,7 @@ class SettingsShiftsPage extends StatelessWidget {
                   settings.updateStaticShiftColor(shift.id, savedShift.color);
                   Navigator.pop(context);
                 },
-                child: const Text('Сохранить'),
+                child: Text(isNewShift ? 'Создать' : 'Сохранить'),
               ),
             ],
           );
@@ -358,7 +358,7 @@ class SettingsShiftsPage extends StatelessWidget {
 
   // Редактирование существующей смены
   void _editExistingShift(BuildContext context, WorkShift shift) {
-    if (shift.isStatic) {
+    if (shift.isStatic()) {
       _editStaticShiftColor(context, shift);
       return;
     }
@@ -400,7 +400,7 @@ class SettingsShiftsPage extends StatelessWidget {
                     ),
                   ),
                   title: Text(shift.name),
-                  subtitle: shift.isStatic ? null : Text(
+                  subtitle: shift.isStatic() ? null : Text(
                     shift.category == ShiftCategory.workingDay
                         ? 'Рабочий день'
                         : 'Выходной',
@@ -413,7 +413,7 @@ class SettingsShiftsPage extends StatelessWidget {
                   ),
                   onTap: () => _editExistingShift(context, shift),
                   onLongPress:
-                    shift.isStatic
+                    shift.isStatic()
                       ? null
                       : settings.workShifts.length <=2
                         ? null

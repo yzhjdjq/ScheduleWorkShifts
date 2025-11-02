@@ -9,13 +9,35 @@ abstract class BaseSettingsMixin {
   void notify();
 }
 
+mixin ShiftNameLegendSettingsMixin on BaseSettingsMixin {
+  static const String _shiftNameLegendKey = 'showShiftNameLegend';
+  bool _showShiftNameLegend = true;
+
+  Future<void> _loadShiftNameLegendFromStorage() async {
+    if (!StorageService.containsKey(_shiftNameLegendKey)) {
+      await StorageService.setBool(_shiftNameLegendKey, _showShiftNameLegend);
+    }
+
+    _showShiftNameLegend = StorageService.getBool(_shiftNameLegendKey)!;
+  }
+
+  bool get showShiftNameLegend => _showShiftNameLegend;
+  set showShiftNameLegend(bool value) {
+    if (_showShiftNameLegend != value) {
+      _showShiftNameLegend = value;
+      StorageService.setBool(_shiftNameLegendKey, _showShiftNameLegend);
+      notify();
+    }
+  }
+}
+
 mixin ShiftNameSettingsMixin on BaseSettingsMixin {
   static const String _shiftNameKey = 'showShiftName';
   bool _showShiftName = true;
 
   Future<void> _loadShiftNameFromStorage() async {
     if (!StorageService.containsKey(_shiftNameKey)) {
-      StorageService.setBool(_shiftNameKey, _showShiftName);
+      await StorageService.setBool(_shiftNameKey, _showShiftName);
     }
 
     _showShiftName = StorageService.getBool(_shiftNameKey)!;
@@ -37,7 +59,7 @@ mixin ScheduleSettingsMixin on BaseSettingsMixin {
 
   Future<void> _loadSchedulesFromStorage() async {
     if (!StorageService.containsKey(_scheduleKey)) {
-      StorageService.setObject(_scheduleKey, _schedules);
+      await StorageService.setObject(_scheduleKey, _schedules);
     }
 
     _schedules = StorageService
@@ -74,11 +96,8 @@ mixin WorkShiftSettingsMixin on BaseSettingsMixin {
   static const String _vacationShiftKey = 'vacationShift';
   static const String _sickLeaveShiftKey = 'sickLeaveShift';
   List<WorkShift> _workShifts = [];
-  WorkShift _vacationShift = WorkShift.createStatic();
-  WorkShift _sickLeaveShift = WorkShift.createStatic(
-    name: 'Больничный',
-    color: Colors.red,
-  );
+  WorkShift _vacationShift = Vacation();
+  WorkShift _sickLeaveShift = SickLeave();
 
   void _ensureMinimumWorkShifts() {
     _workShifts.add(WorkShift.createDefault());
@@ -132,9 +151,9 @@ mixin WorkShiftSettingsMixin on BaseSettingsMixin {
       _sickLeaveShift,
     ]);
 
-  WorkShift get sickLeaveShift => _sickLeaveShift;
-
   WorkShift get vacationShift => _vacationShift;
+
+  WorkShift get sickLeaveShift => _sickLeaveShift;
 
   void addWorkShift(WorkShift shift) {
     _workShifts.add(shift);
@@ -173,6 +192,7 @@ mixin WorkShiftSettingsMixin on BaseSettingsMixin {
 class SettingsProvider
   extends BaseSettingsMixin
   with ChangeNotifier,
+    ShiftNameLegendSettingsMixin,
     ShiftNameSettingsMixin,
     ScheduleSettingsMixin,
     WorkShiftSettingsMixin
@@ -209,6 +229,7 @@ class SettingsProvider
   }
 
   Future<void> _loadFromStorage() async {
+    await _loadShiftNameLegendFromStorage();
     await _loadShiftNameFromStorage();
     await _loadSchedulesFromStorage();
     await _loadShiftsSettingsFromStorage();

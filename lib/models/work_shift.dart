@@ -4,7 +4,9 @@ import 'package:uuid/uuid.dart' show Uuid;
 
 enum ShiftCategory {
   dayOff,
-  workingDay
+  workingDay,
+  vacation,
+  sickLeave,
 }
 
 class WorkShift {
@@ -12,14 +14,16 @@ class WorkShift {
   String name;
   ShiftCategory category;
   Color color;
-  bool isStatic = false;
+
+  bool isStatic() {
+    return category == ShiftCategory.vacation || category == ShiftCategory.sickLeave;
+  }
 
   WorkShift({
     required this.id,
     required this.name,
     required this.category,
     required this.color,
-    this.isStatic = false,
   });
 
   WorkShift.copy(WorkShift other)
@@ -28,7 +32,6 @@ class WorkShift {
     name: other.name,
     category: other.category,
     color: other.color,
-    isStatic: other.isStatic,
   );
 
   static WorkShift createDefault() {
@@ -40,26 +43,12 @@ class WorkShift {
     );
   }
 
-  static WorkShift createStatic({
-    String name = 'Отпуск',
-    Color color = Colors.green,
-  }) {
-    return WorkShift(
-      id: const Uuid().v4(),
-      name: name,
-      category: ShiftCategory.dayOff,
-      color: color,
-      isStatic: true,
-    );
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'category': category.index,
       'color': color.toARGB32(),
-      'isStatic': isStatic,
     };
   }
 
@@ -69,7 +58,32 @@ class WorkShift {
       name: json['name'] as String,
       category: ShiftCategory.values[json['category']],
       color: Color(json['color']),
-      isStatic: json['isStatic'] as bool,
     );
   }
+}
+
+class Vacation extends WorkShift {
+  static const int greenColorArgbInt = 4283215696;
+
+  Vacation({
+    super.color = const Color(greenColorArgbInt),
+  })
+    : super(
+      id: 'vacation',
+      name: 'Отпуск',
+      category: ShiftCategory.vacation,
+  );
+}
+
+class SickLeave extends WorkShift {
+  static const int redColorArgbInt = 4294198070;
+
+  SickLeave({
+    super.color = const Color(redColorArgbInt),
+  })
+    : super(
+      id: 'sickLeave',
+      name: 'Больничный',
+      category: ShiftCategory.sickLeave,
+  );
 }

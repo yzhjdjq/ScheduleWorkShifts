@@ -11,6 +11,9 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Настройки'),
+      ),
       body: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return ListView(
@@ -22,6 +25,16 @@ class SettingsPage extends StatelessWidget {
                 value: settings.showShiftName,
                 onChanged: (value) {
                   settings.showShiftName = value;
+                },
+              ),
+              const Divider(),
+
+              // Флаг: показывать легенду календаря
+              SwitchListTile(
+                title: const Text('Показывать легенду календаря'),
+                value: settings.showShiftNameLegend,
+                onChanged: (value) {
+                  settings.showShiftNameLegend = value;
                 },
               ),
               const Divider(),

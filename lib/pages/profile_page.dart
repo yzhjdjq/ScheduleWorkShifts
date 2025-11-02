@@ -6,6 +6,9 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Профиль'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
@@ -23,7 +26,7 @@ class ProfilePage extends StatelessWidget {
             Text(
               'user@sws.ru',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 30),
