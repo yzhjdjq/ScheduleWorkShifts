@@ -36,9 +36,8 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       _selectedSchedule = settings.schedules.first;
 
       // Пытаемся загрузить сохраненные данные для выбранного графика
-      final savedSequences = scheduleProvider.shiftSequences
-          .where((seq) => seq.scheduleId == _selectedSchedule!.id)
-          .toList();
+      final savedSequences =
+          scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == _selectedSchedule!.id).toList();
 
       if (savedSequences.isNotEmpty) {
         // Загружаем сохраненные данные
@@ -68,10 +67,8 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
         // Находим соответствующую смену
         final workShift = settings.workShifts.firstWhere(
-              (shift) => shift.id == sequence.workShiftId,
-          orElse: () => settings.workShifts.isNotEmpty
-              ? settings.workShifts.first
-              : WorkShift.createDefault(),
+          (shift) => shift.id == sequence.workShiftId,
+          orElse: () => settings.workShifts.isNotEmpty ? settings.workShifts.first : WorkShift.createDefault(),
         );
 
         row.selectedShift = workShift;
@@ -107,9 +104,10 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _addShiftRow() {
     setState(() {
-      _shiftRows.add(ShiftRow()
-        ..daysCount = '1'
-        ..daysController.text = '1'
+      _shiftRows.add(
+        ShiftRow()
+          ..daysCount = '1'
+          ..daysController.text = '1',
       );
     });
   }
@@ -124,9 +122,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _saveSchedule() async {
     if (_selectedSchedule == null || _firstWorkingDay == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Заполните все обязательные поля')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Заполните все обязательные поля')));
       return;
     }
 
@@ -134,25 +130,23 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     for (int i = 0; i < _shiftRows.length; i++) {
       final row = _shiftRows[i];
       if (row.selectedShift == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Выберите смену в строке ${i + 1}')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Выберите смену в строке ${i + 1}')));
         return;
       }
 
       if (row.daysCount.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Введите количество дней в строке ${i + 1}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Введите количество дней в строке ${i + 1}')));
         return;
       }
 
       // Проверка валидности количества дней
       final days = int.tryParse(row.daysCount);
       if (days == null || days < 1 || days > 99) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Некорректное количество дней в строке ${i + 1} (1-99)')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Некорректное количество дней в строке ${i + 1} (1-99)')));
         return;
       }
     }
@@ -161,9 +155,8 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
 
     // Удаляем старые последовательности для этого графика
-    final oldSequences = scheduleProvider.shiftSequences
-        .where((seq) => seq.scheduleId == _selectedSchedule!.id)
-        .toList();
+    final oldSequences =
+        scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == _selectedSchedule!.id).toList();
 
     for (final sequence in oldSequences) {
       scheduleProvider.removeShiftSequence(sequence.id);
@@ -187,9 +180,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       scheduleProvider.addShiftSequence(sequence);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('График сохранен')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('График сохранен')));
   }
 
   DateTime _calculateStartDate(int orderIndex) {
@@ -218,9 +209,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       _selectedSchedule = newValue;
 
       // Пытаемся загрузить сохраненные данные для нового графика
-      final savedSequences = scheduleProvider.shiftSequences
-          .where((seq) => seq.scheduleId == newValue?.id)
-          .toList();
+      final savedSequences = scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == newValue?.id).toList();
 
       if (savedSequences.isNotEmpty) {
         // Загружаем сохраненные данные нового графика
@@ -237,9 +226,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Создать график'),
-      ),
+      appBar: AppBar(title: const Text('Создать график')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -247,17 +234,12 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
           children: <Widget>[
             // Выпадающий список графиков
             DropdownButtonFormField<Schedule>(
-              decoration: const InputDecoration(
-                labelText: 'График *',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'График *', border: OutlineInputBorder()),
               value: _selectedSchedule,
-              items: settings.schedules.map((schedule) {
-                return DropdownMenuItem<Schedule>(
-                  value: schedule,
-                  child: Text(schedule.name),
-                );
-              }).toList(),
+              items:
+                  settings.schedules.map((schedule) {
+                    return DropdownMenuItem<Schedule>(value: schedule, child: Text(schedule.name));
+                  }).toList(),
               onChanged: _onScheduleChanged,
             ),
             const SizedBox(height: 20),
@@ -283,14 +265,16 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                     labelText: 'Первый рабочий день *',
                     border: const OutlineInputBorder(),
                     suffixIcon: const Icon(Icons.calendar_today),
-                    hintText: _firstWorkingDay == null
-                        ? 'Выберите дату'
-                        : '${_firstWorkingDay!.day}.${_firstWorkingDay!.month}.${_firstWorkingDay!.year}',
+                    hintText:
+                        _firstWorkingDay == null
+                            ? 'Выберите дату'
+                            : '${_firstWorkingDay!.day}.${_firstWorkingDay!.month}.${_firstWorkingDay!.year}',
                   ),
                   controller: TextEditingController(
-                    text: _firstWorkingDay == null
-                        ? ''
-                        : '${_firstWorkingDay!.day}.${_firstWorkingDay!.month}.${_firstWorkingDay!.year}',
+                    text:
+                        _firstWorkingDay == null
+                            ? ''
+                            : '${_firstWorkingDay!.day}.${_firstWorkingDay!.month}.${_firstWorkingDay!.year}',
                   ),
                 ),
               ),
@@ -298,154 +282,51 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
             const SizedBox(height: 20),
 
             // Заголовок таблицы
-            const Text(
-              'Последовательность смен:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            const Text('Последовательность смен:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
 
             // Таблица смен
             Expanded(
-              child: _shiftRows.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                child: Table(
-                  columnWidths: const {
-                    0: FlexColumnWidth(10),
-                    1: FlexColumnWidth(5),
-                    2: FlexColumnWidth(10),
-                    3: FlexColumnWidth(1),
-                  },
-                  children: <TableRow>[
-                    // Заголовок таблицы
-                    TableRow(
-                      children: const [
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Смена *',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Кол-во дней *',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Рабочее время',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            '',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Строки с данными
-                    ..._shiftRows.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final row = entry.value;
+              child:
+                  _shiftRows.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : SingleChildScrollView(
+                        child: Table(
+                          columnWidths: const {
+                            0: FlexColumnWidth(3), // Смена
+                            1: FlexColumnWidth(1.5), // Кол-во дней
+                            2: FlexColumnWidth(3), // Рабочее время
+                            3: FixedColumnWidth(48), // Кнопка удаления (фиксированная ширина с отступами)
+                          },
+                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                          children: <TableRow>[
+                            // Заголовок таблицы
+                            TableRow(
+                              decoration: BoxDecoration(color: Colors.grey.shade100),
+                              children: [
+                                _buildHeaderCell('Смена *'),
+                                _buildHeaderCell('Кол-во дней *'),
+                                _buildHeaderCell('Рабочее время'),
+                                _buildHeaderCell(''),
+                              ],
+                            ),
+                            // Строки с данными
+                            ..._shiftRows.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final row = entry.value;
 
-                      return TableRow(
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: DropdownButton<WorkShift>(
-                              isExpanded: true,
-                              value: row.selectedShift,
-                              hint: const Text('Выберите смену'),
-                              items: settings.workShifts.map((shift) {
-                                return DropdownMenuItem<WorkShift>(
-                                  value: shift,
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 12,
-                                        height: 12,
-                                        decoration: BoxDecoration(
-                                          color: shift.color,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(shift.name),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (WorkShift? newValue) {
-                                setState(() {
-                                  row.selectedShift = newValue;
-                                });
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: TextField(
-                              maxLength: 2,
-                              textAlign: TextAlign.center,
-                              controller: row.daysController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                                counterText: '',
-                                hintText: '1',
-                              ),
-                              onChanged: (value) {
-                                if (value.isNotEmpty) {
-                                  final number = int.tryParse(value);
-                                  if (number == null || number < 1 || number > 99) {
-                                    row.daysController.text = '1';
-                                    row.daysCount = '1';
-                                  } else {
-                                    row.daysCount = value;
-                                  }
-                                } else {
-                                  row.daysCount = '1';
-                                }
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: WorkingTimeCell(
-                              workingTime: row.workingTime,
-                              onTimeChanged: (newTime) {
-                                setState(() {
-                                  row.workingTime = newTime;
-                                });
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: (_shiftRows.length > 2)
-                                ? IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                              onPressed: () => _removeShiftRow(index),
-                            )
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
-              ),
+                              return TableRow(
+                                children: <Widget>[
+                                  _buildShiftCell(row, settings),
+                                  _buildDaysCell(row, index),
+                                  _buildTimeCell(row),
+                                  _buildDeleteCell(index),
+                                ],
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
             ),
 
             const SizedBox(height: 20),
@@ -474,19 +355,123 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       ),
     );
   }
+
+  Widget _buildHeaderCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+      child: Text(text, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+    );
+  }
+
+  Widget _buildShiftCell(ShiftRow row, SettingsProvider settings) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+      child: DropdownButton<WorkShift>(
+        isExpanded: true,
+        value: row.selectedShift,
+        hint: const Text('Выберите смену', style: TextStyle(fontSize: 14)),
+        items:
+            settings.workShifts.map((shift) {
+              return DropdownMenuItem<WorkShift>(
+                value: shift,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(color: shift.color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(shift.name, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+        onChanged: (WorkShift? newValue) {
+          setState(() {
+            row.selectedShift = newValue;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildDaysCell(ShiftRow row, int index) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+      child: TextField(
+        maxLength: 2,
+        textAlign: TextAlign.center,
+        controller: row.daysController,
+        keyboardType: TextInputType.number,
+        style: const TextStyle(fontSize: 14),
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          counterText: '',
+          hintText: '1',
+          isDense: true,
+        ),
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            final number = int.tryParse(value);
+            if (number == null || number < 1 || number > 99) {
+              row.daysController.text = '1';
+              row.daysCount = '1';
+            } else {
+              row.daysCount = value;
+            }
+          } else {
+            row.daysCount = '1';
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildTimeCell(ShiftRow row) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+      child: WorkingTimeCell(
+        workingTime: row.workingTime,
+        onTimeChanged: (newTime) {
+          setState(() {
+            row.workingTime = newTime;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildDeleteCell(int index) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      child:
+          (_shiftRows.length > 2)
+              ? IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: () => _removeShiftRow(index),
+              )
+              : const SizedBox(width: 32, height: 32),
+    );
+  }
 }
 
 class ShiftRow {
-WorkShift? selectedShift;
-String daysCount = '1';
-final TextEditingController daysController = TextEditingController(text: '1');
-WorkingTime workingTime = WorkingTime();
+  WorkShift? selectedShift;
+  String daysCount = '1';
+  final TextEditingController daysController = TextEditingController(text: '1');
+  WorkingTime workingTime = WorkingTime();
 
-ShiftRow() {
-daysController.addListener(() {
-daysCount = daysController.text;
-});
-}
+  ShiftRow() {
+    daysController.addListener(() {
+      daysCount = daysController.text;
+    });
+  }
 }
 
 class WorkingTime {
@@ -540,13 +525,9 @@ class WorkingTimeCell extends StatelessWidget {
   final WorkingTime _workingTime;
   final Function(WorkingTime) _onTimeChanged;
 
-  const WorkingTimeCell({
-    super.key,
-    required WorkingTime workingTime,
-    required Function(WorkingTime) onTimeChanged,
-  })
+  const WorkingTimeCell({super.key, required WorkingTime workingTime, required Function(WorkingTime) onTimeChanged})
     : _workingTime = workingTime,
-    _onTimeChanged = onTimeChanged;
+      _onTimeChanged = onTimeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -562,13 +543,10 @@ class WorkingTimeCell extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => _showWorkingTimeDialog(context),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
               side: BorderSide(color: Colors.grey.shade400),
             ),
-            child: const Text(
-              'Настроить время',
-              style: TextStyle(fontSize: 12),
-            ),
+            child: const Text('Настроить', style: TextStyle(fontSize: 12)),
           ),
         ),
       ],
@@ -578,7 +556,7 @@ class WorkingTimeCell extends StatelessWidget {
   /// Отображение сводки выбранного времени
   Widget _buildTimeSummary(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(4),
@@ -591,19 +569,10 @@ class WorkingTimeCell extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Время:',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
+                Text('Время:', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                 Text(
                   '${_formatTimeOfDay(_workingTime.startTime!, context)} - ${_formatTimeOfDay(_workingTime.endTime!, context)}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -611,30 +580,14 @@ class WorkingTimeCell extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Продолжительность:',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                Text(
-                  _workingTime.durationText,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text('Длит:', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                Text(_workingTime.durationText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               ],
             ),
           ] else ...[
             Text(
               'Время не настроено',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey.shade500,
-                fontStyle: FontStyle.italic,
-              ),
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
             ),
           ],
         ],
@@ -644,38 +597,37 @@ class WorkingTimeCell extends StatelessWidget {
 
   /// Диалог для настройки рабочего времени
   void _showWorkingTimeDialog(BuildContext context) {
-    WorkingTime tempWorkingTime = WorkingTime()
-      ..startTime = _workingTime.startTime
-      ..endTime = _workingTime.endTime
-      ..duration = _workingTime.duration;
+    WorkingTime tempWorkingTime =
+        WorkingTime()
+          ..startTime = _workingTime.startTime
+          ..endTime = _workingTime.endTime
+          ..duration = _workingTime.duration;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Настройка рабочего времени'),
-        content: WorkingTimeEditor(
-          workingTime: tempWorkingTime,
-          onTimeChanged: (updatedTime) {
-            tempWorkingTime = updatedTime;
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Настройка рабочего времени'),
+            content: WorkingTimeEditor(
+              workingTime: tempWorkingTime,
+              onTimeChanged: (updatedTime) {
+                tempWorkingTime = updatedTime;
+              },
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () {
+                  _workingTime.startTime = tempWorkingTime.startTime;
+                  _workingTime.endTime = tempWorkingTime.endTime;
+                  _workingTime.calculateDuration();
+                  _onTimeChanged(_workingTime);
+                  Navigator.pop(context);
+                },
+                child: const Text('Сохранить'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              _workingTime.startTime = tempWorkingTime.startTime;
-              _workingTime.endTime = tempWorkingTime.endTime;
-              _workingTime.calculateDuration();
-              _onTimeChanged(_workingTime);
-              Navigator.pop(context);
-            },
-            child: const Text('Сохранить'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -689,11 +641,7 @@ class WorkingTimeEditor extends StatefulWidget {
   final WorkingTime workingTime;
   final Function(WorkingTime) onTimeChanged;
 
-  const WorkingTimeEditor({
-    super.key,
-    required this.workingTime,
-    required this.onTimeChanged,
-  });
+  const WorkingTimeEditor({super.key, required this.workingTime, required this.onTimeChanged});
 
   @override
   State<WorkingTimeEditor> createState() => _WorkingTimeEditorState();
@@ -705,17 +653,15 @@ class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
   @override
   void initState() {
     super.initState();
-    _workingTime = WorkingTime()
-      ..startTime = widget.workingTime.startTime
-      ..endTime = widget.workingTime.endTime
-      ..duration = widget.workingTime.duration;
+    _workingTime =
+        WorkingTime()
+          ..startTime = widget.workingTime.startTime
+          ..endTime = widget.workingTime.endTime
+          ..duration = widget.workingTime.duration;
   }
 
   Future<void> _selectStartTime() async {
-    final selectedTime = await showTimePicker(
-      context: context,
-      initialTime: _workingTime.startTime ?? TimeOfDay.now(),
-    );
+    final selectedTime = await showTimePicker(context: context, initialTime: _workingTime.startTime ?? TimeOfDay.now());
 
     if (selectedTime != null) {
       setState(() {
@@ -727,10 +673,7 @@ class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
   }
 
   Future<void> _selectEndTime() async {
-    final selectedTime = await showTimePicker(
-      context: context,
-      initialTime: _workingTime.endTime ?? TimeOfDay.now(),
-    );
+    final selectedTime = await showTimePicker(context: context, initialTime: _workingTime.endTime ?? TimeOfDay.now());
 
     if (selectedTime != null) {
       setState(() {
@@ -749,19 +692,11 @@ class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Начало работы
-          _buildTimeField(
-            label: 'Начало работы',
-            time: _workingTime.startTime,
-            onTap: _selectStartTime,
-          ),
+          _buildTimeField(label: 'Начало работы', time: _workingTime.startTime, onTap: _selectStartTime),
           const SizedBox(height: 12),
 
           // Конец работы
-          _buildTimeField(
-            label: 'Конец работы',
-            time: _workingTime.endTime,
-            onTap: _selectEndTime,
-          ),
+          _buildTimeField(label: 'Конец работы', time: _workingTime.endTime, onTap: _selectEndTime),
           const SizedBox(height: 16),
 
           // Отображение продолжительности
@@ -775,19 +710,10 @@ class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Общее рабочее время:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                const Text('Общее рабочее время:', style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   _workingTime.durationText,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.blue,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue),
                 ),
               ],
             ),
@@ -797,21 +723,11 @@ class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
     );
   }
 
-  Widget _buildTimeField({
-    required String label,
-    required TimeOfDay? time,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildTimeField({required String label, required TimeOfDay? time, required VoidCallback onTap}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
         const SizedBox(height: 4),
         GestureDetector(
           onTap: onTap,
@@ -820,13 +736,9 @@ class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 suffixIcon: const Icon(Icons.access_time),
-                hintText: time != null
-                    ? _formatTimeOfDay(time, context)
-                    : '--:--',
+                hintText: time != null ? _formatTimeOfDay(time, context) : '--:--',
               ),
-              controller: TextEditingController(
-                text: time != null ? _formatTimeOfDay(time, context) : '',
-              ),
+              controller: TextEditingController(text: time != null ? _formatTimeOfDay(time, context) : ''),
             ),
           ),
         ),
