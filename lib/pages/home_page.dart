@@ -440,19 +440,31 @@ class _HomePageState extends State<HomePage> {
           // Календарь
           Expanded(
             flex: 3,
-            child: CalendarWidget(
-              currentDate: _currentDate,
-              daysInMonth: _daysInMonth,
-              firstWeekday: _firstWeekday,
-              periodicColors: periodicColors.isNotEmpty
-                  ? periodicColors
-                  : [Colors.grey],
-              selectedScheduleId: activeScheduleId,
-              isComparisonMode: scheduleProvider.isComparisonMode,
-              comparisonColors: comparisonColors,
-              showShiftNames: settingsProvider.showShiftName,
-              scheduleProvider: scheduleProvider,
-              settingsProvider: settingsProvider,
+            child: GestureDetector(
+              onHorizontalDragEnd: (details) {
+                // Определяем направление свайпа
+                if (details.primaryVelocity! > 0) {
+                  // Свайп слева направо - предыдущий месяц
+                  _previousMonth();
+                } else if (details.primaryVelocity! < 0) {
+                  // Свайп справа налево - следующий месяц
+                  _nextMonth();
+                }
+              },
+              child: CalendarWidget(
+                currentDate: _currentDate,
+                daysInMonth: _daysInMonth,
+                firstWeekday: _firstWeekday,
+                periodicColors: periodicColors.isNotEmpty
+                    ? periodicColors
+                    : [Colors.grey],
+                selectedScheduleId: activeScheduleId,
+                isComparisonMode: scheduleProvider.isComparisonMode,
+                comparisonColors: comparisonColors,
+                showShiftNames: settingsProvider.showShiftName,
+                scheduleProvider: scheduleProvider,
+                settingsProvider: settingsProvider,
+              ),
             ),
           ),
 
