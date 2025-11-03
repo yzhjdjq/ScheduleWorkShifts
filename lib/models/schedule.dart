@@ -25,7 +25,7 @@ class Schedule {
     return Schedule(
       id: const Uuid().v4(),
       name: 'График',
-      startDate: DateTime.now(),
+      startDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
       isActive: false,
     );
   }

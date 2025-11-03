@@ -33,7 +33,9 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
     // Устанавливаем первый график по умолчанию
     if (settings.schedules.isNotEmpty) {
-      _selectedSchedule = settings.schedules.first;
+      final String activeScheduleId = scheduleProvider.getActiveScheduleId() ?? '';
+      _selectedSchedule = settings.schedules.firstWhere((s) => s.id == activeScheduleId,
+        orElse: () => settings.schedules.first);
 
       // Пытаемся загрузить сохраненные данные для выбранного графика
       final savedSequences =
@@ -82,7 +84,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _loadDefaultSettings(SettingsProvider settings) {
     setState(() {
-      _firstWorkingDay = _selectedSchedule?.startDate ?? DateTime.now();
+      _firstWorkingDay = _selectedSchedule?.startDate ?? DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
       _shiftRows.clear();
 
       // Добавляем две строки по умолчанию
