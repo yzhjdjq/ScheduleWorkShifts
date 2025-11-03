@@ -61,14 +61,21 @@ class StorageService {
 
       final decodedJson = jsonDecode(jsonString);
 
-      if (fromJson != null
-          && decodedJson is List
-      ) {
-        return decodedJson.map((item)
-          => fromJson(item as Map<String, dynamic>)).toList();
+      if (decodedJson is! List) {
+        return null;
       }
 
-      return decodedJson as List<T>?;
+      if (fromJson != null) {
+        return decodedJson.map((item)
+        => fromJson(item as Map<String, dynamic>)).toList();
+      }
+
+      if (decodedJson.every((item) => item is T)) {
+        return decodedJson.cast<T>().toList();
+      }
+
+      return null;
+
     } catch (e) {
       if (kDebugMode) {
         print('Error when deserializing a list: $e');

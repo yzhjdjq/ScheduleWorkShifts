@@ -37,9 +37,115 @@ class _HomePageState extends State<HomePage> {
     _calculateCalendarData();
   }
 
-  void _calculateCalendarData() {
-    _daysInMonth = DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
-    _firstWeekday = DateTime(_currentDate.year, _currentDate.month, 1).weekday;
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.watch<SettingsProvider>();
+    final scheduleProvider = context.watch<ScheduleProvider>();
+
+    // Получаем активный график
+    final activeScheduleId = scheduleProvider.getActiveScheduleId();
+    Schedule? activeSchedule;
+    if (activeScheduleId != null) {
+      activeSchedule = settingsProvider.schedules.firstWhere(
+            (schedule) => schedule.id == activeScheduleId,
+        orElse: () => settingsProvider.schedules.isNotEmpty
+            ? settingsProvider.schedules.first
+            : Schedule.createDefault(),
+      );
+    }
+
+    // Получаем цвета в зависимости от режима
+    final List<Color> periodicColors;
+    final List<List<Color>> comparisonColors;
+
+    if (scheduleProvider.isComparisonMode) {
+      periodicColors = [];
+      comparisonColors = scheduleProvider.getColorsForComparison(
+        settingsProvider.workShifts,
+        _currentDate,
+      );
+    } else {
+      comparisonColors = [[], []];
+      periodicColors = activeScheduleId != null && scheduleProvider.hasSchedules
+          ? scheduleProvider.getColorsForSchedule(
+          activeScheduleId,
+          settingsProvider.workShifts,
+          _currentDate
+      )
+          : _getDefaultColors(settingsProvider);
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_getAppBarTitle(activeSchedule, scheduleProvider, settingsProvider)),
+        actions: [
+          if (settingsProvider.schedules.length > 1)
+            IconButton(
+              icon: Icon(scheduleProvider.isComparisonMode
+                  ? Icons.compare
+                  : Icons.calendar_today),
+              onPressed: () => _showScheduleSelectionDialog(context),
+              tooltip: scheduleProvider.isComparisonMode
+                  ? 'Режим сравнения'
+                  : 'Выбрать график',
+            ),
+        ],
+      ),
+      drawer: _buildDrawer(context),
+      body: Column(
+        children: [
+          _buildMonthSwitcher(activeScheduleId, settingsProvider, scheduleProvider),
+
+          SizedBox(height: 8),
+
+          // Легенда цветов (если включена)
+          if (settingsProvider.showShiftNameLegend)
+            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider),
+
+          if (settingsProvider.showShiftNameLegend)
+            SizedBox(height: 8),
+
+          // Календарь
+          Expanded(
+            flex: 3,
+            child: GestureDetector(
+              onHorizontalDragEnd: (details) {
+                // Определяем направление свайпа
+                if (details.primaryVelocity! > 0) {
+                  // Свайп слева направо - предыдущий месяц
+                  _previousMonth();
+                } else if (details.primaryVelocity! < 0) {
+                  // Свайп справа налево - следующий месяц
+                  _nextMonth();
+                }
+              },
+              child: CalendarWidget(
+                currentDate: _currentDate,
+                daysInMonth: _daysInMonth,
+                firstWeekday: _firstWeekday,
+                periodicColors: periodicColors.isNotEmpty
+                    ? periodicColors
+                    : [Colors.grey],
+                selectedScheduleId: activeScheduleId,
+                isComparisonMode: scheduleProvider.isComparisonMode,
+                comparisonColors: comparisonColors,
+                showShiftNames: settingsProvider.showShiftName,
+                scheduleProvider: scheduleProvider,
+                settingsProvider: settingsProvider,
+              ),
+            ),
+          ),
+
+          // Статистика (всегда показывается, независимо от легенды)
+          Expanded(
+            flex: 1,
+            child: ScheduleShiftsStatistics(
+              currentDate: _currentDate,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showComparisonSelectionDialog(BuildContext context) {
@@ -349,6 +455,241 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _showVacationDialog() {
+    final scheduleProvider = context.read<ScheduleProvider>();
+    final activeScheduleId = scheduleProvider.getActiveScheduleId();
+
+    if (activeScheduleId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Сначала выберите активный график'))
+      );
+      return;
+    }
+
+    _showExceptionDialog(
+        context,
+        'Добавить отпуск',
+        activeScheduleId,
+        scheduleProvider.addVacation
+    );
+  }
+
+  void _showSickLeaveDialog() {
+    final scheduleProvider = context.read<ScheduleProvider>();
+    final activeScheduleId = scheduleProvider.getActiveScheduleId();
+
+    if (activeScheduleId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Сначала выберите активный график'))
+      );
+      return;
+    }
+
+    _showExceptionDialog(
+        context,
+        'Добавить больничный',
+        activeScheduleId,
+        scheduleProvider.addSickLeave
+    );
+  }
+
+  void _showExceptionDialog(
+      BuildContext context,
+      String title,
+      String scheduleId,
+      Function(String, DateTime, DateTime) onAdd
+      )
+  {
+    DateTime? startDate;
+    DateTime? endDate;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(title),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Поле выбора даты начала
+                  GestureDetector(
+                    onTap: () async {
+                      final selectedDate = await showDatePicker(
+                        context: context,
+                        initialDate: startDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (selectedDate != null) {
+                        setState(() {
+                          startDate = selectedDate;
+                        });
+                      }
+                    },
+                    child: AbsorbPointer(
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Дата начала',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: const Icon(Icons.calendar_today),
+                          hintText: startDate == null
+                              ? 'Выберите дату'
+                              : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
+                        ),
+                        controller: TextEditingController(
+                          text: startDate == null
+                              ? ''
+                              : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Поле выбора даты окончания
+                  GestureDetector(
+                    onTap: () async {
+                      final selectedDate = await showDatePicker(
+                        context: context,
+                        initialDate: endDate ?? (startDate ?? DateTime.now()),
+                        firstDate: startDate ?? DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (selectedDate != null) {
+                        setState(() {
+                          endDate = selectedDate;
+                        });
+                      }
+                    },
+                    child: AbsorbPointer(
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Дата окончания',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: const Icon(Icons.calendar_today),
+                          hintText: endDate == null
+                              ? 'Выберите дату'
+                              : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
+                        ),
+                        controller: TextEditingController(
+                          text: endDate == null
+                              ? ''
+                              : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: startDate != null && endDate != null
+                    ? () {
+                  if (endDate!.isBefore(startDate!)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Дата окончания не может быть раньше даты начала'))
+                    );
+                    return;
+                  }
+
+                  onAdd(scheduleId, startDate!, endDate!);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$title добавлен'))
+                  );
+                }
+                    : null,
+                child: const Text('Добавить'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // Добавим метод для просмотра и управления исключениями
+  void _showExceptionsManagementDialog() {
+    final scheduleProvider = context.read<ScheduleProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+    final activeScheduleId = scheduleProvider.getActiveScheduleId();
+
+    if (activeScheduleId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Сначала выберите активный график'))
+      );
+      return;
+    }
+
+    final exceptions = scheduleProvider.getExceptionsForSchedule(activeScheduleId);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Управление отпусками и больничными'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: exceptions.isEmpty
+              ? const Center(child: Text('Нет добавленных периодов'))
+              : ListView.builder(
+            shrinkWrap: true,
+            itemCount: exceptions.length,
+            itemBuilder: (context, index) {
+              final exception = exceptions[index];
+              final workShift = settingsProvider.allWorkShifts.firstWhere(
+                    (shift) => shift.id == exception.workShiftId,
+                orElse: () => WorkShift.createDefault(),
+              );
+
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: ListTile(
+                  leading: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: workShift.color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  title: Text(workShift.name),
+                  subtitle: Text(
+                      '${exception.startDate.day}.${exception.startDate.month}.${exception.startDate.year} - '
+                          '${exception.endDate.day}.${exception.endDate.month}.${exception.endDate.year}'
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      scheduleProvider.removeScheduleException(exception.id);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Период удален'))
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Закрыть'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Обновленный метод для получения заголовка AppBar
   String _getAppBarTitle(Schedule? activeSchedule, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
     if (scheduleProvider.isComparisonMode) {
@@ -369,117 +710,6 @@ class _HomePageState extends State<HomePage> {
     return 'Главная';
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final settingsProvider = context.watch<SettingsProvider>();
-    final scheduleProvider = context.watch<ScheduleProvider>();
-
-    // Получаем активный график
-    final activeScheduleId = scheduleProvider.getActiveScheduleId();
-    Schedule? activeSchedule;
-    if (activeScheduleId != null) {
-      activeSchedule = settingsProvider.schedules.firstWhere(
-            (schedule) => schedule.id == activeScheduleId,
-        orElse: () => settingsProvider.schedules.isNotEmpty
-            ? settingsProvider.schedules.first
-            : Schedule.createDefault(),
-      );
-    }
-
-    // Получаем цвета в зависимости от режима
-    final List<Color> periodicColors;
-    final List<List<Color>> comparisonColors;
-
-    if (scheduleProvider.isComparisonMode) {
-      periodicColors = [];
-      comparisonColors = scheduleProvider.getColorsForComparison(
-        settingsProvider.workShifts,
-        _currentDate,
-      );
-    } else {
-      comparisonColors = [[], []];
-      periodicColors = activeScheduleId != null && scheduleProvider.hasSchedules
-          ? scheduleProvider.getColorsForSchedule(
-          activeScheduleId,
-          settingsProvider.workShifts,
-          _currentDate
-      )
-          : _getDefaultColors(settingsProvider);
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_getAppBarTitle(activeSchedule, scheduleProvider, settingsProvider)),
-        actions: [
-          if (settingsProvider.schedules.length > 1)
-            IconButton(
-              icon: Icon(scheduleProvider.isComparisonMode
-                  ? Icons.compare
-                  : Icons.calendar_today),
-              onPressed: () => _showScheduleSelectionDialog(context),
-              tooltip: scheduleProvider.isComparisonMode
-                  ? 'Режим сравнения'
-                  : 'Выбрать график',
-            ),
-        ],
-      ),
-      drawer: _buildDrawer(context),
-      body: Column(
-        children: [
-          _buildMonthSwitcher(activeScheduleId, settingsProvider, scheduleProvider),
-
-          SizedBox(height: 8),
-
-          // Легенда цветов (если включена)
-          if (settingsProvider.showShiftNameLegend)
-            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider),
-
-          if (settingsProvider.showShiftNameLegend)
-            SizedBox(height: 8),
-
-          // Календарь
-          Expanded(
-            flex: 3,
-            child: GestureDetector(
-              onHorizontalDragEnd: (details) {
-                // Определяем направление свайпа
-                if (details.primaryVelocity! > 0) {
-                  // Свайп слева направо - предыдущий месяц
-                  _previousMonth();
-                } else if (details.primaryVelocity! < 0) {
-                  // Свайп справа налево - следующий месяц
-                  _nextMonth();
-                }
-              },
-              child: CalendarWidget(
-                currentDate: _currentDate,
-                daysInMonth: _daysInMonth,
-                firstWeekday: _firstWeekday,
-                periodicColors: periodicColors.isNotEmpty
-                    ? periodicColors
-                    : [Colors.grey],
-                selectedScheduleId: activeScheduleId,
-                isComparisonMode: scheduleProvider.isComparisonMode,
-                comparisonColors: comparisonColors,
-                showShiftNames: settingsProvider.showShiftName,
-                scheduleProvider: scheduleProvider,
-                settingsProvider: settingsProvider,
-              ),
-            ),
-          ),
-
-          // Статистика (всегда показывается, независимо от легенды)
-          Expanded(
-            flex: 1,
-            child: ScheduleShiftsStatistics(
-              currentDate: _currentDate,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // Построение бокового меню
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
@@ -487,14 +717,6 @@ class _HomePageState extends State<HomePage> {
         padding: EdgeInsets.zero,
         children: [
           _buildDrawerHeader(),
-          _buildDrawerItem(
-            icon: Icons.home,
-            title: 'Главная',
-            onTap: () {
-              Navigator.pop(context); // Закрыть Drawer
-              // Уже на главной странице
-            },
-          ),
           _buildDrawerItem(
             icon: Icons.schedule,
             title: 'Создать график',
@@ -504,6 +726,30 @@ class _HomePageState extends State<HomePage> {
                 context,
                 MaterialPageRoute(builder: (context) => const CreateSchedulePage()),
               );
+            },
+          ),
+          _buildDrawerItem(
+            icon: Icons.beach_access,
+            title: 'Отпуск',
+            onTap: () {
+              Navigator.pop(context);
+              _showVacationDialog();
+            },
+          ),
+          _buildDrawerItem(
+            icon: Icons.medical_services,
+            title: 'Больничный',
+            onTap: () {
+              Navigator.pop(context);
+              _showSickLeaveDialog();
+            },
+          ),
+          _buildDrawerItem(
+            icon: Icons.list,
+            title: 'Мои отпуска/больничные',
+            onTap: () {
+              Navigator.pop(context);
+              _showExceptionsManagementDialog();
             },
           ),
           _buildDrawerItem(
@@ -588,32 +834,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Диалог выхода
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Выход'),
-          content: const Text('Вы уверены, что хотите выйти?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Здесь логика выхода
-              },
-              child: const Text('Выйти'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   List<Color> _getDefaultColors(SettingsProvider settingsProvider) {
     if (settingsProvider.workShifts.isEmpty) {
       return [Colors.blue, Colors.green];
@@ -665,8 +885,6 @@ class _HomePageState extends State<HomePage> {
       SettingsProvider settingsProvider,
       ScheduleProvider scheduleProvider
       ) {
-
-    // Если флаг легенды выключен - не показываем ничего
     if (!settingsProvider.showShiftNameLegend) {
       return const SizedBox.shrink();
     }
@@ -820,6 +1038,11 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
     );
+  }
+
+  void _calculateCalendarData() {
+    _daysInMonth = DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
+    _firstWeekday = DateTime(_currentDate.year, _currentDate.month, 1).weekday;
   }
 
   void _previousMonth() {

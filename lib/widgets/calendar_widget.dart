@@ -116,29 +116,41 @@ class CalendarWidget extends StatelessWidget {
 
       final currentDay = DateTime(_currentDate.year, _currentDate.month, day);
 
-      // В режиме сравнения используем упрощенную логику без названий смен
       if (_isComparisonMode) {
+        // Используем новый метод для получения цветов с учетом исключений
+        final colors = _scheduleProvider.getComparisonColorsForDate(
+            currentDay,
+            _settingsProvider.workShifts,
+            _settingsProvider
+        );
+
         return _ComparisonCalendarCellWidget(
           day: day,
           isToday: isToday,
           currentDay: currentDay,
           scheduleProvider: _scheduleProvider,
-          comparisonColors: _comparisonColors,
+          comparisonColors: [colors], // Передаем цвета как список
           fontSize: _calculateFontSize(cellHeight),
+          settingsProvider: _settingsProvider,
         );
       } else {
-        // В обычном режиме передаем все параметры
-        Color dayColor = _getDayColor(currentDay, scheduleProvider);
-        Color dayCurrentColor = _getDayColorDark(currentDay, scheduleProvider);
+        // Обычный режим - получаем цвет с учетом исключений
+        final dayOffset = _selectedScheduleId != null
+            ? _scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, currentDay)
+            : _scheduleProvider.getDayOffsetForActiveSchedule(currentDay);
+
+        Color dayColor = _getColorWithExceptions(currentDay, dayOffset, scheduleProvider);
+        Color dayCurrentColor = _getDarkenedColor(dayColor);
+
         double fontSize = _calculateFontSize(cellHeight);
 
         return _CalendarCellWidget(
           day: day,
           isToday: isToday,
-          dayColor: dayColor,
+          dayColor: isToday ? dayCurrentColor : dayColor,
           dayCurrentColor: dayCurrentColor,
           fontSize: fontSize,
-          showShiftNames: _showShiftNames, // Только в обычном режиме
+          showShiftNames: _showShiftNames,
           currentDay: currentDay,
           scheduleProvider: _scheduleProvider,
           settingsProvider: _settingsProvider,
@@ -159,43 +171,33 @@ class CalendarWidget extends StatelessWidget {
     }
   }
 
-  Color _getDayColor(DateTime day, ScheduleProvider scheduleProvider) {
+  Color _getColorWithExceptions(DateTime date, int dayOffset, ScheduleProvider scheduleProvider) {
+    final scheduleId = _selectedScheduleId ?? scheduleProvider.getActiveScheduleId() ?? '';
+
+    // Проверяем исключения
+    if (scheduleProvider.hasExceptionForDate(date, scheduleId)) {
+      final exception = scheduleProvider.getExceptionForDate(date, scheduleId);
+      final workShift = _settingsProvider.allWorkShifts.firstWhere(
+            (shift) => shift.id == exception!.workShiftId,
+        orElse: () => WorkShift.createDefault(),
+      );
+      return workShift.color;
+    }
+
+    // Обычная логика если исключений нет
     if (_periodicColors.isEmpty) return Colors.grey;
 
-    // Получаем смещение относительно первого рабочего дня для выбранного графика
-    final dayOffset =
-        _selectedScheduleId != null
-            ? scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, day)
-            : scheduleProvider.getDayOffsetForActiveSchedule(day);
-
-    // Если день до первого рабочего дня - серый цвет
     if (dayOffset < 0) {
       return Colors.grey.withValues(alpha: 0.3);
     }
 
-    // Применяем периодическую раскраску с учетом смещения
     final int colorIndex = dayOffset % _periodicColors.length;
     return _periodicColors[colorIndex];
   }
 
-  Color _getDayColorDark(DateTime day, ScheduleProvider scheduleProvider) {
-    if (_periodicColors.isEmpty) return Colors.grey;
-
-    // Получаем смещение относительно первого рабочего дня для выбранного графика
-    final dayOffset =
-        _selectedScheduleId != null
-            ? scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, day)
-            : scheduleProvider.getDayOffsetForActiveSchedule(day);
-
-    // Если день до первого рабочего дня - темно-серый цвет
-    if (dayOffset < 0) {
-      return Colors.grey.withValues(alpha: 0.5);
-    }
-
-    // Применяем периодическую раскраску с учетом смещения (темнее)
-    final int colorIndex = dayOffset % _periodicColors.length;
-    final HSLColor color = HSLColor.fromColor(_periodicColors[colorIndex]);
-    return color.withLightness(color.lightness * .75).toColor();
+  Color _getDarkenedColor(Color color) {
+    final HSLColor hslColor = HSLColor.fromColor(color);
+    return hslColor.withLightness(hslColor.lightness * 0.75).toColor();
   }
 
   bool _isToday(int day) {
@@ -297,38 +299,40 @@ class _CalendarCellWidget extends StatelessWidget {
     );
   }
 
-  // Метод для получения названия смены для текущего дня
   // В классе _CalendarCellWidget обновим метод _getShiftNameForDay
   String _getShiftNameForDay() {
     final activeScheduleId = _scheduleProvider.getActiveScheduleId();
     if (activeScheduleId == null) return '';
 
-    // Получаем общее количество дней в цикле
+    // Сначала проверяем, есть ли исключение для этого дня
+    if (_scheduleProvider.hasExceptionForDate(_currentDay, activeScheduleId)) {
+      final exception = _scheduleProvider.getExceptionForDate(_currentDay, activeScheduleId);
+      final workShift = _settingsProvider.allWorkShifts.firstWhere(
+            (shift) => shift.id == exception!.workShiftId,
+        orElse: () => WorkShift.createDefault(),
+      );
+      return workShift.name; // Показываем название отпуска/больничного
+    }
+
+    // Если исключений нет, показываем обычную смену
     final totalCycleDays = _scheduleProvider.getTotalCycleDaysForSchedule(activeScheduleId);
     if (totalCycleDays == 0) return '';
 
-    // Получаем смещение дня относительно первого рабочего дня
     final dayOffset = _scheduleProvider.getDayOffsetForActiveSchedule(_currentDay);
-    if (dayOffset < 0) return ''; // День до начала графика
+    if (dayOffset < 0) return '';
 
-    // Вычисляем позицию в цикле (учитываем повторение циклов)
     final cyclePosition = dayOffset % totalCycleDays;
-
-    // Получаем последовательности смен для активного графика
     final sequences = _scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == activeScheduleId).toList();
 
     if (sequences.isEmpty) return '';
 
-    // Сортируем по orderIndex
     sequences.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
-    // Находим, какая смена соответствует этому дню в цикле
     int currentDay = 0;
     for (final sequence in sequences) {
       if (cyclePosition < currentDay + sequence.consecutiveDays) {
-        // Нашли смену для этого дня
         final workShift = _settingsProvider.allWorkShifts.firstWhere(
-          (shift) => shift.id == sequence.workShiftId,
+              (shift) => shift.id == sequence.workShiftId,
           orElse: () => WorkShift.createDefault(),
         );
         return workShift.name;
@@ -362,7 +366,6 @@ class _CalendarCellEmptyWidget extends StatelessWidget {
   }
 }
 
-// Новый виджет для ячейки в режиме сравнения
 class _ComparisonCalendarCellWidget extends StatelessWidget {
   final int _day;
   final bool _isToday;
@@ -370,6 +373,7 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
   final ScheduleProvider _scheduleProvider;
   final List<List<Color>> _comparisonColors;
   final double _fontSize;
+  final SettingsProvider _settingsProvider;
 
   const _ComparisonCalendarCellWidget({
     required int day,
@@ -378,33 +382,38 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
     required ScheduleProvider scheduleProvider,
     required List<List<Color>> comparisonColors,
     required double fontSize,
+    required SettingsProvider settingsProvider,
   }) : _day = day,
-       _isToday = isToday,
-       _currentDay = currentDay,
-       _scheduleProvider = scheduleProvider,
-       _comparisonColors = comparisonColors,
-       _fontSize = fontSize;
+        _isToday = isToday,
+        _currentDay = currentDay,
+        _scheduleProvider = scheduleProvider,
+        _comparisonColors = comparisonColors,
+        _fontSize = fontSize,
+        _settingsProvider = settingsProvider;
 
   @override
   Widget build(BuildContext context) {
-    // Получаем цвета для обоих графиков
-    final offsets = _scheduleProvider.getDayOffsetsForComparison(_currentDay);
-    final firstColor = _getComparisonColor(0, offsets[0]);
-    final secondColor = _getComparisonColor(1, offsets[1]);
+    final colors = _scheduleProvider.getComparisonColorsForDate(
+        _currentDay,
+        _settingsProvider.workShifts,
+        _settingsProvider
+    );
 
-    // Вычисляем затемненные цвета для сегодняшнего дня
+    Color firstColor = colors[0];
+    Color secondColor = colors[1];
+
     final firstColorDark = _getDarkenedColor(firstColor);
     final secondColorDark = _getDarkenedColor(secondColor);
 
     BoxDecoration decoration = BoxDecoration(
       borderRadius: BorderRadius.circular(4),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .1), blurRadius: 2, offset: const Offset(0, 1))],
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 2, offset: const Offset(0, 1))],
     );
 
     if (_isToday) {
       decoration = decoration.copyWith(
         border: Border.all(color: Colors.black, width: 3),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .3), blurRadius: 4, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues( alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))],
       );
     }
 
@@ -419,13 +428,13 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
             ClipPath(
               clipper: DiagonalClipper(),
               child: Container(
-                color: _isToday ? firstColorDark : firstColor, // Используем затемненный цвет если сегодня
+                color: _isToday ? firstColorDark : firstColor,
               ),
             ),
             ClipPath(
               clipper: DiagonalClipper(reverse: true),
               child: Container(
-                color: _isToday ? secondColorDark : secondColor, // Используем затемненный цвет если сегодня
+                color: _isToday ? secondColorDark : secondColor,
               ),
             ),
             // Диагональная разделительная линия
@@ -440,10 +449,9 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
                   color: _getTextColorForComparison(_isToday ? firstColorDark : firstColor),
                   fontWeight: _isToday ? FontWeight.bold : FontWeight.normal,
                   fontSize: _fontSize,
-                  shadows:
-                      _needsTextShadow(_isToday ? firstColorDark : firstColor)
-                          ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: .5), blurRadius: 2)]
-                          : null,
+                  shadows: _needsTextShadow(_isToday ? firstColorDark : firstColor)
+                      ? <Shadow>[Shadow(color: Colors.black.withOpacity(.5), blurRadius: 2)]
+                      : null,
                 ),
               ),
             ),
@@ -453,34 +461,17 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
     );
   }
 
-  // Метод для затемнения цвета (аналогично тому, что используется в обычных ячейках)
   Color _getDarkenedColor(Color color) {
     final HSLColor hslColor = HSLColor.fromColor(color);
     return hslColor.withLightness(hslColor.lightness * 0.75).toColor();
   }
 
-  Color _getComparisonColor(int scheduleIndex, int dayOffset) {
-    if (_comparisonColors.length <= scheduleIndex || _comparisonColors[scheduleIndex].isEmpty) {
-      return Colors.grey.withValues(alpha: 0.3);
-    }
-
-    // Если день до первого рабочего дня - серый цвет
-    if (dayOffset < 0) {
-      return Colors.grey.withValues(alpha: 0.3);
-    }
-
-    final int colorIndex = dayOffset % _comparisonColors[scheduleIndex].length;
-    return _comparisonColors[scheduleIndex][colorIndex];
-  }
-
   Color _getTextColorForComparison(Color firstColor) {
-    // Текст находится в левом верхнем углу, поэтому используем только цвет первой смены
     final luminance = firstColor.computeLuminance();
     return luminance > 0.5 ? Colors.black : Colors.white;
   }
 
   bool _needsTextShadow(Color firstColor) {
-    // Тень текста зависит только от цвета первой смены
     final luminance = firstColor.computeLuminance();
     return luminance > 0.7;
   }
