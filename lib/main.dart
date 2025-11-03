@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'package:sws/pages/home_page.dart';
@@ -11,6 +12,7 @@ void main() async{
   await StorageService.initialize();
   await SettingsProvider.initialize();
   await ScheduleProvider.initialize();
+  await initializeDateFormatting('ru', null);
   runApp(const MyApp());
 }
 

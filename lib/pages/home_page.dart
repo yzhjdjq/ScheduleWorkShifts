@@ -459,9 +459,23 @@ class _HomePageState extends State<HomePage> {
     final scheduleProvider = context.read<ScheduleProvider>();
     final activeScheduleId = scheduleProvider.getActiveScheduleId();
 
+    // Проверяем, что не включен режим сравнения
+    if (scheduleProvider.isComparisonMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Нельзя добавить отпуск в режиме сравнения графиков. Сначала выберите один график.'),
+            duration: Duration(seconds: 3),
+          )
+      );
+      return;
+    }
+
     if (activeScheduleId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Сначала выберите активный график'))
+          const SnackBar(
+            content: Text('Сначала выберите активный график'),
+            duration: Duration(seconds: 2),
+          )
       );
       return;
     }
@@ -478,9 +492,23 @@ class _HomePageState extends State<HomePage> {
     final scheduleProvider = context.read<ScheduleProvider>();
     final activeScheduleId = scheduleProvider.getActiveScheduleId();
 
+    // Проверяем, что не включен режим сравнения
+    if (scheduleProvider.isComparisonMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Нельзя добавить больничный в режиме сравнения графиков. Сначала выберите один график.'),
+            duration: Duration(seconds: 3),
+          )
+      );
+      return;
+    }
+
     if (activeScheduleId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Сначала выберите активный график'))
+          const SnackBar(
+            content: Text('Сначала выберите активный график'),
+            duration: Duration(seconds: 2),
+          )
       );
       return;
     }
@@ -616,80 +644,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Добавим метод для просмотра и управления исключениями
-  void _showExceptionsManagementDialog() {
-    final scheduleProvider = context.read<ScheduleProvider>();
-    final settingsProvider = context.read<SettingsProvider>();
-    final activeScheduleId = scheduleProvider.getActiveScheduleId();
-
-    if (activeScheduleId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Сначала выберите активный график'))
-      );
-      return;
-    }
-
-    final exceptions = scheduleProvider.getExceptionsForSchedule(activeScheduleId);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Управление отпусками и больничными'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: exceptions.isEmpty
-              ? const Center(child: Text('Нет добавленных периодов'))
-              : ListView.builder(
-            shrinkWrap: true,
-            itemCount: exceptions.length,
-            itemBuilder: (context, index) {
-              final exception = exceptions[index];
-              final workShift = settingsProvider.allWorkShifts.firstWhere(
-                    (shift) => shift.id == exception.workShiftId,
-                orElse: () => WorkShift.createDefault(),
-              );
-
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  leading: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: workShift.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  title: Text(workShift.name),
-                  subtitle: Text(
-                      '${exception.startDate.day}.${exception.startDate.month}.${exception.startDate.year} - '
-                          '${exception.endDate.day}.${exception.endDate.month}.${exception.endDate.year}'
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      scheduleProvider.removeScheduleException(exception.id);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Период удален'))
-                      );
-                    },
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Закрыть'),
-          ),
-        ],
-      ),
-    );
-  }
-
   // Обновленный метод для получения заголовка AppBar
   String _getAppBarTitle(Schedule? activeSchedule, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
     if (scheduleProvider.isComparisonMode) {
@@ -742,14 +696,6 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.pop(context);
               _showSickLeaveDialog();
-            },
-          ),
-          _buildDrawerItem(
-            icon: Icons.list,
-            title: 'Мои отпуска/больничные',
-            onTap: () {
-              Navigator.pop(context);
-              _showExceptionsManagementDialog();
             },
           ),
           _buildDrawerItem(

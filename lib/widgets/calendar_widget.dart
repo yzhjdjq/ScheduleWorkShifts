@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:sws/models/work_shift.dart';
 import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/providers/settings_provider.dart';
@@ -42,7 +43,7 @@ class CalendarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[_buildWeekDaysHeader(), Expanded(child: _buildCalendarGrid(_scheduleProvider))],
+      children: <Widget>[_buildWeekDaysHeader(), Expanded(child: _buildCalendarGrid(context, _scheduleProvider))],
     );
   }
 
@@ -77,7 +78,7 @@ class CalendarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCalendarGrid(ScheduleProvider scheduleProvider) {
+  Widget _buildCalendarGrid(BuildContext context, ScheduleProvider scheduleProvider) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final pads = const EdgeInsets.all(6);
@@ -93,7 +94,7 @@ class CalendarWidget extends StatelessWidget {
                 child: Row(
                   children: List.generate(
                     7,
-                    (col) => Expanded(child: _buildCalendarCell(row, col, cellHeight, scheduleProvider)),
+                    (col) => Expanded(child: _buildCalendarCell(context, row, col, cellHeight, scheduleProvider)),
                   ),
                 ),
               );
@@ -104,7 +105,7 @@ class CalendarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCalendarCell(int row, int col, double cellHeight, ScheduleProvider scheduleProvider) {
+  Widget _buildCalendarCell(BuildContext context, int row, int col, double cellHeight, ScheduleProvider scheduleProvider) {
     const int dayInWeek = 7;
     final cellIndex = row * dayInWeek + col;
 
@@ -117,19 +118,12 @@ class CalendarWidget extends StatelessWidget {
       final currentDay = DateTime(_currentDate.year, _currentDate.month, day);
 
       if (_isComparisonMode) {
-        // Используем новый метод для получения цветов с учетом исключений
-        final colors = _scheduleProvider.getComparisonColorsForDate(
-            currentDay,
-            _settingsProvider.workShifts,
-            _settingsProvider
-        );
-
         return _ComparisonCalendarCellWidget(
           day: day,
           isToday: isToday,
           currentDay: currentDay,
           scheduleProvider: _scheduleProvider,
-          comparisonColors: [colors], // Передаем цвета как список
+          comparisonColors: _comparisonColors,
           fontSize: _calculateFontSize(cellHeight),
           settingsProvider: _settingsProvider,
         );
@@ -154,9 +148,101 @@ class CalendarWidget extends StatelessWidget {
           currentDay: currentDay,
           scheduleProvider: _scheduleProvider,
           settingsProvider: _settingsProvider,
+          onTap: () => _onDayTapped(context, currentDay, scheduleProvider, _settingsProvider), // Передаем context
         );
       }
     }
+  }
+
+  void _showExceptionDetailsDialog(
+      BuildContext context,
+      DateTime day,
+      ScheduleProvider scheduleProvider,
+      SettingsProvider settingsProvider,
+      String scheduleId
+      ) {
+    final exception = scheduleProvider.getExceptionForDate(day, scheduleId);
+    if (exception == null) return;
+
+    final workShift = settingsProvider.allWorkShifts.firstWhere(
+          (shift) => shift.id == exception.workShiftId,
+      orElse: () => WorkShift.createDefault(),
+    );
+
+    final DateFormat dateFormat = DateFormat('d MMMM yyyy', 'ru');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          dateFormat.format(day),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                workShift.name,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Период
+            const Text(
+              'Период:',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${exception.startDate.day}.${exception.startDate.month}.${exception.startDate.year} - '
+                  '${exception.endDate.day}.${exception.endDate.month}.${exception.endDate.year}',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () {
+                  scheduleProvider.removeScheduleException(exception.id);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${workShift.name} удален'))
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+                child: const Text('Удалить'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Отмена'),
+              ),
+            ]
+          ),
+        ],
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+      ),
+    );
+  }
+
+  void _onDayTapped(BuildContext context, DateTime day, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
+    final activeScheduleId = _selectedScheduleId ?? scheduleProvider.getActiveScheduleId();
+    if (activeScheduleId == null) return;
+
+    // Проверяем, есть ли исключение для этого дня
+    if (scheduleProvider.hasExceptionForDate(day, activeScheduleId)) {
+      _showExceptionDetailsDialog(context, day, scheduleProvider, settingsProvider, activeScheduleId);
+    }
+    // Для обычных смен пока ничего не делаем (оставим на будущее)
   }
 
   double _calculateFontSize(double cellHeight) {
@@ -212,10 +298,11 @@ class _CalendarCellWidget extends StatelessWidget {
   final Color _dayColor;
   final Color _dayCurrentColor;
   final double _fontSize;
-  final bool _showShiftNames; // Новый параметр
-  final DateTime _currentDay; // Новый параметр
-  final ScheduleProvider _scheduleProvider; // Новый параметр
-  final SettingsProvider _settingsProvider; // Новый параметр
+  final bool _showShiftNames;
+  final DateTime _currentDay;
+  final ScheduleProvider _scheduleProvider;
+  final SettingsProvider _settingsProvider;
+  final VoidCallback _onTap; // Добавляем callback
 
   const _CalendarCellWidget({
     required int day,
@@ -227,28 +314,30 @@ class _CalendarCellWidget extends StatelessWidget {
     required DateTime currentDay,
     required ScheduleProvider scheduleProvider,
     required SettingsProvider settingsProvider,
+    required VoidCallback onTap, // Добавляем параметр
   }) : _day = day,
-       _isToday = isToday,
-       _dayColor = dayColor,
-       _dayCurrentColor = dayCurrentColor,
-       _fontSize = fontSize,
-       _showShiftNames = showShiftNames,
-       _currentDay = currentDay,
-       _scheduleProvider = scheduleProvider,
-       _settingsProvider = settingsProvider;
+        _isToday = isToday,
+        _dayColor = dayColor,
+        _dayCurrentColor = dayCurrentColor,
+        _fontSize = fontSize,
+        _showShiftNames = showShiftNames,
+        _currentDay = currentDay,
+        _scheduleProvider = scheduleProvider,
+        _settingsProvider = settingsProvider,
+        _onTap = onTap;
 
   @override
   Widget build(BuildContext context) {
     BoxDecoration decoration = BoxDecoration(
       color: _dayColor,
       borderRadius: BorderRadius.circular(4),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .1), blurRadius: 2, offset: const Offset(0, 1))],
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 2, offset: const Offset(0, 1))],
     );
 
     if (_isToday) {
       decoration = decoration.copyWith(
         color: _dayCurrentColor,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .3), blurRadius: 4, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))],
         border: Border.all(color: Colors.black, width: 3),
       );
     }
@@ -256,45 +345,46 @@ class _CalendarCellWidget extends StatelessWidget {
     // Получаем название смены для этого дня
     final shiftName = _getShiftNameForDay();
 
-    return Container(
-      margin: const EdgeInsets.all(1),
-      decoration: decoration,
-      child: Stack(
-        children: <Widget>[
-          // Число дня в левом верхнем углу
-          Positioned(
-            top: _isToday ? 1 : 4,
-            left: _isToday ? 5 : 8,
-            child: Text(
-              _day.toString(),
-              style: TextStyle(
-                color: _getTextColorForBackground(_dayColor),
-                fontWeight: _isToday ? FontWeight.bold : FontWeight.normal,
-                fontSize: _fontSize, // Чуть меньше размер для числа
-                shadows:
-                    _needsTextShadow(_dayColor)
-                        ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: .5), blurRadius: 2)]
-                        : null,
-              ),
-            ),
-          ),
-          // Название смены в центре (если включено)
-          if (_showShiftNames && shiftName.isNotEmpty)
-            Center(
+    return GestureDetector(
+      onTap: _onTap, // Добавляем обработчик нажатия
+      child: Container(
+        margin: const EdgeInsets.all(1),
+        decoration: decoration,
+        child: Stack(
+          children: <Widget>[
+            // Число дня в левом верхнем углу
+            Positioned(
+              top: _isToday ? 1 : 4,
+              left: _isToday ? 5 : 8,
               child: Text(
-                shiftName,
-                textAlign: TextAlign.center,
+                _day.toString(),
                 style: TextStyle(
                   color: _getTextColorForBackground(_dayColor),
-                  fontSize: _fontSize * 0.8, // Меньший размер для названия
-                  shadows:
-                      _needsTextShadow(_dayColor)
-                          ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: .5), blurRadius: 1)]
-                          : null,
+                  fontWeight: _isToday ? FontWeight.bold : FontWeight.normal,
+                  fontSize: _fontSize,
+                  shadows: _needsTextShadow(_dayColor)
+                      ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 2)]
+                      : null,
                 ),
               ),
             ),
-        ],
+            // Название смены в центре (если включено)
+            if (_showShiftNames && shiftName.isNotEmpty)
+              Center(
+                child: Text(
+                  shiftName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _getTextColorForBackground(_dayColor),
+                    fontSize: _fontSize * 0.8,
+                    shadows: _needsTextShadow(_dayColor)
+                        ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 1)]
+                        : null,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -371,7 +461,6 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
   final bool _isToday;
   final DateTime _currentDay;
   final ScheduleProvider _scheduleProvider;
-  final List<List<Color>> _comparisonColors;
   final double _fontSize;
   final SettingsProvider _settingsProvider;
 
@@ -387,7 +476,6 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
         _isToday = isToday,
         _currentDay = currentDay,
         _scheduleProvider = scheduleProvider,
-        _comparisonColors = comparisonColors,
         _fontSize = fontSize,
         _settingsProvider = settingsProvider;
 
@@ -450,7 +538,7 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
                   fontWeight: _isToday ? FontWeight.bold : FontWeight.normal,
                   fontSize: _fontSize,
                   shadows: _needsTextShadow(_isToday ? firstColorDark : firstColor)
-                      ? <Shadow>[Shadow(color: Colors.black.withOpacity(.5), blurRadius: 2)]
+                      ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 2)]
                       : null,
                 ),
               ),
