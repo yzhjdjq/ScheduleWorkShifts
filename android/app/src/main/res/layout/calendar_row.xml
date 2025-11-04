@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:orientation="horizontal"
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp"
+    android:paddingTop="0.25dp"
+    android:paddingBottom="0.25dp">
+
+    <!-- Каждая ячейка теперь с внутренними отступами -->
+    <FrameLayout
+        android:id="@+id/day1_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day1_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:id="@+id/day1_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day2_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day2_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/day2_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day3_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day3_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/day3_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day4_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day4_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/day4_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day5_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day5_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/day5_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day6_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day6_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/day6_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day7_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="1dp">
+
+        <ImageView
+            android:id="@+id/day7_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/day7_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </FrameLayout>
+
+</LinearLayout>
