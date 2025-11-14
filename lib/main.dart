@@ -7,7 +7,7 @@ import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/providers/settings_provider.dart';
 import 'package:sws/services/storage_service.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.initialize();
   await SettingsProvider.initialize();
@@ -21,7 +21,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Основной цвет приложения
     const Color primaryColor = Color(0xFF0E879C);
 
     return MultiProvider(
@@ -32,23 +31,16 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'График смен',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: primaryColor,
-            primary: primaryColor,
-          ),
+          colorScheme: ColorScheme.fromSeed(seedColor: primaryColor, primary: primaryColor),
           appBarTheme: AppBarTheme(
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
-            titleTextStyle: const TextStyle(
-              fontWeight: FontWeight.w600,
-              letterSpacing: .3,
-              fontSize: 18,
-            ),
+            titleTextStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: .3, fontSize: 18),
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           useMaterial3: true,
         ),
-        home: const HomePage(), // Стартовая страница - HomePage
+        home: const HomePage(),
       ),
     );
   }

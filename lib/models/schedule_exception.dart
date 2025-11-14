@@ -1,5 +1,3 @@
-
-
 import 'package:sws/models/working_time.dart' show WorkingTime;
 
 class ScheduleException {
@@ -16,18 +14,18 @@ class ScheduleException {
     required this.workShiftId,
     required this.startDate,
     required this.endDate,
-    WorkingTime? workingTime
+    WorkingTime? workingTime,
   });
 
   ScheduleException.copy(ScheduleException other)
-      : this(
-    id: other.id,
-    scheduleId: other.scheduleId,
-    workShiftId: other.workShiftId,
-    startDate: other.startDate,
-    endDate: other.endDate,
-    workingTime: other.workingTime,
-  );
+    : this(
+        id: other.id,
+        scheduleId: other.scheduleId,
+        workShiftId: other.workShiftId,
+        startDate: other.startDate,
+        endDate: other.endDate,
+        workingTime: other.workingTime,
+      );
 
   Map<String, dynamic> toJson() {
     return {

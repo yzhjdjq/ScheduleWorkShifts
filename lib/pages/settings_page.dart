@@ -11,9 +11,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Настройки'),
-      ),
+      appBar: AppBar(title: const Text('Настройки')),
       body: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return ListView(
@@ -41,12 +39,7 @@ class SettingsPage extends StatelessWidget {
                 title: const Text('Настройка графиков'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsSchedulesPage(),
-                    ),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsSchedulesPage()));
                 },
               ),
               const Divider(),
@@ -55,12 +48,7 @@ class SettingsPage extends StatelessWidget {
                 title: const Text('Настройка смен'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsShiftsPage(),
-                    ),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsShiftsPage()));
                 },
               ),
             ],

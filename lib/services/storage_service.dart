@@ -51,6 +51,7 @@ class StorageService {
       return null;
     }
   }
+
   static List<T>? getObjectList<T>(String key, {T Function(Map<String, dynamic>)? fromJson}) {
     try {
       final jsonString = _prefs.getString(key);
@@ -66,8 +67,7 @@ class StorageService {
       }
 
       if (fromJson != null) {
-        return decodedJson.map((item)
-        => fromJson(item as Map<String, dynamic>)).toList();
+        return decodedJson.map((item) => fromJson(item as Map<String, dynamic>)).toList();
       }
 
       if (decodedJson.every((item) => item is T)) {
@@ -75,7 +75,6 @@ class StorageService {
       }
 
       return null;
-
     } catch (e) {
       if (kDebugMode) {
         print('Error when deserializing a list: $e');

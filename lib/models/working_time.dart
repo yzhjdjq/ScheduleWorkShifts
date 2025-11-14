@@ -45,14 +45,8 @@ class WorkingTime {
 
   Map<String, dynamic> toJson() {
     return {
-      'startTime': startTime != null ? {
-        'hour': startTime!.hour,
-        'minute': startTime!.minute,
-      } : null,
-      'endTime': endTime != null ? {
-        'hour': endTime!.hour,
-        'minute': endTime!.minute,
-      } : null,
+      'startTime': startTime != null ? {'hour': startTime!.hour, 'minute': startTime!.minute} : null,
+      'endTime': endTime != null ? {'hour': endTime!.hour, 'minute': endTime!.minute} : null,
       'durationInMinutes': duration?.inMinutes,
     };
   }
@@ -68,10 +62,7 @@ class WorkingTime {
     }
 
     if (json['endTime'] != null) {
-      workingTime.endTime = TimeOfDay(
-        hour: json['endTime']['hour'] as int,
-        minute: json['endTime']['minute'] as int,
-      );
+      workingTime.endTime = TimeOfDay(hour: json['endTime']['hour'] as int, minute: json['endTime']['minute'] as int);
     }
 
     if (json['durationInMinutes'] != null) {

@@ -62,8 +62,7 @@ mixin ScheduleSettingsMixin on BaseSettingsMixin {
       await StorageService.setObject(_scheduleKey, _schedules);
     }
 
-    _schedules = StorageService
-      .getObjectList<Schedule>(_scheduleKey, fromJson: Schedule.fromJson) ?? [];
+    _schedules = StorageService.getObjectList<Schedule>(_scheduleKey, fromJson: Schedule.fromJson) ?? [];
   }
 
   List<Schedule> get schedules => List.unmodifiable(_schedules);
@@ -101,19 +100,14 @@ mixin WorkShiftSettingsMixin on BaseSettingsMixin {
 
   void _ensureMinimumWorkShifts() {
     _workShifts.add(WorkShift.createDefault());
-    _workShifts.add(WorkShift(
-      id: const Uuid().v4(),
-      name: 'Выходной',
-      category: ShiftCategory.dayOff,
-      color: Colors.green,
-    ));
+    _workShifts.add(
+      WorkShift(id: const Uuid().v4(), name: 'Выходной', category: ShiftCategory.dayOff, color: Colors.green),
+    );
   }
 
   Future<void> _loadShiftsSettingsFromStorage() async {
-    if (!StorageService.containsKey(_workShiftsKey)
-      || ( StorageService.getObjectList<WorkShift>(_workShiftsKey,
-        fromJson: WorkShift.fromJson)?.isEmpty ?? true )
-    ) {
+    if (!StorageService.containsKey(_workShiftsKey) ||
+        (StorageService.getObjectList<WorkShift>(_workShiftsKey, fromJson: WorkShift.fromJson)?.isEmpty ?? true)) {
       _ensureMinimumWorkShifts();
       StorageService.setObject(_workShiftsKey, _workShifts);
     }
@@ -131,25 +125,17 @@ mixin WorkShiftSettingsMixin on BaseSettingsMixin {
     final sickLeaveColorValue = StorageService.getInt(_sickLeaveShiftKey);
 
     if (vacationColorValue != null) {
-      _vacationShift = WorkShift.copy(_vacationShift)
-        ..color = Color(vacationColorValue);
+      _vacationShift = WorkShift.copy(_vacationShift)..color = Color(vacationColorValue);
     }
 
     if (sickLeaveColorValue != null) {
-      _sickLeaveShift = WorkShift.copy(_sickLeaveShift)
-        ..color = Color(sickLeaveColorValue);
+      _sickLeaveShift = WorkShift.copy(_sickLeaveShift)..color = Color(sickLeaveColorValue);
     }
   }
 
-  List<WorkShift> get workShifts
-    => List.unmodifiable(_workShifts);
+  List<WorkShift> get workShifts => List.unmodifiable(_workShifts);
 
-  List<WorkShift> get allWorkShifts
-    => List.unmodifiable([
-      ..._workShifts,
-      _vacationShift,
-      _sickLeaveShift,
-    ]);
+  List<WorkShift> get allWorkShifts => List.unmodifiable([..._workShifts, _vacationShift, _sickLeaveShift]);
 
   WorkShift get vacationShift => _vacationShift;
 
@@ -189,14 +175,13 @@ mixin WorkShiftSettingsMixin on BaseSettingsMixin {
   }
 }
 
-class SettingsProvider
-  extends BaseSettingsMixin
-  with ChangeNotifier,
-    ShiftNameLegendSettingsMixin,
-    ShiftNameSettingsMixin,
-    ScheduleSettingsMixin,
-    WorkShiftSettingsMixin
-{
+class SettingsProvider extends BaseSettingsMixin
+    with
+        ChangeNotifier,
+        ShiftNameLegendSettingsMixin,
+        ShiftNameSettingsMixin,
+        ScheduleSettingsMixin,
+        WorkShiftSettingsMixin {
   static SettingsProvider? _instance;
   static SettingsProvider get instance {
     if (_instance == null) {

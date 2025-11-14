@@ -16,8 +16,7 @@ class SettingsShiftsPage extends StatelessWidget {
       context,
       newShift,
       isNewShift: true,
-      onSave: (savedShift)
-        => settings.addWorkShift(savedShift),
+      onSave: (savedShift) => settings.addWorkShift(savedShift),
     );
   }
 
@@ -26,96 +25,87 @@ class SettingsShiftsPage extends StatelessWidget {
     WorkShift editedShift = WorkShift.copy(shift);
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Цвет для ${editedShift.name}'),
-            content: ColorPickerWidget(shift: editedShift, setState: setState),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final savedShift = WorkShift.copy(editedShift);
-                  settings.updateStaticShiftColor(shift.id, savedShift.color);
-                  Navigator.pop(context);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        },
-      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text('Цвет для ${editedShift.name}'),
+                content: ColorPickerWidget(shift: editedShift, setState: setState),
+                actions: <Widget>[
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                  TextButton(
+                    onPressed: () {
+                      final savedShift = WorkShift.copy(editedShift);
+                      settings.updateStaticShiftColor(shift.id, savedShift.color);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Сохранить'),
+                  ),
+                ],
+              );
+            },
+          ),
     );
   }
 
   void _editShiftDialogWidget(
-      BuildContext context,
-      WorkShift shift, {
-        bool isNewShift = false,
-        Function(WorkShift)? onSave,
-      }) {
+    BuildContext context,
+    WorkShift shift, {
+    bool isNewShift = false,
+    Function(WorkShift)? onSave,
+  }) {
     final settings = context.read<SettingsProvider>();
     final textController = TextEditingController(text: shift.name);
     WorkShift editedShift = WorkShift.copy(shift);
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text(isNewShift ? 'Создание смены' : 'Редактировать смену'),
-            content: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    TextField(
-                      controller: textController,
-                      decoration: const InputDecoration(
-                        labelText: 'Название смены',
-                        border: OutlineInputBorder(),
-                      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text(isNewShift ? 'Создание смены' : 'Редактировать смену'),
+                content: SingleChildScrollView(
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        TextField(
+                          controller: textController,
+                          decoration: const InputDecoration(labelText: 'Название смены', border: OutlineInputBorder()),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildCategoryRadioButtons(editedShift, setState),
+                        const SizedBox(height: 20),
+
+                        ColorPickerWidget(shift: editedShift, setState: setState),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-
-                    _buildCategoryRadioButtons(editedShift, setState),
-                    const SizedBox(height: 20),
-
-                    ColorPickerWidget(shift: editedShift, setState: setState),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final savedShift = WorkShift.copy(editedShift);
-                  savedShift.name = textController.text.isEmpty
-                    ? 'Новая смена'
-                    : textController.text;
+                actions: <Widget>[
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                  TextButton(
+                    onPressed: () {
+                      final savedShift = WorkShift.copy(editedShift);
+                      savedShift.name = textController.text.isEmpty ? 'Новая смена' : textController.text;
 
-                  if (isNewShift && onSave != null) {
-                    onSave(savedShift);
-                  } else {
-                    settings.updateWorkShift(shift.id, savedShift);
-                  }
+                      if (isNewShift && onSave != null) {
+                        onSave(savedShift);
+                      } else {
+                        settings.updateWorkShift(shift.id, savedShift);
+                      }
 
-                  Navigator.pop(context);
-                },
-                child: Text(isNewShift ? 'Создать' : 'Сохранить'),
-              ),
-            ],
-          );
-        },
-      ),
+                      Navigator.pop(context);
+                    },
+                    child: Text(isNewShift ? 'Создать' : 'Сохранить'),
+                  ),
+                ],
+              );
+            },
+          ),
     );
   }
 
@@ -123,10 +113,7 @@ class SettingsShiftsPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
-          'Категория:',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        const Text('Категория:', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: <Widget>[
@@ -165,23 +152,21 @@ class SettingsShiftsPage extends StatelessWidget {
   void _deleteShiftBtnHandler(BuildContext context, WorkShift shift) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Удалить смену?'),
-        content: Text('Вы уверены, что хотите удалить "${shift.name}"?'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Удалить смену?'),
+            content: Text('Вы уверены, что хотите удалить "${shift.name}"?'),
+            actions: <Widget>[
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () {
+                  context.read<SettingsProvider>().removeWorkShift(shift.id);
+                  Navigator.pop(context);
+                },
+                child: const Text('Удалить'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              context.read<SettingsProvider>().removeWorkShift(shift.id);
-              Navigator.pop(context);
-            },
-            child: const Text('Удалить'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -197,17 +182,12 @@ class SettingsShiftsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Настройка смен'),
-      ),
+      appBar: AppBar(title: const Text('Настройка смен')),
       body: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           if (settings.workShifts.isEmpty) {
             return const Center(
-              child: Text(
-                'Нажмите + чтобы добавить первую смену',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
+              child: Text('Нажмите + чтобы добавить первую смену', style: TextStyle(fontSize: 16, color: Colors.grey)),
             );
           }
 
@@ -229,24 +209,23 @@ class SettingsShiftsPage extends StatelessWidget {
                     ),
                   ),
                   title: Text(shift.name),
-                  subtitle: shift.isStatic() ? null : Text(
-                    shift.category == ShiftCategory.workingDay
-                        ? 'Рабочий день'
-                        : 'Выходной',
-                    style: TextStyle(
-                      color: shift.category == ShiftCategory.workingDay
-                          ? Colors.green
-                          : Colors.orange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  subtitle:
+                      shift.isStatic()
+                          ? null
+                          : Text(
+                            shift.category == ShiftCategory.workingDay ? 'Рабочий день' : 'Выходной',
+                            style: TextStyle(
+                              color: shift.category == ShiftCategory.workingDay ? Colors.green : Colors.orange,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                   onTap: () => _editExistingShiftBtnHandler(context, shift),
                   onLongPress:
-                    shift.isStatic()
-                      ? null
-                      : settings.workShifts.length <=2
-                        ? null
-                        : () => _deleteShiftBtnHandler(context, shift),
+                      shift.isStatic()
+                          ? null
+                          : settings.workShifts.length <= 2
+                          ? null
+                          : () => _deleteShiftBtnHandler(context, shift),
                 ),
               );
             },

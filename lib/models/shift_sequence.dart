@@ -19,14 +19,14 @@ class ShiftSequence {
 
   ShiftSequence.copy(ShiftSequence other)
     : this(
-      id: other.id,
-      scheduleId: other.scheduleId,
-      workShiftId: other.workShiftId,
-      consecutiveDays: other.consecutiveDays,
-      orderIndex: other.orderIndex,
-      startDate: other.startDate,
-      endDate: other.endDate,
-    );
+        id: other.id,
+        scheduleId: other.scheduleId,
+        workShiftId: other.workShiftId,
+        consecutiveDays: other.consecutiveDays,
+        orderIndex: other.orderIndex,
+        startDate: other.startDate,
+        endDate: other.endDate,
+      );
 
   Map<String, dynamic> toJson() {
     return {

@@ -18,10 +18,10 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
   void initState() {
     super.initState();
     _workingTime =
-    WorkingTime()
-      ..startTime = widget.workingTime.startTime
-      ..endTime = widget.workingTime.endTime
-      ..duration = widget.workingTime.duration;
+        WorkingTime()
+          ..startTime = widget.workingTime.startTime
+          ..endTime = widget.workingTime.endTime
+          ..duration = widget.workingTime.duration;
   }
 
   Future<void> _selectStartTime() async {

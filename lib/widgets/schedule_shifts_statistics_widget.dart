@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 class ScheduleShiftsStatistics extends StatelessWidget {
   final DateTime _currentDate;
 
-  const ScheduleShiftsStatistics({
-    super.key,
-    required DateTime currentDate,
-  })
-    : _currentDate = currentDate;
+  const ScheduleShiftsStatistics({super.key, required DateTime currentDate}) : _currentDate = currentDate;
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +36,7 @@ class ScheduleShiftsStatistics extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text("Рабочие дни", style: TextStyle(color: Colors.black, fontSize: 12)),
-                Text(
-                  (daysInMonth - 8).toString(),
-                  style: const TextStyle(color: Colors.black, fontSize: 12),
-                ),
+                Text((daysInMonth - 8).toString(), style: const TextStyle(color: Colors.black, fontSize: 12)),
               ],
             ),
           ],

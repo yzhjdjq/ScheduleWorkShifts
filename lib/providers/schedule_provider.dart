@@ -169,10 +169,9 @@ mixin ScheduleExceptionMixin on BaseScheduleMixin {
       await StorageService.setObject(_scheduleExceptionsKey, _scheduleExceptions);
     }
 
-    _scheduleExceptions = StorageService.getObjectList<ScheduleException>(
-        _scheduleExceptionsKey,
-        fromJson: ScheduleException.fromJson
-    ) ?? [];
+    _scheduleExceptions =
+        StorageService.getObjectList<ScheduleException>(_scheduleExceptionsKey, fromJson: ScheduleException.fromJson) ??
+        [];
   }
 
   List<ScheduleException> get scheduleExceptions => List.unmodifiable(_scheduleExceptions);
@@ -192,26 +191,25 @@ mixin ScheduleExceptionMixin on BaseScheduleMixin {
   // Получить исключения для определенного дня
   ScheduleException? getExceptionForDate(DateTime date, String scheduleId) {
     return _scheduleExceptions.firstWhere(
-          (exception) =>
-      exception.scheduleId == scheduleId &&
-          !date.isBefore(exception.startDate) &&
-          !date.isAfter(exception.endDate),
-      orElse: () => ScheduleException(
-        id: '',
-        scheduleId: '',
-        workShiftId: '',
-        startDate: DateTime.now(),
-        endDate: DateTime.now(),
-      ),
+      (exception) =>
+          exception.scheduleId == scheduleId && !date.isBefore(exception.startDate) && !date.isAfter(exception.endDate),
+      orElse:
+          () => ScheduleException(
+            id: '',
+            scheduleId: '',
+            workShiftId: '',
+            startDate: DateTime.now(),
+            endDate: DateTime.now(),
+          ),
     );
   }
 
   // Проверить, есть ли исключения для даты
   bool hasExceptionForDate(DateTime date, String scheduleId) {
-    return _scheduleExceptions.any((exception) =>
-    exception.scheduleId == scheduleId &&
-        !date.isBefore(exception.startDate) &&
-        !date.isAfter(exception.endDate));
+    return _scheduleExceptions.any(
+      (exception) =>
+          exception.scheduleId == scheduleId && !date.isBefore(exception.startDate) && !date.isAfter(exception.endDate),
+    );
   }
 
   List<ScheduleException> getExceptionsForSchedule(String scheduleId) {
@@ -219,12 +217,7 @@ mixin ScheduleExceptionMixin on BaseScheduleMixin {
   }
 }
 
-
-class ScheduleProvider
-  extends BaseScheduleMixin
-    with ChangeNotifier,
-      ScheduleSequenceMixin,
-      ScheduleExceptionMixin {
+class ScheduleProvider extends BaseScheduleMixin with ChangeNotifier, ScheduleSequenceMixin, ScheduleExceptionMixin {
   static ScheduleProvider? _instance;
   static ScheduleProvider get instance {
     if (_instance == null) {
@@ -310,17 +303,35 @@ class ScheduleProvider
     final firstOffset = getDayOffsetForSchedule(_comparedScheduleIds[0], date);
     final secondOffset = getDayOffsetForSchedule(_comparedScheduleIds[1], date);
 
-    Color firstColor = _getColorWithExceptions(date, _comparedScheduleIds[0], firstColors, firstOffset, settingsProvider);
-    Color secondColor = _getColorWithExceptions(date, _comparedScheduleIds[1], secondColors, secondOffset, settingsProvider);
+    Color firstColor = _getColorWithExceptions(
+      date,
+      _comparedScheduleIds[0],
+      firstColors,
+      firstOffset,
+      settingsProvider,
+    );
+    Color secondColor = _getColorWithExceptions(
+      date,
+      _comparedScheduleIds[1],
+      secondColors,
+      secondOffset,
+      settingsProvider,
+    );
 
     return [firstColor, secondColor];
   }
 
-  Color _getColorWithExceptions(DateTime date, String scheduleId, List<Color> periodicColors, int dayOffset, SettingsProvider settingsProvider) {
+  Color _getColorWithExceptions(
+    DateTime date,
+    String scheduleId,
+    List<Color> periodicColors,
+    int dayOffset,
+    SettingsProvider settingsProvider,
+  ) {
     if (hasExceptionForDate(date, scheduleId)) {
       final exception = getExceptionForDate(date, scheduleId);
       final workShift = settingsProvider.allWorkShifts.firstWhere(
-            (shift) => shift.id == exception!.workShiftId,
+        (shift) => shift.id == exception!.workShiftId,
         orElse: () => WorkShift.createDefault(),
       );
       return workShift.color;

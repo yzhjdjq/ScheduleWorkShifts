@@ -8,8 +8,8 @@ class WorkingTimeWidget extends StatelessWidget {
   final Function(WorkingTime) _onTimeChanged;
 
   const WorkingTimeWidget({super.key, required WorkingTime workingTime, required Function(WorkingTime) onTimeChanged})
-      : _workingTime = workingTime,
-        _onTimeChanged = onTimeChanged;
+    : _workingTime = workingTime,
+      _onTimeChanged = onTimeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -80,36 +80,36 @@ class WorkingTimeWidget extends StatelessWidget {
   /// Диалог для настройки рабочего времени
   void _showWorkingTimeDialog(BuildContext context) {
     WorkingTime tempWorkingTime =
-    WorkingTime()
-      ..startTime = _workingTime.startTime
-      ..endTime = _workingTime.endTime
-      ..duration = _workingTime.duration;
+        WorkingTime()
+          ..startTime = _workingTime.startTime
+          ..endTime = _workingTime.endTime
+          ..duration = _workingTime.duration;
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-        title: const Text('Настройка рабочего времени'),
-        content: WorkingTimeEditWidget(
-          workingTime: tempWorkingTime,
-          onTimeChanged: (updatedTime) {
-            tempWorkingTime = updatedTime;
-          },
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
-          TextButton(
-            onPressed: () {
-              _workingTime.startTime = tempWorkingTime.startTime;
-              _workingTime.endTime = tempWorkingTime.endTime;
-              _workingTime.calculateDuration();
-              _onTimeChanged(_workingTime);
-              Navigator.pop(context);
-            },
-            child: const Text('Сохранить'),
+            title: const Text('Настройка рабочего времени'),
+            content: WorkingTimeEditWidget(
+              workingTime: tempWorkingTime,
+              onTimeChanged: (updatedTime) {
+                tempWorkingTime = updatedTime;
+              },
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () {
+                  _workingTime.startTime = tempWorkingTime.startTime;
+                  _workingTime.endTime = tempWorkingTime.endTime;
+                  _workingTime.calculateDuration();
+                  _onTimeChanged(_workingTime);
+                  Navigator.pop(context);
+                },
+                child: const Text('Сохранить'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 

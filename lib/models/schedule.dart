@@ -6,20 +6,10 @@ class Schedule {
   DateTime startDate;
   bool isActive;
 
-  Schedule({
-    required this.id,
-    required this.name,
-    required this.startDate,
-    this.isActive = false,
-  });
+  Schedule({required this.id, required this.name, required this.startDate, this.isActive = false});
 
   Schedule.copy(Schedule other)
-      : this(
-    id: other.id,
-    name: other.name,
-    startDate: other.startDate,
-    isActive: other.isActive,
-  );
+    : this(id: other.id, name: other.name, startDate: other.startDate, isActive: other.isActive);
 
   static Schedule createDefault() {
     return Schedule(
@@ -31,20 +21,15 @@ class Schedule {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'startDate': startDate.toIso8601String(),
-      'isActive': isActive,
-    };
+    return {'id': id, 'name': name, 'startDate': startDate.toIso8601String(), 'isActive': isActive};
   }
 
   static Schedule fromJson(Map<String, dynamic> json) {
     return Schedule(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        startDate: DateTime.parse((json['startDate'] as String)),
-        isActive: json['isActive'] as bool,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      startDate: DateTime.parse((json['startDate'] as String)),
+      isActive: json['isActive'] as bool,
     );
   }
 }

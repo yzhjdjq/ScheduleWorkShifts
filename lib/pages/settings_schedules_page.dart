@@ -12,84 +12,75 @@ class SettingsSchedulesPage extends StatelessWidget {
     final newSchedule = Schedule.createDefault();
 
     _editScheduleBtnHandler(
-        context,
-        newSchedule,
-        isNewSchedule: true,
-        onSave: (savedSchedule)
-          => settings.addSchedule(savedSchedule),
+      context,
+      newSchedule,
+      isNewSchedule: true,
+      onSave: (savedSchedule) => settings.addSchedule(savedSchedule),
     );
   }
 
   void _editScheduleBtnHandler(
-      BuildContext context,
-      Schedule schedule, {
-        bool isNewSchedule = false,
-        void Function(Schedule)? onSave,
-      }) {
+    BuildContext context,
+    Schedule schedule, {
+    bool isNewSchedule = false,
+    void Function(Schedule)? onSave,
+  }) {
     final settings = context.read<SettingsProvider>();
     final textController = TextEditingController(text: schedule.name);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Переименовать график'),
-        content: TextField(controller: textController),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () {
-              final savedSchedule = Schedule.copy(schedule);
-              savedSchedule.name = textController.text.isEmpty
-                ? 'График'
-                : textController.text;
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Переименовать график'),
+            content: TextField(controller: textController),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () {
+                  final savedSchedule = Schedule.copy(schedule);
+                  savedSchedule.name = textController.text.isEmpty ? 'График' : textController.text;
 
-              if ( isNewSchedule && onSave != null ) {
-                onSave(savedSchedule);
-              } else {
-                settings.updateSchedule(schedule.id, savedSchedule);
-              }
+                  if (isNewSchedule && onSave != null) {
+                    onSave(savedSchedule);
+                  } else {
+                    settings.updateSchedule(schedule.id, savedSchedule);
+                  }
 
-              Navigator.pop(context);
-            },
-            child: Text(isNewSchedule ? 'Создать' : 'Сохранить'),
+                  Navigator.pop(context);
+                },
+                child: Text(isNewSchedule ? 'Создать' : 'Сохранить'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _deleteScheduleBtnHandler(BuildContext context, Schedule schedule) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Удалить график?'),
-        content: Text('Вы уверены, что хотите удалить "${schedule.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Удалить график?'),
+            content: Text('Вы уверены, что хотите удалить "${schedule.name}"?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () {
+                  context.read<SettingsProvider>().removeSchedule(schedule.id);
+                  Navigator.pop(context);
+                },
+                child: const Text('Удалить'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              context.read<SettingsProvider>().removeSchedule(schedule.id);
-              Navigator.pop(context);
-            },
-            child: const Text('Удалить'),
-          ),
-        ],
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Настройка графиков'),
-      ),
+      appBar: AppBar(title: const Text('Настройка графиков')),
       body: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return ListView.builder(
