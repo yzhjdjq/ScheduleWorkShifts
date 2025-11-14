@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:uuid/uuid.dart' show Uuid;
+
+import 'working_time_edit_widget.dart' show WorkingTimeEditWidget;
 import 'package:sws/models/schedule_exception.dart';
 import 'package:sws/models/work_shift.dart';
-import 'package:sws/pages/create_schedule_page.dart';
+import 'package:sws/models/working_time.dart' show WorkingTime;
 import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/providers/settings_provider.dart';
-import 'package:uuid/uuid.dart' show Uuid;
 
 class CalendarWidget extends StatelessWidget {
   final DateTime _currentDate;
@@ -108,7 +110,13 @@ class CalendarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCalendarCell(BuildContext context, int row, int col, double cellHeight, ScheduleProvider scheduleProvider) {
+  Widget _buildCalendarCell(
+    BuildContext context,
+    int row,
+    int col,
+    double cellHeight,
+    ScheduleProvider scheduleProvider,
+  ) {
     const int dayInWeek = 7;
     final cellIndex = row * dayInWeek + col;
 
@@ -132,9 +140,10 @@ class CalendarWidget extends StatelessWidget {
         );
       } else {
         // Обычный режим - получаем цвет с учетом исключений
-        final dayOffset = _selectedScheduleId != null
-            ? _scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, currentDay)
-            : _scheduleProvider.getDayOffsetForActiveSchedule(currentDay);
+        final dayOffset =
+            _selectedScheduleId != null
+                ? _scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, currentDay)
+                : _scheduleProvider.getDayOffsetForActiveSchedule(currentDay);
 
         Color dayColor = _getColorWithExceptions(currentDay, dayOffset, scheduleProvider);
         Color dayCurrentColor = _getDarkenedColor(dayColor);
@@ -158,17 +167,17 @@ class CalendarWidget extends StatelessWidget {
   }
 
   void _showExceptionDetailsDialog(
-      BuildContext context,
-      DateTime day,
-      ScheduleProvider scheduleProvider,
-      SettingsProvider settingsProvider,
-      String scheduleId
-      ) {
+    BuildContext context,
+    DateTime day,
+    ScheduleProvider scheduleProvider,
+    SettingsProvider settingsProvider,
+    String scheduleId,
+  ) {
     final exception = scheduleProvider.getExceptionForDate(day, scheduleId);
     if (exception == null) return;
 
     final workShift = settingsProvider.allWorkShifts.firstWhere(
-          (shift) => shift.id == exception.workShiftId,
+      (shift) => shift.id == exception.workShiftId,
       orElse: () => WorkShift.createDefault(),
     );
 
@@ -176,117 +185,106 @@ class CalendarWidget extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          dateFormat.format(day),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Align(
-              alignment: Alignment.center,
-              child: Text(
-                workShift.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              dateFormat.format(day),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-
-            // Период (только для отпуска/больничного с периодом)
-            if (exception.startDate != exception.endDate)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Период:',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${exception.startDate.day}.${exception.startDate.month}.${exception.startDate.year} - '
-                        '${exception.endDate.day}.${exception.endDate.month}.${exception.endDate.year}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-
-            // Рабочее время (только для индивидуальных настроек дней)
-            if (exception.startDate == exception.endDate && exception.workingTime?.startTime != null && exception.workingTime?.endTime != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Рабочее время:',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    exception.workingTime?.getDisplayText(context) ?? '',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Продолжительность: ${exception.workingTime?.durationText}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-          ],
-        ),
-        actions: [
-          Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Для индивидуальных настроек дней показываем кнопку "Изменить"
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(workShift.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                ),
+                const SizedBox(height: 16),
+
+                // Период (только для отпуска/больничного с периодом)
+                if (exception.startDate != exception.endDate)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Период:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${exception.startDate.day}.${exception.startDate.month}.${exception.startDate.year} - '
+                        '${exception.endDate.day}.${exception.endDate.month}.${exception.endDate.year}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+
+                // Рабочее время (только для индивидуальных настроек дней)
                 if (exception.startDate == exception.endDate &&
-                    exception.workShiftId != 'vacation' &&
-                    exception.workShiftId != 'sickLeave')
+                    exception.workingTime?.startTime != null &&
+                    exception.workingTime?.endTime != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Рабочее время:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 4),
+                      Text(exception.workingTime?.getDisplayText(context) ?? '', style: const TextStyle(fontSize: 14)),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Продолжительность: ${exception.workingTime?.durationText}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            actions: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Для индивидуальных настроек дней показываем кнопку "Изменить"
+                  if (exception.startDate == exception.endDate &&
+                      exception.workShiftId != 'vacation' &&
+                      exception.workShiftId != 'sickLeave')
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showDaySettingsDialog(
+                          context,
+                          day,
+                          scheduleProvider,
+                          settingsProvider,
+                          scheduleId,
+                          existingException: exception,
+                        );
+                      },
+                      child: const Text('Изменить'),
+                    )
+                  else
+                    const SizedBox(), // Для отпуска/больничного не показываем кнопку изменения
+
                   TextButton(
                     onPressed: () {
+                      scheduleProvider.removeScheduleException(exception.id);
                       Navigator.pop(context);
-                      _showDaySettingsDialog(
-                        context,
-                        day,
-                        scheduleProvider,
-                        settingsProvider,
-                        scheduleId,
-                        existingException: exception,
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${workShift.name} удален')));
                     },
-                    child: const Text('Изменить'),
-                  )
-                else
-                  const SizedBox(), // Для отпуска/больничного не показываем кнопку изменения
-
-                TextButton(
-                  onPressed: () {
-                    scheduleProvider.removeScheduleException(exception.id);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${workShift.name} удален'))
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: const Text('Удалить'),
                   ),
-                  child: const Text('Удалить'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Отмена'),
-                ),
-              ]
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                ],
+              ),
+            ],
+            actionsAlignment: MainAxisAlignment.spaceBetween,
           ),
-        ],
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-      ),
     );
   }
 
-  void _onDayTapped(BuildContext context, DateTime day, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
+  void _onDayTapped(
+    BuildContext context,
+    DateTime day,
+    ScheduleProvider scheduleProvider,
+    SettingsProvider settingsProvider,
+  ) {
     final activeScheduleId = _selectedScheduleId ?? scheduleProvider.getActiveScheduleId();
     if (activeScheduleId == null) return;
 
@@ -300,13 +298,13 @@ class CalendarWidget extends StatelessWidget {
   }
 
   void _showDaySettingsDialog(
-      BuildContext context,
-      DateTime day,
-      ScheduleProvider scheduleProvider,
-      SettingsProvider settingsProvider,
-      String scheduleId, {
-        ScheduleException? existingException,
-      }) {
+    BuildContext context,
+    DateTime day,
+    ScheduleProvider scheduleProvider,
+    SettingsProvider settingsProvider,
+    String scheduleId, {
+    ScheduleException? existingException,
+  }) {
     final DateFormat dateFormat = DateFormat('E, d MMMM yyyy', 'ru');
 
     // Определяем текущую смену
@@ -316,7 +314,7 @@ class CalendarWidget extends StatelessWidget {
     // Если редактируем существующее исключение
     if (existingException != null) {
       selectedShift = settingsProvider.allWorkShifts.firstWhere(
-            (shift) => shift.id == existingException.workShiftId,
+        (shift) => shift.id == existingException.workShiftId,
         orElse: () => settingsProvider.workShifts.first,
       );
       workingTime = existingException.workingTime ?? WorkingTime();
@@ -327,122 +325,119 @@ class CalendarWidget extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text(
-              dateFormat.format(day),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Выпадающий список смен (исключаем отпуск и больничный)
-                  DropdownButtonFormField<WorkShift>(
-                    decoration: const InputDecoration(
-                      labelText: 'Смена',
-                      border: OutlineInputBorder(),
-                    ),
-                    value: selectedShift,
-                    items: settingsProvider.workShifts.where((shift) =>
-                    !shift.isStatic() // Исключаем статические смены (отпуск/больничный)
-                    ).map((shift) {
-                      return DropdownMenuItem<WorkShift>(
-                        value: shift,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: shift.color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(shift.name),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (WorkShift? newValue) {
-                      setState(() {
-                        selectedShift = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Настройка рабочего времени
-                  WorkingTimeEditor(
-                    workingTime: workingTime,
-                    onTimeChanged: (updatedTime) {
-                      setState(() {
-                        workingTime = updatedTime;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Отмена'),
-                  ),
-                  if (existingException != null)
-                    TextButton(
-                      onPressed: () {
-                        scheduleProvider.removeScheduleException(existingException.id);
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Настройки для ${day.day}.${day.month}.${day.year} удалены'))
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text(
+                  dateFormat.format(day),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Выпадающий список смен (исключаем отпуск и больничный)
+                      DropdownButtonFormField<WorkShift>(
+                        decoration: const InputDecoration(labelText: 'Смена', border: OutlineInputBorder()),
+                        value: selectedShift,
+                        items:
+                            settingsProvider.workShifts
+                                .where(
+                                  (shift) => !shift.isStatic(), // Исключаем статические смены (отпуск/больничный)
+                                )
+                                .map((shift) {
+                                  return DropdownMenuItem<WorkShift>(
+                                    value: shift,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(color: shift.color, shape: BoxShape.circle),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(shift.name),
+                                      ],
+                                    ),
+                                  );
+                                })
+                                .toList(),
+                        onChanged: (WorkShift? newValue) {
+                          setState(() {
+                            selectedShift = newValue;
+                          });
+                        },
                       ),
-                      child: const Text('Удалить'),
-                    ),
-                  TextButton(
-                    onPressed: selectedShift != null ? () {
-                      _saveDaySettings(
-                        context,
-                        day,
-                        scheduleId,
-                        selectedShift!,
-                        workingTime,
-                        scheduleProvider,
-                        existingException: existingException,
-                      );
-                      Navigator.pop(context);
-                    } : null,
-                    child: Text(existingException != null ? 'Сохранить' : 'Добавить'),
+                      const SizedBox(height: 16),
+
+                      // Настройка рабочего времени
+                      WorkingTimeEditWidget(
+                        workingTime: workingTime,
+                        onTimeChanged: (updatedTime) {
+                          setState(() {
+                            workingTime = updatedTime;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                      if (existingException != null)
+                        TextButton(
+                          onPressed: () {
+                            scheduleProvider.removeScheduleException(existingException.id);
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Настройки для ${day.day}.${day.month}.${day.year} удалены')),
+                            );
+                          },
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('Удалить'),
+                        ),
+                      TextButton(
+                        onPressed:
+                            selectedShift != null
+                                ? () {
+                                  _saveDaySettings(
+                                    context,
+                                    day,
+                                    scheduleId,
+                                    selectedShift!,
+                                    workingTime,
+                                    scheduleProvider,
+                                    existingException: existingException,
+                                  );
+                                  Navigator.pop(context);
+                                }
+                                : null,
+                        child: Text(existingException != null ? 'Сохранить' : 'Добавить'),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          );
-        },
-      ),
+              );
+            },
+          ),
     );
   }
 
   void _saveDaySettings(
-      BuildContext context,
-      DateTime day,
-      String scheduleId,
-      WorkShift selectedShift,
-      WorkingTime workingTime,
-      ScheduleProvider scheduleProvider, {
-        ScheduleException? existingException,
-      }) {
+    BuildContext context,
+    DateTime day,
+    String scheduleId,
+    WorkShift selectedShift,
+    WorkingTime workingTime,
+    ScheduleProvider scheduleProvider, {
+    ScheduleException? existingException,
+  }) {
     final exception = ScheduleException(
       id: existingException?.id ?? const Uuid().v4(),
       scheduleId: scheduleId,
@@ -460,16 +455,16 @@ class CalendarWidget extends StatelessWidget {
     scheduleProvider.addScheduleException(exception);
 
     ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Настройки для ${day.day}.${day.month}.${day.year} ${existingException != null ? 'обновлены' : 'сохранены'}'))
+      SnackBar(
+        content: Text(
+          'Настройки для ${day.day}.${day.month}.${day.year} ${existingException != null ? 'обновлены' : 'сохранены'}',
+        ),
+      ),
     );
   }
 
-// Вспомогательный метод для получения текущей смены дня
-  WorkShift _getCurrentShiftForDay(
-      DateTime day,
-      ScheduleProvider scheduleProvider,
-      SettingsProvider settingsProvider
-      ) {
+  // Вспомогательный метод для получения текущей смены дня
+  WorkShift _getCurrentShiftForDay(DateTime day, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
     final activeScheduleId = scheduleProvider.getActiveScheduleId();
     if (activeScheduleId == null) return settingsProvider.workShifts.first;
 
@@ -481,9 +476,7 @@ class CalendarWidget extends StatelessWidget {
     if (dayOffset < 0) return settingsProvider.workShifts.first;
 
     final cyclePosition = dayOffset % totalCycleDays;
-    final sequences = scheduleProvider.shiftSequences
-        .where((seq) => seq.scheduleId == activeScheduleId)
-        .toList();
+    final sequences = scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == activeScheduleId).toList();
 
     if (sequences.isEmpty) return settingsProvider.workShifts.first;
 
@@ -493,7 +486,7 @@ class CalendarWidget extends StatelessWidget {
     for (final sequence in sequences) {
       if (cyclePosition < currentDay + sequence.consecutiveDays) {
         return settingsProvider.allWorkShifts.firstWhere(
-              (shift) => shift.id == sequence.workShiftId,
+          (shift) => shift.id == sequence.workShiftId,
           orElse: () => settingsProvider.workShifts.first,
         );
       }
@@ -522,7 +515,7 @@ class CalendarWidget extends StatelessWidget {
     if (scheduleProvider.hasExceptionForDate(date, scheduleId)) {
       final exception = scheduleProvider.getExceptionForDate(date, scheduleId);
       final workShift = _settingsProvider.allWorkShifts.firstWhere(
-            (shift) => shift.id == exception!.workShiftId,
+        (shift) => shift.id == exception!.workShiftId,
         orElse: () => WorkShift.createDefault(),
       );
       return workShift.color;
@@ -574,15 +567,15 @@ class _CalendarCellWidget extends StatelessWidget {
     required SettingsProvider settingsProvider,
     required VoidCallback onTap, // Добавляем параметр
   }) : _day = day,
-        _isToday = isToday,
-        _dayColor = dayColor,
-        _dayCurrentColor = dayCurrentColor,
-        _fontSize = fontSize,
-        _showShiftNames = showShiftNames,
-        _currentDay = currentDay,
-        _scheduleProvider = scheduleProvider,
-        _settingsProvider = settingsProvider,
-        _onTap = onTap;
+       _isToday = isToday,
+       _dayColor = dayColor,
+       _dayCurrentColor = dayCurrentColor,
+       _fontSize = fontSize,
+       _showShiftNames = showShiftNames,
+       _currentDay = currentDay,
+       _scheduleProvider = scheduleProvider,
+       _settingsProvider = settingsProvider,
+       _onTap = onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -620,9 +613,10 @@ class _CalendarCellWidget extends StatelessWidget {
                   color: _getTextColorForBackground(_dayColor),
                   fontWeight: _isToday ? FontWeight.bold : FontWeight.normal,
                   fontSize: _fontSize,
-                  shadows: _needsTextShadow(_dayColor)
-                      ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 2)]
-                      : null,
+                  shadows:
+                      _needsTextShadow(_dayColor)
+                          ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 2)]
+                          : null,
                 ),
               ),
             ),
@@ -635,9 +629,10 @@ class _CalendarCellWidget extends StatelessWidget {
                   style: TextStyle(
                     color: _getTextColorForBackground(_dayColor),
                     fontSize: _fontSize * 0.8,
-                    shadows: _needsTextShadow(_dayColor)
-                        ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 1)]
-                        : null,
+                    shadows:
+                        _needsTextShadow(_dayColor)
+                            ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 1)]
+                            : null,
                   ),
                 ),
               ),
@@ -656,7 +651,7 @@ class _CalendarCellWidget extends StatelessWidget {
     if (_scheduleProvider.hasExceptionForDate(_currentDay, activeScheduleId)) {
       final exception = _scheduleProvider.getExceptionForDate(_currentDay, activeScheduleId);
       final workShift = _settingsProvider.allWorkShifts.firstWhere(
-            (shift) => shift.id == exception!.workShiftId,
+        (shift) => shift.id == exception!.workShiftId,
         orElse: () => WorkShift.createDefault(),
       );
       return workShift.name; // Показываем название отпуска/больничного
@@ -680,7 +675,7 @@ class _CalendarCellWidget extends StatelessWidget {
     for (final sequence in sequences) {
       if (cyclePosition < currentDay + sequence.consecutiveDays) {
         final workShift = _settingsProvider.allWorkShifts.firstWhere(
-              (shift) => shift.id == sequence.workShiftId,
+          (shift) => shift.id == sequence.workShiftId,
           orElse: () => WorkShift.createDefault(),
         );
         return workShift.name;
@@ -731,18 +726,18 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
     required double fontSize,
     required SettingsProvider settingsProvider,
   }) : _day = day,
-        _isToday = isToday,
-        _currentDay = currentDay,
-        _scheduleProvider = scheduleProvider,
-        _fontSize = fontSize,
-        _settingsProvider = settingsProvider;
+       _isToday = isToday,
+       _currentDay = currentDay,
+       _scheduleProvider = scheduleProvider,
+       _fontSize = fontSize,
+       _settingsProvider = settingsProvider;
 
   @override
   Widget build(BuildContext context) {
     final colors = _scheduleProvider.getComparisonColorsForDate(
-        _currentDay,
-        _settingsProvider.workShifts,
-        _settingsProvider
+      _currentDay,
+      _settingsProvider.workShifts,
+      _settingsProvider,
     );
 
     Color firstColor = colors[0];
@@ -759,7 +754,7 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
     if (_isToday) {
       decoration = decoration.copyWith(
         border: Border.all(color: Colors.black, width: 3),
-        boxShadow: [BoxShadow(color: Colors.black.withValues( alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))],
       );
     }
 
@@ -771,17 +766,10 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
         child: Stack(
           children: [
             // Диагональное разделение ячейки
-            ClipPath(
-              clipper: DiagonalClipper(),
-              child: Container(
-                color: _isToday ? firstColorDark : firstColor,
-              ),
-            ),
+            ClipPath(clipper: DiagonalClipper(), child: Container(color: _isToday ? firstColorDark : firstColor)),
             ClipPath(
               clipper: DiagonalClipper(reverse: true),
-              child: Container(
-                color: _isToday ? secondColorDark : secondColor,
-              ),
+              child: Container(color: _isToday ? secondColorDark : secondColor),
             ),
             // Диагональная разделительная линия
             CustomPaint(painter: DiagonalLinePainter(), size: Size.infinite),
@@ -795,9 +783,10 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
                   color: _getTextColorForComparison(_isToday ? firstColorDark : firstColor),
                   fontWeight: _isToday ? FontWeight.bold : FontWeight.normal,
                   fontSize: _fontSize,
-                  shadows: _needsTextShadow(_isToday ? firstColorDark : firstColor)
-                      ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 2)]
-                      : null,
+                  shadows:
+                      _needsTextShadow(_isToday ? firstColorDark : firstColor)
+                          ? <Shadow>[Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 2)]
+                          : null,
                 ),
               ),
             ),

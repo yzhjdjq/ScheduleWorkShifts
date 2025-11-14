@@ -1,4 +1,6 @@
-import '../pages/create_schedule_page.dart';
+
+
+import 'package:sws/models/working_time.dart' show WorkingTime;
 
 class ScheduleException {
   String id;
@@ -6,7 +8,7 @@ class ScheduleException {
   String workShiftId;
   DateTime startDate;
   DateTime endDate;
-  WorkingTime? workingTime; // Добавляем поле рабочего времени
+  WorkingTime? workingTime;
 
   ScheduleException({
     required this.id,
@@ -34,7 +36,7 @@ class ScheduleException {
       'workShiftId': workShiftId,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
-      'workingTime': workingTime?.toJson(), // Сериализуем WorkingTime
+      'workingTime': workingTime?.toJson(),
     };
   }
 
@@ -45,7 +47,7 @@ class ScheduleException {
       workShiftId: json['workShiftId'] as String,
       startDate: DateTime.parse((json['startDate'] as String)),
       endDate: DateTime.parse((json['endDate'] as String)),
-      workingTime: WorkingTime.fromJson(json['workingTime'] ?? {}), // Десериализуем WorkingTime
+      workingTime: WorkingTime.fromJson(json['workingTime'] ?? {}),
     );
   }
 }

@@ -4,7 +4,7 @@ import 'package:sws/models/work_shift.dart';
 import 'package:sws/models/schedule.dart';
 
 import 'package:sws/widgets/calendar_widget.dart';
-import 'package:sws/widgets/schedule_shifts_statistics.dart';
+import 'package:sws/widgets/schedule_shifts_statistics_widget.dart';
 import 'package:sws/providers/settings_provider.dart';
 import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/pages/about_page.dart';

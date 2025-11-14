@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart' show Uuid;
+
 import 'package:sws/models/schedule.dart';
 import 'package:sws/models/work_shift.dart';
+import 'package:sws/models/working_time.dart' show WorkingTime;
 import 'package:sws/providers/settings_provider.dart';
 import 'package:sws/providers/schedule_provider.dart';
 import 'package:sws/models/shift_sequence.dart';
-import 'package:uuid/uuid.dart' show Uuid;
+import 'package:sws/widgets/working_time_widget.dart';
 
 class CreateSchedulePage extends StatefulWidget {
   const CreateSchedulePage({super.key});
@@ -17,7 +20,7 @@ class CreateSchedulePage extends StatefulWidget {
 class _CreateSchedulePageState extends State<CreateSchedulePage> {
   Schedule? _selectedSchedule;
   DateTime? _firstWorkingDay;
-  final List<ShiftRow> _shiftRows = [];
+  final List<_ShiftRow> _shiftRows = [];
 
   @override
   void initState() {
@@ -65,7 +68,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
       // Заполняем строки сохраненными данными
       for (final sequence in sequences) {
-        final row = ShiftRow();
+        final row = _ShiftRow();
 
         // Находим соответствующую смену
         final workShift = settings.workShifts.firstWhere(
@@ -89,7 +92,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
       // Добавляем две строки по умолчанию
       for (int i = 0; i < 2; i++) {
-        final row = ShiftRow();
+        final row = _ShiftRow();
 
         if (settings.workShifts.length > i) {
           row.selectedShift = settings.workShifts[i];
@@ -107,7 +110,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
   void _addShiftRow() {
     setState(() {
       _shiftRows.add(
-        ShiftRow()
+        _ShiftRow()
           ..daysCount = '1'
           ..daysController.text = '1',
       );
@@ -365,7 +368,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     );
   }
 
-  Widget _buildShiftCell(ShiftRow row, SettingsProvider settings) {
+  Widget _buildShiftCell(_ShiftRow row, SettingsProvider settings) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
       child: DropdownButton<WorkShift>(
@@ -400,7 +403,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     );
   }
 
-  Widget _buildDaysCell(ShiftRow row, int index) {
+  Widget _buildDaysCell(_ShiftRow row, int index) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
       child: TextField(
@@ -433,10 +436,10 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     );
   }
 
-  Widget _buildTimeCell(ShiftRow row) {
+  Widget _buildTimeCell(_ShiftRow row) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-      child: WorkingTimeCell(
+      child: WorkingTimeWidget(
         workingTime: row.workingTime,
         onTimeChanged: (newTime) {
           setState(() {
@@ -463,330 +466,15 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
   }
 }
 
-class ShiftRow {
+class _ShiftRow {
   WorkShift? selectedShift;
   String daysCount = '1';
   final TextEditingController daysController = TextEditingController(text: '1');
   WorkingTime workingTime = WorkingTime();
 
-  ShiftRow() {
+  _ShiftRow() {
     daysController.addListener(() {
       daysCount = daysController.text;
     });
-  }
-}
-
-class WorkingTime {
-  TimeOfDay? startTime;
-  TimeOfDay? endTime;
-  Duration? duration;
-
-  WorkingTime();
-
-  String getDisplayText(BuildContext context) {
-    if (startTime != null && endTime != null) {
-      return '${_formatTimeOfDay(startTime!, context)} - ${_formatTimeOfDay(endTime!, context)}';
-    }
-    return 'Выберите время';
-  }
-
-  // Форматирование TimeOfDay в строку
-  String _formatTimeOfDay(TimeOfDay time, BuildContext context) {
-    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
-  }
-
-  // Вычисление продолжительности
-  void calculateDuration() {
-    if (startTime != null && endTime != null) {
-      final startMinutes = startTime!.hour * 60 + startTime!.minute;
-      final endMinutes = endTime!.hour * 60 + endTime!.minute;
-
-      int totalMinutes;
-      if (endMinutes >= startMinutes) {
-        totalMinutes = endMinutes - startMinutes;
-      } else {
-        totalMinutes = (24 * 60 - startMinutes) + endMinutes;
-      }
-
-      duration = Duration(minutes: totalMinutes);
-    }
-  }
-
-  String get durationText {
-    if (duration != null) {
-      final hours = duration!.inHours;
-      final minutes = duration!.inMinutes % 60;
-      return '$hoursч $minutesм';
-    }
-    return '0ч 0м';
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'startTime': startTime != null ? {
-        'hour': startTime!.hour,
-        'minute': startTime!.minute,
-      } : null,
-      'endTime': endTime != null ? {
-        'hour': endTime!.hour,
-        'minute': endTime!.minute,
-      } : null,
-      'durationInMinutes': duration?.inMinutes,
-    };
-  }
-
-  static WorkingTime fromJson(Map<String, dynamic> json) {
-    final workingTime = WorkingTime();
-
-    if (json['startTime'] != null) {
-      workingTime.startTime = TimeOfDay(
-        hour: json['startTime']['hour'] as int,
-        minute: json['startTime']['minute'] as int,
-      );
-    }
-
-    if (json['endTime'] != null) {
-      workingTime.endTime = TimeOfDay(
-        hour: json['endTime']['hour'] as int,
-        minute: json['endTime']['minute'] as int,
-      );
-    }
-
-    if (json['durationInMinutes'] != null) {
-      workingTime.duration = Duration(minutes: json['durationInMinutes'] as int);
-    }
-
-    return workingTime;
-  }
-}
-
-/// Виджет ячейки рабочего времени для таблицы
-class WorkingTimeCell extends StatelessWidget {
-  final WorkingTime _workingTime;
-  final Function(WorkingTime) _onTimeChanged;
-
-  const WorkingTimeCell({super.key, required WorkingTime workingTime, required Function(WorkingTime) onTimeChanged})
-    : _workingTime = workingTime,
-      _onTimeChanged = onTimeChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Компактное отображение выбранного времени
-        _buildTimeSummary(context),
-        const SizedBox(height: 4),
-
-        // Кнопка для открытия диалога редактирования
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () => _showWorkingTimeDialog(context),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-              side: BorderSide(color: Colors.grey.shade400),
-            ),
-            child: const Text('Настроить', style: TextStyle(fontSize: 12)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Отображение сводки выбранного времени
-  Widget _buildTimeSummary(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_workingTime.startTime != null && _workingTime.endTime != null) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Время:', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                Text(
-                  '${_formatTimeOfDay(_workingTime.startTime!, context)} - ${_formatTimeOfDay(_workingTime.endTime!, context)}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Длит:', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                Text(_workingTime.durationText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ] else ...[
-            Text(
-              'Время не настроено',
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Диалог для настройки рабочего времени
-  void _showWorkingTimeDialog(BuildContext context) {
-    WorkingTime tempWorkingTime =
-        WorkingTime()
-          ..startTime = _workingTime.startTime
-          ..endTime = _workingTime.endTime
-          ..duration = _workingTime.duration;
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Настройка рабочего времени'),
-            content: WorkingTimeEditor(
-              workingTime: tempWorkingTime,
-              onTimeChanged: (updatedTime) {
-                tempWorkingTime = updatedTime;
-              },
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
-              TextButton(
-                onPressed: () {
-                  _workingTime.startTime = tempWorkingTime.startTime;
-                  _workingTime.endTime = tempWorkingTime.endTime;
-                  _workingTime.calculateDuration();
-                  _onTimeChanged(_workingTime);
-                  Navigator.pop(context);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  String _formatTimeOfDay(TimeOfDay time, BuildContext context) {
-    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
-  }
-}
-
-/// Виджет редактора рабочего времени для диалога
-class WorkingTimeEditor extends StatefulWidget {
-  final WorkingTime workingTime;
-  final Function(WorkingTime) onTimeChanged;
-
-  const WorkingTimeEditor({super.key, required this.workingTime, required this.onTimeChanged});
-
-  @override
-  State<WorkingTimeEditor> createState() => _WorkingTimeEditorState();
-}
-
-class _WorkingTimeEditorState extends State<WorkingTimeEditor> {
-  late WorkingTime _workingTime;
-
-  @override
-  void initState() {
-    super.initState();
-    _workingTime =
-        WorkingTime()
-          ..startTime = widget.workingTime.startTime
-          ..endTime = widget.workingTime.endTime
-          ..duration = widget.workingTime.duration;
-  }
-
-  Future<void> _selectStartTime() async {
-    final selectedTime = await showTimePicker(context: context, initialTime: _workingTime.startTime ?? TimeOfDay.now());
-
-    if (selectedTime != null) {
-      setState(() {
-        _workingTime.startTime = selectedTime;
-        _workingTime.calculateDuration();
-        widget.onTimeChanged(_workingTime);
-      });
-    }
-  }
-
-  Future<void> _selectEndTime() async {
-    final selectedTime = await showTimePicker(context: context, initialTime: _workingTime.endTime ?? TimeOfDay.now());
-
-    if (selectedTime != null) {
-      setState(() {
-        _workingTime.endTime = selectedTime;
-        _workingTime.calculateDuration();
-        widget.onTimeChanged(_workingTime);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.maxFinite,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Начало работы
-          _buildTimeField(label: 'Начало работы', time: _workingTime.startTime, onTap: _selectStartTime),
-          const SizedBox(height: 12),
-
-          // Конец работы
-          _buildTimeField(label: 'Конец работы', time: _workingTime.endTime, onTap: _selectEndTime),
-          const SizedBox(height: 16),
-
-          // Отображение продолжительности
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade100),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Общее рабочее время:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  _workingTime.durationText,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeField({required String label, required TimeOfDay? time, required VoidCallback onTap}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        const SizedBox(height: 4),
-        GestureDetector(
-          onTap: onTap,
-          child: AbsorbPointer(
-            child: TextFormField(
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                suffixIcon: const Icon(Icons.access_time),
-                hintText: time != null ? _formatTimeOfDay(time, context) : '--:--',
-              ),
-              controller: TextEditingController(text: time != null ? _formatTimeOfDay(time, context) : ''),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _formatTimeOfDay(TimeOfDay time, BuildContext context) {
-    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
   }
 }
