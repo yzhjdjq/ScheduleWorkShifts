@@ -18,8 +18,7 @@ class SettingsPage extends StatelessWidget {
         builder: (context, settings, child) {
           return ListView(
             padding: const EdgeInsets.all(8),
-            children: [
-              // Флаг: показывать название смены
+            children: <Widget>[
               SwitchListTile(
                 title: const Text('Показывать название смены'),
                 value: settings.showShiftName,
@@ -29,7 +28,6 @@ class SettingsPage extends StatelessWidget {
               ),
               const Divider(),
 
-              // Флаг: показывать легенду календаря
               SwitchListTile(
                 title: const Text('Показывать легенду календаря'),
                 value: settings.showShiftNameLegend,
@@ -39,7 +37,6 @@ class SettingsPage extends StatelessWidget {
               ),
               const Divider(),
 
-              // Подменю: Настройка графиков
               ListTile(
                 title: const Text('Настройка графиков'),
                 trailing: const Icon(Icons.arrow_forward_ios),
@@ -54,7 +51,6 @@ class SettingsPage extends StatelessWidget {
               ),
               const Divider(),
 
-              // Подменю: Настройка смен
               ListTile(
                 title: const Text('Настройка смен'),
                 trailing: const Icon(Icons.arrow_forward_ios),

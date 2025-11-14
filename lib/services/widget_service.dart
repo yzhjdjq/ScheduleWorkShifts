@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/services.dart';
 
 class WidgetService {
@@ -7,7 +8,9 @@ class WidgetService {
     try {
       await platform.invokeMethod('updateWidget');
     } on PlatformException catch (e) {
-      print("Failed to update widget: '${e.message}'.");
+      if (kDebugMode) {
+        print("Failed to update widget: '${e.message}'.");
+      }
     }
   }
 }

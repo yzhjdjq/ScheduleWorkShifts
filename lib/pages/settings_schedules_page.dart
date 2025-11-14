@@ -7,11 +7,11 @@ import 'package:sws/models/schedule.dart';
 class SettingsSchedulesPage extends StatelessWidget {
   const SettingsSchedulesPage({super.key});
 
-  void _addNewSchedule(BuildContext context) {
+  void _addNewScheduleBtnHandler(BuildContext context) {
     final settings = context.read<SettingsProvider>();
     final newSchedule = Schedule.createDefault();
 
-    _editSchedule(
+    _editScheduleBtnHandler(
         context,
         newSchedule,
         isNewSchedule: true,
@@ -20,7 +20,7 @@ class SettingsSchedulesPage extends StatelessWidget {
     );
   }
 
-  void _editSchedule(
+  void _editScheduleBtnHandler(
       BuildContext context,
       Schedule schedule, {
         bool isNewSchedule = false,
@@ -61,7 +61,7 @@ class SettingsSchedulesPage extends StatelessWidget {
     );
   }
 
-  void _deleteSchedule(BuildContext context, Schedule schedule) {
+  void _deleteScheduleBtnHandler(BuildContext context, Schedule schedule) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -101,8 +101,8 @@ class SettingsSchedulesPage extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ListTile(
                   title: Text(schedule.name),
-                  onTap: () => _editSchedule(context, schedule),
-                  onLongPress: () => _deleteSchedule(context, schedule),
+                  onTap: () => _editScheduleBtnHandler(context, schedule),
+                  onLongPress: () => _deleteScheduleBtnHandler(context, schedule),
                 ),
               );
             },
@@ -110,7 +110,7 @@ class SettingsSchedulesPage extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addNewSchedule(context),
+        onPressed: () => _addNewScheduleBtnHandler(context),
         child: const Icon(Icons.add),
       ),
     );

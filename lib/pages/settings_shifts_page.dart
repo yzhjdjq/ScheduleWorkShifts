@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:sws/providers/settings_provider.dart';
 import 'package:sws/models/work_shift.dart';
+import 'package:sws/widgets/color_picker_widget.dart';
 
 class SettingsShiftsPage extends StatelessWidget {
   const SettingsShiftsPage({super.key});
 
-  void _addNewShift(BuildContext context) {
+  void _addNewShiftBtnHandler(BuildContext context) {
     final settings = context.read<SettingsProvider>();
     final newShift = WorkShift.createDefault();
 
-    _editShift(
+    _editShiftDialogWidget(
       context,
       newShift,
       isNewShift: true,
@@ -19,7 +21,7 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  void _editStaticShiftColor(BuildContext context, WorkShift shift) {
+  void _editStaticShiftDialogWidget(BuildContext context, WorkShift shift) {
     final settings = context.read<SettingsProvider>();
     WorkShift editedShift = WorkShift.copy(shift);
     showDialog(
@@ -28,7 +30,7 @@ class SettingsShiftsPage extends StatelessWidget {
         builder: (context, setState) {
           return AlertDialog(
             title: Text('Цвет для ${editedShift.name}'),
-            content: _buildColorPicker(context, editedShift, setState),
+            content: ColorPickerWidget(shift: editedShift, setState: setState),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -49,7 +51,7 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  void _editShift(
+  void _editShiftDialogWidget(
       BuildContext context,
       WorkShift shift, {
         bool isNewShift = false,
@@ -67,7 +69,7 @@ class SettingsShiftsPage extends StatelessWidget {
             title: Text(isNewShift ? 'Создание смены' : 'Редактировать смену'),
             content: SingleChildScrollView(
               child: Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -83,7 +85,7 @@ class SettingsShiftsPage extends StatelessWidget {
                     _buildCategoryRadioButtons(editedShift, setState),
                     const SizedBox(height: 20),
 
-                    _buildColorPicker(context, editedShift, setState),
+                    ColorPickerWidget(shift: editedShift, setState: setState),
                   ],
                 ),
               ),
@@ -127,7 +129,7 @@ class SettingsShiftsPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Row(
-          children: [
+          children: <Widget>[
             Expanded(
               child: RadioListTile<ShiftCategory>(
                 title: const Text('Рабочий день'),
@@ -160,186 +162,13 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildColorPicker(BuildContext context, WorkShift shift, StateSetter setState) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Цвет смены:',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-
-        // Предпросмотр выбранного цвета
-        Container(
-          width: double.infinity,
-          height: 50,
-          decoration: BoxDecoration(
-            color: shift.color,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Center(
-            child: Text(
-              shift.category == ShiftCategory.workingDay ? 'Рабочий день' : 'Выходной',
-              style: TextStyle(
-                color: shift.color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Градиент для выбора цвета
-        Container(
-          height: 60,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            gradient: const LinearGradient(
-              colors: [
-                Colors.red,
-                Colors.orange,
-                Colors.yellow,
-                Colors.green,
-                Colors.blue,
-                Colors.indigo,
-                Colors.purple,
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-          ),
-          child: GestureDetector(
-            onTapDown: (details) {
-              final renderBox = context.findRenderObject() as RenderBox?;
-              if (renderBox != null) {
-                final localPosition = renderBox.globalToLocal(details.globalPosition);
-                final relativeX = localPosition.dx / renderBox.size.width;
-
-                // Преобразование позиции в цвет
-                final newColor = _getColorFromPosition(relativeX);
-                setState(() {
-                  shift.color = newColor;
-                });
-              }
-            },
-            onPanUpdate: (details) {
-              final renderBox = context.findRenderObject() as RenderBox?;
-              if (renderBox != null) {
-                final localPosition = renderBox.globalToLocal(details.globalPosition);
-                final relativeX = localPosition.dx.clamp(0.0, renderBox.size.width) / renderBox.size.width;
-
-                // Преобразование позиции в цвет
-                final newColor = _getColorFromPosition(relativeX);
-                setState(() {
-                  shift.color = newColor;
-                });
-              }
-            },
-            child: Container(),
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Точный выбор через HSLColor
-        _buildHslColorPicker(shift, setState),
-      ],
-    );
-  }
-
-  // Точный выбор цвета через HSL
-  Widget _buildHslColorPicker(WorkShift shift, StateSetter setState) {
-    final hslColor = HSLColor.fromColor(shift.color);
-
-    return Column(
-      children: [
-        // Ползунок для оттенка (Hue)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Цвет:'),
-            Slider(
-              value: hslColor.hue,
-              min: 0,
-              max: 360,
-              onChanged: (value) {
-                setState(() {
-                  shift.color = hslColor.withHue(value).toColor();
-                });
-              },
-              activeColor: shift.color,
-            ),
-          ],
-        ),
-
-        // Ползунок для насыщенности (Saturation)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Насыщенность:'),
-            Slider(
-              value: hslColor.saturation,
-              min: 0,
-              max: 1,
-              onChanged: (value) {
-                setState(() {
-                  shift.color = hslColor.withSaturation(value).toColor();
-                });
-              },
-              activeColor: shift.color,
-            ),
-          ],
-        ),
-
-        // Ползунок для светлоты (Lightness)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Яркость:'),
-            Slider(
-              value: hslColor.lightness,
-              min: 0,
-              max: 1,
-              onChanged: (value) {
-                setState(() {
-                  shift.color = hslColor.withLightness(value).toColor();
-                });
-              },
-              activeColor: shift.color,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Преобразование позиции в цвет из градиента
-  Color _getColorFromPosition(double position) {
-    const colors = [
-      Colors.red,
-      Colors.orange,
-      Colors.yellow,
-      Colors.green,
-      Colors.blue,
-      Colors.indigo,
-      Colors.purple,
-    ];
-
-    final segment = 1.0 / (colors.length - 1);
-    final index = (position / segment).clamp(0, colors.length - 2).floor();
-    final localPosition = (position - index * segment) / segment;
-
-    return Color.lerp(colors[index], colors[index + 1], localPosition)!;
-  }
-
-  void _deleteShift(BuildContext context, WorkShift shift) {
+  void _deleteShiftBtnHandler(BuildContext context, WorkShift shift) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Удалить смену?'),
         content: Text('Вы уверены, что хотите удалить "${shift.name}"?'),
-        actions: [
+        actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Отмена'),
@@ -357,12 +186,12 @@ class SettingsShiftsPage extends StatelessWidget {
   }
 
   // Редактирование существующей смены
-  void _editExistingShift(BuildContext context, WorkShift shift) {
+  void _editExistingShiftBtnHandler(BuildContext context, WorkShift shift) {
     if (shift.isStatic()) {
-      _editStaticShiftColor(context, shift);
+      _editStaticShiftDialogWidget(context, shift);
       return;
     }
-    _editShift(context, shift, isNewShift: false);
+    _editShiftDialogWidget(context, shift, isNewShift: false);
   }
 
   @override
@@ -411,13 +240,13 @@ class SettingsShiftsPage extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  onTap: () => _editExistingShift(context, shift),
+                  onTap: () => _editExistingShiftBtnHandler(context, shift),
                   onLongPress:
                     shift.isStatic()
                       ? null
                       : settings.workShifts.length <=2
                         ? null
-                        : () => _deleteShift(context, shift),
+                        : () => _deleteShiftBtnHandler(context, shift),
                 ),
               );
             },
@@ -425,7 +254,7 @@ class SettingsShiftsPage extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addNewShift(context),
+        onPressed: () => _addNewShiftBtnHandler(context),
         child: const Icon(Icons.add),
       ),
     );
