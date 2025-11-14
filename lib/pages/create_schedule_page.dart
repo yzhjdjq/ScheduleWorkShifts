@@ -520,6 +520,44 @@ class WorkingTime {
     }
     return '0ч 0м';
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'startTime': startTime != null ? {
+        'hour': startTime!.hour,
+        'minute': startTime!.minute,
+      } : null,
+      'endTime': endTime != null ? {
+        'hour': endTime!.hour,
+        'minute': endTime!.minute,
+      } : null,
+      'durationInMinutes': duration?.inMinutes,
+    };
+  }
+
+  static WorkingTime fromJson(Map<String, dynamic> json) {
+    final workingTime = WorkingTime();
+
+    if (json['startTime'] != null) {
+      workingTime.startTime = TimeOfDay(
+        hour: json['startTime']['hour'] as int,
+        minute: json['startTime']['minute'] as int,
+      );
+    }
+
+    if (json['endTime'] != null) {
+      workingTime.endTime = TimeOfDay(
+        hour: json['endTime']['hour'] as int,
+        minute: json['endTime']['minute'] as int,
+      );
+    }
+
+    if (json['durationInMinutes'] != null) {
+      workingTime.duration = Duration(minutes: json['durationInMinutes'] as int);
+    }
+
+    return workingTime;
+  }
 }
 
 /// Виджет ячейки рабочего времени для таблицы

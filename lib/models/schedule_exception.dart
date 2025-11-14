@@ -1,9 +1,12 @@
+import '../pages/create_schedule_page.dart';
+
 class ScheduleException {
   String id;
   String scheduleId;
   String workShiftId;
   DateTime startDate;
   DateTime endDate;
+  WorkingTime? workingTime; // Добавляем поле рабочего времени
 
   ScheduleException({
     required this.id,
@@ -11,16 +14,18 @@ class ScheduleException {
     required this.workShiftId,
     required this.startDate,
     required this.endDate,
+    WorkingTime? workingTime
   });
 
   ScheduleException.copy(ScheduleException other)
-    : this(
-      id: other.id,
-      scheduleId: other.scheduleId,
-      workShiftId: other.workShiftId,
-      startDate: other.startDate,
-      endDate: other.endDate,
-    );
+      : this(
+    id: other.id,
+    scheduleId: other.scheduleId,
+    workShiftId: other.workShiftId,
+    startDate: other.startDate,
+    endDate: other.endDate,
+    workingTime: other.workingTime,
+  );
 
   Map<String, dynamic> toJson() {
     return {
@@ -29,6 +34,7 @@ class ScheduleException {
       'workShiftId': workShiftId,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
+      'workingTime': workingTime?.toJson(), // Сериализуем WorkingTime
     };
   }
 
@@ -39,6 +45,7 @@ class ScheduleException {
       workShiftId: json['workShiftId'] as String,
       startDate: DateTime.parse((json['startDate'] as String)),
       endDate: DateTime.parse((json['endDate'] as String)),
+      workingTime: WorkingTime.fromJson(json['workingTime'] ?? {}), // Десериализуем WorkingTime
     );
   }
 }
