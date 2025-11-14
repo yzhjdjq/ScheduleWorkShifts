@@ -265,7 +265,15 @@ class CalendarWidget extends StatelessWidget {
                     onPressed: () {
                       scheduleProvider.removeScheduleException(exception.id);
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${workShift.name} удален')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${workShift.name} удален'),
+                          behavior: SnackBarBehavior.floating,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+                          ),
+                        ),
+                      );
                     },
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                     child: const Text('Удалить'),
@@ -396,7 +404,16 @@ class CalendarWidget extends StatelessWidget {
                             scheduleProvider.removeScheduleException(existingException.id);
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Настройки для ${day.day}.${day.month}.${day.year} удалены')),
+                              SnackBar(
+                                content: Text('Настройки для ${day.day}.${day.month}.${day.year} удалены'),
+                                behavior: SnackBarBehavior.floating,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(15),
+                                    bottom: Radius.circular(15),
+                                  ),
+                                ),
+                              ),
                             );
                           },
                           style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -458,6 +475,10 @@ class CalendarWidget extends StatelessWidget {
       SnackBar(
         content: Text(
           'Настройки для ${day.day}.${day.month}.${day.year} ${existingException != null ? 'обновлены' : 'сохранены'}',
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
         ),
       ),
     );

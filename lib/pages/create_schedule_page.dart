@@ -130,7 +130,16 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _saveSchedule() async {
     if (_selectedSchedule == null || _firstWorkingDay == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Заполните все обязательные поля')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Заполните все обязательные поля'),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+          ),
+        ),
+      );
       return;
     }
 
@@ -138,29 +147,52 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     for (int i = 0; i < _shiftRows.length; i++) {
       final row = _shiftRows[i];
       if (row.selectedShift == null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Выберите смену в строке ${i + 1}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Выберите смену в строке ${i + 1}'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+            ),
+          ),
+        );
         return;
       }
 
       if (row.daysCount.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Введите количество дней в строке ${i + 1}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Введите количество дней в строке ${i + 1}'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+            ),
+          ),
+        );
         return;
       }
 
       // Проверка валидности количества дней
       final days = int.tryParse(row.daysCount);
       if (days == null || days < 1 || days > 99) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Некорректное количество дней в строке ${i + 1} (1-99)')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Некорректное количество дней в строке ${i + 1} (1-99)'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+            ),
+          ),
+        );
         return;
       }
     }
 
     // Сохранение в ScheduleProvider
-    final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+    final scheduleProvider = context.read<ScheduleProvider>();
 
     // Удаляем старые последовательности для этого графика
     final oldSequences =
@@ -188,7 +220,15 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       scheduleProvider.addShiftSequence(sequence);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('График сохранен')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('График сохранен'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+        ),
+      ),
+    );
   }
 
   DateTime _calculateStartDate(int orderIndex) {
@@ -311,7 +351,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                             // Заголовок таблицы
                             TableRow(
                               decoration: BoxDecoration(color: Colors.grey.shade100),
-                              children: [
+                              children: <Widget>[
                                 _buildHeaderCell('Смена *'),
                                 _buildHeaderCell('Кол-во дней *'),
                                 _buildHeaderCell('Рабочее время'),
@@ -383,7 +423,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
               return DropdownMenuItem<WorkShift>(
                 value: shift,
                 child: Row(
-                  children: [
+                  children: <Widget>[
                     Container(
                       width: 10,
                       height: 10,
