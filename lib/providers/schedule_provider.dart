@@ -4,6 +4,7 @@ import 'package:sws/models/shift_sequence.dart';
 import 'package:sws/models/work_shift.dart';
 import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
 import 'package:sws/services/storage_service.dart';
+import 'package:sws/services/widget_service.dart';
 import 'package:uuid/uuid.dart' show Uuid;
 
 abstract class BaseScheduleMixin {
@@ -247,6 +248,7 @@ class ScheduleProvider extends BaseScheduleMixin with ChangeNotifier, ScheduleSe
   @override
   void notify() {
     notifyListeners();
+    WidgetService.updateWidget();
   }
 
   static const String _comparedSchedulesKey = 'comparedSchedules';

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sws/models/schedule.dart';
 import 'package:sws/models/work_shift.dart';
 import 'package:sws/services/storage_service.dart';
+import 'package:sws/services/widget_service.dart';
 import 'package:uuid/uuid.dart' show Uuid;
 
 abstract class BaseSettingsMixin {
@@ -211,6 +212,7 @@ class SettingsProvider extends BaseSettingsMixin
   @override
   void notify() {
     notifyListeners();
+    WidgetService.updateWidget();
   }
 
   Future<void> _loadFromStorage() async {
