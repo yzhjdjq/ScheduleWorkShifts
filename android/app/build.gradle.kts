@@ -28,6 +28,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        buildConfigField("boolean", "DEBUG", "true")
     }
 
     buildTypes {
@@ -35,7 +37,15 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("boolean", "DEBUG", "false")
         }
+        debug {
+            buildConfigField("boolean", "DEBUG", "true")
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 }
 

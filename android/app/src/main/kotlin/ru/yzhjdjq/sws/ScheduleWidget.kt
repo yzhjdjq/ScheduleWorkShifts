@@ -94,7 +94,6 @@ class ScheduleWidget : AppWidgetProvider() {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Widget $appWidgetId updated. Bitmaps in cache: ${bitmapCache.size}")
         }
-        }
     }
 
     private fun buildEmptyCalendar(views: RemoteViews, context: Context, widgetWidth: Int) {

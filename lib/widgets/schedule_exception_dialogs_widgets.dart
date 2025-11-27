@@ -172,7 +172,7 @@ void _exceptionDialogWidget(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Дата окончания не может быть раньше даты начала'),
-                                  duration: const Duration(seconds: 3),
+                                  duration: Duration(seconds: 3),
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.vertical(
