@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> {
       periodicColors =
           activeScheduleId != null && scheduleProvider.hasSchedules
               ? scheduleProvider.getColorsForSchedule(activeScheduleId, settingsProvider.workShifts, _currentDate)
-              : _getDefaultColors(settingsProvider);
+              : [];
     }
 
     return Scaffold(
@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
 
           if (settingsProvider.showShiftNameLegend)
-            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider),
+            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider, periodicColors),
 
           if (settingsProvider.showShiftNameLegend) const SizedBox(height: 8),
 
@@ -420,13 +420,6 @@ class _HomePageState extends State<HomePage> {
     return 'Главная';
   }
 
-  List<Color> _getDefaultColors(SettingsProvider settingsProvider) {
-    if (settingsProvider.workShifts.isEmpty) {
-      return [Colors.blue, Colors.green];
-    }
-    return settingsProvider.workShifts.map((shift) => shift.color).toList();
-  }
-
   Widget _buildMonthSwitcher(
     String? activeScheduleId,
     SettingsProvider settingsProvider,
@@ -459,8 +452,9 @@ class _HomePageState extends State<HomePage> {
     String? activeScheduleId,
     SettingsProvider settingsProvider,
     ScheduleProvider scheduleProvider,
+    List<Color> periodicColors,
   ) {
-    if (!settingsProvider.showShiftNameLegend) {
+    if (!settingsProvider.showShiftNameLegend || periodicColors.isEmpty) {
       return const SizedBox.shrink();
     }
 

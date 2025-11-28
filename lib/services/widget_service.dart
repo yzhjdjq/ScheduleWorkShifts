@@ -1,15 +1,25 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class WidgetService {
   static const platform = MethodChannel('ru.yzhjdjq.sws/widget');
 
   static Future<void> updateWidget() async {
-    try {
-      await platform.invokeMethod('updateWidget');
-    } on PlatformException catch (e) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        await platform.invokeMethod('updateWidget');
+      } on PlatformException catch (e) {
+        if (kDebugMode) {
+          print("Ошибка при обновлении виджета: $e");
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print("Неизвестная ошибка при вызове виджета: $e");
+        }
+      }
+    } else {
       if (kDebugMode) {
-        print("Failed to update widget: '${e.message}'.");
+        print('Widget update skipped: Not Android platform');
       }
     }
   }

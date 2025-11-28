@@ -374,13 +374,19 @@ class ScheduleProvider extends BaseScheduleMixin with ChangeNotifier, ScheduleSe
     final activeScheduleId = getActiveScheduleId();
     if (activeScheduleId == null) return [];
 
+    final sequences = _shiftSequences.where((seq) => seq.scheduleId == activeScheduleId).toList();
+    if (sequences.isEmpty) return [];
+
     return getColorsForSchedule(activeScheduleId, workShifts, forMonth);
   }
 
   // Получить смещение для дня в активном графике
   int getDayOffsetForActiveSchedule(DateTime day) {
     final activeScheduleId = getActiveScheduleId();
-    if (activeScheduleId == null) return day.day - 1;
+    if (activeScheduleId == null) return -1;
+
+    final sequences = _shiftSequences.where((seq) => seq.scheduleId == activeScheduleId).toList();
+    if (sequences.isEmpty) return -1;
 
     return getDayOffsetForSchedule(activeScheduleId, day);
   }

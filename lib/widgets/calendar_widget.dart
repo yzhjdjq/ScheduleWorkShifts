@@ -542,10 +542,7 @@ class CalendarWidget extends StatelessWidget {
       return workShift.color;
     }
 
-    // Обычная логика если исключений нет
-    if (_periodicColors.isEmpty) return Colors.grey;
-
-    if (dayOffset < 0) {
+    if (dayOffset < 0 || _periodicColors.isEmpty) {
       return Colors.grey.withValues(alpha: 0.3);
     }
 
