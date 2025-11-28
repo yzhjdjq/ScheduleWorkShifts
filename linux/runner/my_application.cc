@@ -1,6 +1,11 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
+#include <glib.h>
+#include <libgen.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
 #endif
@@ -13,6 +18,14 @@ struct _MyApplication {
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+static gchar* get_bundle_path() {
+    g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+    if (!exe_path) return nullptr;
+
+    g_autofree gchar* exe_dir = g_path_get_dirname(exe_path);
+    return g_path_get_dirname(exe_dir);
+}
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
@@ -40,18 +53,27 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "sws");
+    gtk_header_bar_set_title(header_bar, "Schedule shifts");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "sws");
+    gtk_window_set_title(window, "Schedule shifts");
   }
 
   gtk_window_set_default_size(window, 1280, 720);
   gtk_widget_show(GTK_WIDGET(window));
 
+  g_autofree gchar* bundle_path = get_bundle_path();
+  g_autofree gchar* data_path = g_build_filename(bundle_path, "data", nullptr);
+  g_autofree gchar* assets_path = g_build_filename(data_path, "flutter_assets", nullptr);
+  g_autofree gchar* icu_path = g_build_filename(data_path, "icudtl.dat", nullptr);
+  g_autofree gchar* aot_library_path = g_build_filename(bundle_path, "lib", "libapp.so", nullptr);
+
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
+  fl_dart_project_set_assets_path(project, assets_path);
+  fl_dart_project_set_icu_data_path(project, icu_path);
+  fl_dart_project_set_aot_library_path(project, aot_library_path);
 
   FlView* view = fl_view_new(project);
   gtk_widget_show(GTK_WIDGET(view));
