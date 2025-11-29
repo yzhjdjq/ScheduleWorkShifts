@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' show ReadContext, WatchContext;
 import 'package:uuid/uuid.dart' show Uuid;
 
-import 'package:sws/models/schedule.dart';
-import 'package:sws/models/work_shift.dart';
+import 'package:sws/models/schedule.dart' show Schedule;
+import 'package:sws/models/work_shift.dart' show WorkShift;
 import 'package:sws/models/working_time.dart' show WorkingTime;
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/providers/schedule_provider.dart';
-import 'package:sws/models/shift_sequence.dart';
-import 'package:sws/widgets/working_time_widget.dart';
+import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
+import 'package:sws/models/shift_sequence.dart' show ShiftSequence;
+import 'package:sws/widgets/working_time_widget.dart' show WorkingTimeWidget;
 
 class CreateSchedulePage extends StatefulWidget {
   const CreateSchedulePage({super.key});
@@ -31,80 +30,77 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
   }
 
   void _loadScheduleData() {
-    final settings = context.read<SettingsProvider>();
     final scheduleProvider = context.read<ScheduleProvider>();
 
-    // Устанавливаем первый график по умолчанию
-    if (settings.schedules.isNotEmpty) {
+    if (scheduleProvider.schedules.isNotEmpty) {
       final String activeScheduleId = scheduleProvider.getActiveScheduleId() ?? '';
-      _selectedSchedule = settings.schedules.firstWhere(
+      _selectedSchedule = scheduleProvider.schedules.firstWhere(
         (s) => s.id == activeScheduleId,
-        orElse: () => settings.schedules.first,
+        orElse: () => scheduleProvider.schedules.first,
       );
 
-      // Пытаемся загрузить сохраненные данные для выбранного графика
       final savedSequences =
           scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == _selectedSchedule!.id).toList();
 
       if (savedSequences.isNotEmpty) {
-        // Загружаем сохраненные данные
-        _loadSavedSequences(savedSequences, settings);
+        _loadSavedSequences(savedSequences, scheduleProvider);
       } else {
-        // Используем настройки по умолчанию
-        _loadDefaultSettings(settings);
+        _loadDefaultSettings(scheduleProvider);
       }
     } else {
-      _loadDefaultSettings(settings);
+      _loadDefaultSettings(scheduleProvider);
     }
   }
 
-  void _loadSavedSequences(List<ShiftSequence> sequences, SettingsProvider settings) {
+  void _loadSavedSequences(List<ShiftSequence> sequences, ScheduleProvider scheduleProvider) {
     setState(() {
       _shiftRows.clear();
 
-      // Сортируем последовательности по orderIndex
       sequences.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
-      // Устанавливаем первый рабочий день из первой последовательности
-      _firstWorkingDay = sequences.first.startDate;
+      _firstWorkingDay = _selectedSchedule?.startDate;
 
-      // Заполняем строки сохраненными данными
       for (final sequence in sequences) {
         final row = _ShiftRow();
 
-        // Находим соответствующую смену
-        final workShift = settings.workShifts.firstWhere(
+        final workShift = scheduleProvider.workShifts.firstWhere(
           (shift) => shift.id == sequence.workShiftId,
-          orElse: () => settings.workShifts.isNotEmpty ? settings.workShifts.first : WorkShift.createDefault(),
+          orElse:
+              () =>
+                  scheduleProvider.workShifts.isNotEmpty
+                      ? scheduleProvider.workShifts.first
+                      : WorkShift.createDefault(),
         );
 
         row.selectedShift = workShift;
         row.daysCount = sequence.consecutiveDays.toString();
         row.daysController.text = sequence.consecutiveDays.toString();
+        row.workingTime = sequence.workingTime; // ✅ Сохраняем рабочее время
 
         _shiftRows.add(row);
       }
     });
   }
 
-  void _loadDefaultSettings(SettingsProvider settings) {
+  void _loadDefaultSettings(ScheduleProvider scheduleProvider) {
     setState(() {
       _firstWorkingDay =
           _selectedSchedule?.startDate ?? DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
       _shiftRows.clear();
 
-      // Добавляем две строки по умолчанию
       for (int i = 0; i < 2; i++) {
         final row = _ShiftRow();
 
-        if (settings.workShifts.length > i) {
-          row.selectedShift = settings.workShifts[i];
-        } else if (settings.workShifts.isNotEmpty) {
-          row.selectedShift = settings.workShifts.first;
+        if (scheduleProvider.workShifts.length > i) {
+          row.selectedShift = scheduleProvider.workShifts[i];
+        } else if (scheduleProvider.workShifts.isNotEmpty) {
+          row.selectedShift = scheduleProvider.workShifts.first;
         }
 
         row.daysCount = '1';
         row.daysController.text = '1';
+        row.workingTime = const WorkingTime(); // ✅ по умолчанию
+
         _shiftRows.add(row);
       }
     });
@@ -115,7 +111,8 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       _shiftRows.add(
         _ShiftRow()
           ..daysCount = '1'
-          ..daysController.text = '1',
+          ..daysController.text = '1'
+          ..workingTime = const WorkingTime(),
       );
     });
   }
@@ -128,7 +125,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     }
   }
 
-  void _saveSchedule() async {
+  void _saveSchedule() {
     if (_selectedSchedule == null || _firstWorkingDay == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -143,7 +140,6 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       return;
     }
 
-    // Валидация всех строк
     for (int i = 0; i < _shiftRows.length; i++) {
       final row = _shiftRows[i];
       if (row.selectedShift == null) {
@@ -174,7 +170,6 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
         return;
       }
 
-      // Проверка валидности количества дней
       final days = int.tryParse(row.daysCount);
       if (days == null || days < 1 || days > 99) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -191,10 +186,12 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       }
     }
 
-    // Сохранение в ScheduleProvider
     final scheduleProvider = context.read<ScheduleProvider>();
 
-    // Удаляем старые последовательности для этого графика
+    _selectedSchedule = _selectedSchedule!.copyWith(startDate: _firstWorkingDay);
+    scheduleProvider.updateSchedule(_selectedSchedule!);
+
+    // Удаляем старые последовательности
     final oldSequences =
         scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == _selectedSchedule!.id).toList();
 
@@ -202,7 +199,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       scheduleProvider.removeShiftSequence(sequence.id);
     }
 
-    // Создаем новые последовательности смен
+    // Создаём новые
     for (int i = 0; i < _shiftRows.length; i++) {
       final row = _shiftRows[i];
       final days = int.parse(row.daysCount);
@@ -213,8 +210,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
         workShiftId: row.selectedShift!.id,
         consecutiveDays: days,
         orderIndex: i,
-        startDate: _calculateStartDate(i),
-        endDate: _calculateEndDate(i, days),
+        workingTime: row.workingTime,
       );
 
       scheduleProvider.addShiftSequence(sequence);
@@ -231,47 +227,25 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     );
   }
 
-  DateTime _calculateStartDate(int orderIndex) {
-    if (orderIndex == 0) return _firstWorkingDay!;
-
-    // Вычисляем дату начала на основе предыдущих последовательностей
-    DateTime startDate = _firstWorkingDay!;
-    for (int i = 0; i < orderIndex; i++) {
-      final row = _shiftRows[i];
-      final days = int.parse(row.daysCount);
-      startDate = startDate.add(Duration(days: days));
-    }
-    return startDate;
-  }
-
-  DateTime _calculateEndDate(int orderIndex, int days) {
-    final startDate = _calculateStartDate(orderIndex);
-    return startDate.add(Duration(days: days - 1));
-  }
-
   void _onScheduleChanged(Schedule? newValue) {
-    final settings = context.read<SettingsProvider>();
     final scheduleProvider = context.read<ScheduleProvider>();
 
     setState(() {
       _selectedSchedule = newValue;
 
-      // Пытаемся загрузить сохраненные данные для нового графика
       final savedSequences = scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == newValue?.id).toList();
 
       if (savedSequences.isNotEmpty) {
-        // Загружаем сохраненные данные нового графика
-        _loadSavedSequences(savedSequences, settings);
+        _loadSavedSequences(savedSequences, scheduleProvider);
       } else {
-        // Полный сброс к настройкам по умолчанию для нового графика
-        _loadDefaultSettings(settings);
+        _loadDefaultSettings(scheduleProvider);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<SettingsProvider>();
+    final scheduleProvider = context.watch<ScheduleProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Создать график')),
@@ -280,19 +254,17 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            // Выпадающий список графиков
             DropdownButtonFormField<Schedule>(
               decoration: const InputDecoration(labelText: 'График *', border: OutlineInputBorder()),
               value: _selectedSchedule,
               items:
-                  settings.schedules.map((schedule) {
+                  scheduleProvider.schedules.map((schedule) {
                     return DropdownMenuItem<Schedule>(value: schedule, child: Text(schedule.name));
                   }).toList(),
               onChanged: _onScheduleChanged,
             ),
             const SizedBox(height: 20),
 
-            // Поле выбора даты
             GestureDetector(
               onTap: () async {
                 final selectedDate = await showDatePicker(
@@ -301,7 +273,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2100),
                 );
-                if (selectedDate != null) {
+                if (selectedDate != null && _selectedSchedule != null) {
                   setState(() {
                     _firstWorkingDay = selectedDate;
                   });
@@ -329,11 +301,9 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
             ),
             const SizedBox(height: 20),
 
-            // Заголовок таблицы
             const Text('Последовательность смен:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
 
-            // Таблица смен
             Expanded(
               child:
                   _shiftRows.isEmpty
@@ -341,14 +311,13 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                       : SingleChildScrollView(
                         child: Table(
                           columnWidths: const {
-                            0: FlexColumnWidth(3), // Смена
-                            1: FlexColumnWidth(1.5), // Кол-во дней
-                            2: FlexColumnWidth(3), // Рабочее время
-                            3: FixedColumnWidth(48), // Кнопка удаления (фиксированная ширина с отступами)
+                            0: FlexColumnWidth(3),
+                            1: FlexColumnWidth(1.5),
+                            2: FlexColumnWidth(3),
+                            3: FixedColumnWidth(48),
                           },
                           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                           children: <TableRow>[
-                            // Заголовок таблицы
                             TableRow(
                               decoration: BoxDecoration(color: Colors.grey.shade100),
                               children: <Widget>[
@@ -358,14 +327,13 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                                 _buildHeaderCell(''),
                               ],
                             ),
-                            // Строки с данными
                             ..._shiftRows.asMap().entries.map((entry) {
                               final index = entry.key;
                               final row = entry.value;
 
                               return TableRow(
                                 children: <Widget>[
-                                  _buildShiftCell(row, settings),
+                                  _buildShiftCell(row, scheduleProvider),
                                   _buildDaysCell(row, index),
                                   _buildTimeCell(row),
                                   _buildDeleteCell(index),
@@ -384,7 +352,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.add),
-                    label: const Text('Добавить строку'),
+                    label: const Text('Добавить смену'),
                     onPressed: _addShiftRow,
                   ),
                 ),
@@ -411,7 +379,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     );
   }
 
-  Widget _buildShiftCell(_ShiftRow row, SettingsProvider settings) {
+  Widget _buildShiftCell(_ShiftRow row, ScheduleProvider scheduleProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
       child: DropdownButton<WorkShift>(
@@ -419,7 +387,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
         value: row.selectedShift,
         hint: const Text('Выберите смену', style: TextStyle(fontSize: 14)),
         items:
-            settings.workShifts.map((shift) {
+            scheduleProvider.workShifts.map((shift) {
               return DropdownMenuItem<WorkShift>(
                 value: shift,
                 child: Row(
@@ -513,7 +481,7 @@ class _ShiftRow {
   WorkShift? selectedShift;
   String daysCount = '1';
   final TextEditingController daysController = TextEditingController(text: '1');
-  WorkingTime workingTime = WorkingTime();
+  WorkingTime workingTime = const WorkingTime(); // ✅ const
 
   _ShiftRow() {
     daysController.addListener(() {

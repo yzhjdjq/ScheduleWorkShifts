@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' show Consumer, ReadContext;
 
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/models/schedule.dart';
+import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
+import 'package:sws/models/schedule.dart' show Schedule;
 
 class SettingsSchedulesPage extends StatelessWidget {
   const SettingsSchedulesPage({super.key});
@@ -38,13 +38,14 @@ class SettingsSchedulesPage extends StatelessWidget {
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
               TextButton(
                 onPressed: () {
-                  final savedSchedule = Schedule.copy(schedule);
-                  savedSchedule.name = textController.text.isEmpty ? 'График' : textController.text;
+                  final savedSchedule = schedule.copyWith(
+                    name: textController.text.isEmpty ? 'График' : textController.text,
+                  );
 
                   if (isNewSchedule && onSave != null) {
                     onSave(savedSchedule);
                   } else {
-                    settings.updateSchedule(schedule.id, savedSchedule);
+                    settings.updateSchedule(savedSchedule);
                   }
 
                   Navigator.pop(context);

@@ -4,12 +4,14 @@ import 'package:sws/models/working_time.dart' show WorkingTime;
 import 'package:sws/widgets/working_time_edit_widget.dart' show WorkingTimeEditWidget;
 
 class WorkingTimeWidget extends StatelessWidget {
-  final WorkingTime _workingTime;
-  final Function(WorkingTime) _onTimeChanged;
+  final WorkingTime workingTime;
+  final ValueChanged<WorkingTime> onTimeChanged;
 
-  const WorkingTimeWidget({super.key, required WorkingTime workingTime, required Function(WorkingTime) onTimeChanged})
-    : _workingTime = workingTime,
-      _onTimeChanged = onTimeChanged;
+  const WorkingTimeWidget({
+    super.key,
+    required this.workingTime,
+    required this.onTimeChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +49,13 @@ class WorkingTimeWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_workingTime.startTime != null && _workingTime.endTime != null) ...[
+          if (workingTime.startTime != null && workingTime.endTime != null) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Время:', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                 Text(
-                  '${_formatTimeOfDay(_workingTime.startTime!, context)} - ${_formatTimeOfDay(_workingTime.endTime!, context)}',
+                  '${_formatTimeOfDay(workingTime.startTime!, context)} - ${_formatTimeOfDay(workingTime.endTime!, context)}',
                   style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -63,7 +65,7 @@ class WorkingTimeWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Длит:', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                Text(_workingTime.durationText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(workingTime.durationText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               ],
             ),
           ] else ...[
@@ -79,37 +81,34 @@ class WorkingTimeWidget extends StatelessWidget {
 
   /// Диалог для настройки рабочего времени
   void _showWorkingTimeDialog(BuildContext context) {
-    WorkingTime tempWorkingTime =
-        WorkingTime()
-          ..startTime = _workingTime.startTime
-          ..endTime = _workingTime.endTime
-          ..duration = _workingTime.duration;
+    // Локальная копия для редактирования
+    var tempWorkingTime = workingTime;
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Настройка рабочего времени'),
-            content: WorkingTimeEditWidget(
-              workingTime: tempWorkingTime,
-              onTimeChanged: (updatedTime) {
-                tempWorkingTime = updatedTime;
-              },
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
-              TextButton(
-                onPressed: () {
-                  _workingTime.startTime = tempWorkingTime.startTime;
-                  _workingTime.endTime = tempWorkingTime.endTime;
-                  _workingTime.calculateDuration();
-                  _onTimeChanged(_workingTime);
-                  Navigator.pop(context);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Настройка рабочего времени'),
+        content: WorkingTimeEditWidget(
+          workingTime: tempWorkingTime,
+          onTimeChanged: (updated) {
+            tempWorkingTime = updated;
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
           ),
+          TextButton(
+            onPressed: () {
+              // Сохраняем обновлённое значение через callback
+              onTimeChanged(tempWorkingTime);
+              Navigator.pop(context);
+            },
+            child: const Text('Сохранить'),
+          ),
+        ],
+      ),
     );
   }
 

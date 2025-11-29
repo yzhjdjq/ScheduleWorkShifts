@@ -1,18 +1,17 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show ChangeNotifier, Color;
+import 'package:sws/models/schedule.dart' show Schedule;
+import 'package:sws/models/work_shift.dart' show WorkShift;
+import 'package:sws/providers/base_provider_mixin.dart' show BaseProviderMixin;
+import 'package:sws/providers/schedule_exception_store.dart' show ScheduleExceptionStore;
+import 'package:sws/providers/schedule_store.dart' show ScheduleStore;
+import 'package:sws/providers/shift_sequence_store.dart' show ShiftSequenceStore;
+import 'package:sws/providers/work_shift_store.dart' show WorkShiftStore;
+import 'package:sws/services/storage_service.dart' show StorageService;
+import 'package:sws/services/widget_service.dart' show WidgetService;
 
-import 'package:sws/models/schedule.dart';
-import 'package:sws/models/work_shift.dart';
-import 'package:sws/services/storage_service.dart';
-import 'package:sws/services/widget_service.dart';
-import 'package:uuid/uuid.dart' show Uuid;
-
-abstract class BaseSettingsMixin {
-  void notify();
-}
-
-mixin ShiftNameLegendSettingsMixin on BaseSettingsMixin {
+mixin _ShiftNameLegendSettingsMixin on BaseProviderMixin {
   static const String _shiftNameLegendKey = 'showShiftNameLegend';
-  bool _showShiftNameLegend = true;
+  static bool _showShiftNameLegend = true;
 
   Future<void> _loadShiftNameLegendFromStorage() async {
     if (!StorageService.containsKey(_shiftNameLegendKey)) {
@@ -32,9 +31,9 @@ mixin ShiftNameLegendSettingsMixin on BaseSettingsMixin {
   }
 }
 
-mixin ShiftNameSettingsMixin on BaseSettingsMixin {
+mixin _ShiftNameSettingsMixin on BaseProviderMixin {
   static const String _shiftNameKey = 'showShiftName';
-  bool _showShiftName = true;
+  static bool _showShiftName = true;
 
   Future<void> _loadShiftNameFromStorage() async {
     if (!StorageService.containsKey(_shiftNameKey)) {
@@ -54,135 +53,8 @@ mixin ShiftNameSettingsMixin on BaseSettingsMixin {
   }
 }
 
-mixin ScheduleSettingsMixin on BaseSettingsMixin {
-  static const String _scheduleKey = 'schedules';
-  List<Schedule> _schedules = [];
-
-  Future<void> _loadSchedulesFromStorage() async {
-    if (!StorageService.containsKey(_scheduleKey)) {
-      await StorageService.setObject(_scheduleKey, _schedules);
-    }
-
-    _schedules = StorageService.getObjectList<Schedule>(_scheduleKey, fromJson: Schedule.fromJson) ?? [];
-  }
-
-  List<Schedule> get schedules => List.unmodifiable(_schedules);
-
-  void addSchedule(Schedule schedule) {
-    _schedules.add(schedule);
-    StorageService.setObject(_scheduleKey, _schedules);
-    notify();
-  }
-
-  void updateSchedule(String id, Schedule newSchedule) {
-    final int index = _schedules.indexWhere((schedule) => schedule.id == id);
-
-    if (index != -1) {
-      _schedules[index] = newSchedule;
-      StorageService.setObject(_scheduleKey, _schedules);
-      notify();
-    }
-  }
-
-  void removeSchedule(String id) {
-    _schedules.removeWhere((schedule) => schedule.id == id);
-    StorageService.setObject(_scheduleKey, _schedules);
-    notify();
-  }
-}
-
-mixin WorkShiftSettingsMixin on BaseSettingsMixin {
-  static const String _workShiftsKey = 'workShifts';
-  static const String _vacationShiftKey = 'vacationShift';
-  static const String _sickLeaveShiftKey = 'sickLeaveShift';
-  List<WorkShift> _workShifts = [];
-  WorkShift _vacationShift = Vacation();
-  WorkShift _sickLeaveShift = SickLeave();
-
-  void _ensureMinimumWorkShifts() {
-    _workShifts.add(WorkShift.createDefault());
-    _workShifts.add(
-      WorkShift(id: const Uuid().v4(), name: 'Выходной', category: ShiftCategory.dayOff, color: Colors.green),
-    );
-  }
-
-  Future<void> _loadShiftsSettingsFromStorage() async {
-    if (!StorageService.containsKey(_workShiftsKey) ||
-        (StorageService.getObjectList<WorkShift>(_workShiftsKey, fromJson: WorkShift.fromJson)?.isEmpty ?? true)) {
-      _ensureMinimumWorkShifts();
-      StorageService.setObject(_workShiftsKey, _workShifts);
-    }
-
-    if (!StorageService.containsKey(_vacationShiftKey)) {
-      StorageService.setInt(_vacationShiftKey, _vacationShift.color.toARGB32());
-    }
-
-    if (!StorageService.containsKey(_sickLeaveShiftKey)) {
-      StorageService.setInt(_sickLeaveShiftKey, _sickLeaveShift.color.toARGB32());
-    }
-
-    _workShifts = StorageService.getObjectList<WorkShift>(_workShiftsKey, fromJson: WorkShift.fromJson) ?? [];
-    final vacationColorValue = StorageService.getInt(_vacationShiftKey);
-    final sickLeaveColorValue = StorageService.getInt(_sickLeaveShiftKey);
-
-    if (vacationColorValue != null) {
-      _vacationShift = WorkShift.copy(_vacationShift)..color = Color(vacationColorValue);
-    }
-
-    if (sickLeaveColorValue != null) {
-      _sickLeaveShift = WorkShift.copy(_sickLeaveShift)..color = Color(sickLeaveColorValue);
-    }
-  }
-
-  List<WorkShift> get workShifts => List.unmodifiable(_workShifts);
-
-  List<WorkShift> get allWorkShifts => List.unmodifiable([..._workShifts, _vacationShift, _sickLeaveShift]);
-
-  WorkShift get vacationShift => _vacationShift;
-
-  WorkShift get sickLeaveShift => _sickLeaveShift;
-
-  void addWorkShift(WorkShift shift) {
-    _workShifts.add(shift);
-    StorageService.setObject(_workShiftsKey, _workShifts);
-    notify();
-  }
-
-  void updateWorkShift(String id, WorkShift newShift) {
-    final int index = _workShifts.indexWhere((shift) => shift.id == id);
-
-    if (index != -1) {
-      _workShifts[index] = newShift;
-      StorageService.setObject(_workShiftsKey, _workShifts);
-      notify();
-    }
-  }
-
-  void updateStaticShiftColor(String id, Color newColor) {
-    if (id == _sickLeaveShift.id) {
-      _sickLeaveShift = WorkShift.copy(_sickLeaveShift)..color = newColor;
-      StorageService.setInt(_sickLeaveShiftKey, _sickLeaveShift.color.toARGB32());
-    } else if (id == _vacationShift.id) {
-      _vacationShift = WorkShift.copy(_vacationShift)..color = newColor;
-      StorageService.setInt(_vacationShiftKey, _vacationShift.color.toARGB32());
-    }
-    notify();
-  }
-
-  void removeWorkShift(String id) {
-    _workShifts.removeWhere((shift) => shift.id == id);
-    StorageService.setObject(_workShiftsKey, _workShifts);
-    notify();
-  }
-}
-
-class SettingsProvider extends BaseSettingsMixin
-    with
-        ChangeNotifier,
-        ShiftNameLegendSettingsMixin,
-        ShiftNameSettingsMixin,
-        ScheduleSettingsMixin,
-        WorkShiftSettingsMixin {
+class SettingsProvider extends BaseProviderMixin
+    with ChangeNotifier, _ShiftNameLegendSettingsMixin, _ShiftNameSettingsMixin {
   static SettingsProvider? _instance;
   static SettingsProvider get instance {
     if (_instance == null) {
@@ -196,6 +68,18 @@ class SettingsProvider extends BaseSettingsMixin
       return _instance!;
     }
 
+    if (!ScheduleStore.isInitialized) {
+      await ScheduleStore.initialize();
+    }
+    if (!WorkShiftStore.isInitialized) {
+      await WorkShiftStore.initialize();
+    }
+    if (!ShiftSequenceStore.isInitialized) {
+      await ShiftSequenceStore.initialize();
+    }
+    if (!ScheduleExceptionStore.isInitialized) {
+      await ScheduleExceptionStore.initialize();
+    }
     _instance = SettingsProvider();
     await _instance!._loadFromStorage();
     return _instance!;
@@ -205,9 +89,23 @@ class SettingsProvider extends BaseSettingsMixin
     if (_instance != null) {
       throw Exception('SettingsProvider already initialized.');
     }
+    _scheduleStore = ScheduleStore.instance;
+    _workShiftStore = WorkShiftStore.instance;
+    _shiftSequenceStore = ShiftSequenceStore.instance;
+    _scheduleExceptionStore = ScheduleExceptionStore.instance;
+
+    _scheduleStore.addListener(notify);
+    _workShiftStore.addListener(notify);
+    _shiftSequenceStore.addListener(notify);
+    _scheduleExceptionStore.addListener(notify);
   }
 
   static bool get isInitialized => _instance != null;
+
+  static late ScheduleStore _scheduleStore;
+  static late WorkShiftStore _workShiftStore;
+  static late ShiftSequenceStore _shiftSequenceStore;
+  static late ScheduleExceptionStore _scheduleExceptionStore;
 
   @override
   void notify() {
@@ -218,7 +116,34 @@ class SettingsProvider extends BaseSettingsMixin
   Future<void> _loadFromStorage() async {
     await _loadShiftNameLegendFromStorage();
     await _loadShiftNameFromStorage();
-    await _loadSchedulesFromStorage();
-    await _loadShiftsSettingsFromStorage();
   }
+
+  List<Schedule> get schedules => _scheduleStore.schedules;
+
+  void addSchedule(Schedule schedule) => _scheduleStore.addSchedule(schedule);
+
+  void updateSchedule(Schedule newSchedule) =>
+      _scheduleStore.updateSchedule(newSchedule);
+
+  void removeSchedule(String scheduleId) {
+    _scheduleStore.removeSchedule(scheduleId);
+    _shiftSequenceStore.removeSequencesForSchedule(scheduleId);
+    _scheduleExceptionStore.removeExceptionsForSchedule(scheduleId);
+  }
+
+  void addWorkShift(WorkShift shift) => _workShiftStore.addWorkShift(shift);
+
+  void updateWorkShift(WorkShift newShift) => _workShiftStore.updateWorkShift(newShift);
+
+  void updateStaticShiftColor(String id, Color newColor) => _workShiftStore.updateStaticShiftColor(id, newColor);
+
+  void removeWorkShift(String shiftId) {
+    _workShiftStore.removeWorkShift(shiftId);
+    _shiftSequenceStore.removeSequencesForShift(shiftId);
+    _scheduleExceptionStore.removeExceptionsForShift(shiftId);
+  }
+
+  List<WorkShift> get workShifts => _workShiftStore.workShifts;
+
+  List<WorkShift> get allWorkShifts => _workShiftStore.allWorkShifts;
 }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sws/pages/about_page.dart' show AboutPage;
 import 'package:sws/pages/create_schedule_page.dart' show CreateSchedulePage;
 import 'package:sws/pages/settings_page.dart' show SettingsPage;
-import 'package:sws/sws_metadata.dart';
+import 'package:sws/sws_metadata.dart' show SwsMetadata;
 import 'package:sws/widgets/schedule_exception_dialogs_widgets.dart' show sickLeaveDialogWidget, vacationDialogWidget;
 
 class MainDrawer extends StatelessWidget {

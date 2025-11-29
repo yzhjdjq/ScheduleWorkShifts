@@ -5,47 +5,97 @@ import 'package:uuid/uuid.dart' show Uuid;
 enum ShiftCategory { dayOff, workingDay, vacation, sickLeave }
 
 class WorkShift {
-  String id;
-  String name;
-  ShiftCategory category;
-  Color color;
+  final String id;
+  final String name;
+  final ShiftCategory category;
+  final Color color;
+
+  const WorkShift({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.color,
+  });
 
   bool isStatic() {
     return category == ShiftCategory.vacation || category == ShiftCategory.sickLeave;
   }
 
-  WorkShift({required this.id, required this.name, required this.category, required this.color});
-
-  WorkShift.copy(WorkShift other) : this(id: other.id, name: other.name, category: other.category, color: other.color);
+  WorkShift copyWith({
+    String? id,
+    String? name,
+    ShiftCategory? category,
+    Color? color,
+  }) {
+    return WorkShift(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      color: color ?? this.color,
+    );
+  }
 
   static WorkShift createDefault() {
-    return WorkShift(id: const Uuid().v4(), name: 'В день', category: ShiftCategory.workingDay, color: Colors.brown);
+    return WorkShift(
+      id: const Uuid().v4(),
+      name: 'В день',
+      category: ShiftCategory.workingDay,
+      color: Colors.brown,
+    );
+  }
+
+  // Статические смены — обычные фабричные методы, возвращают WorkShift
+  static WorkShift vacation({Color? color}) {
+    return WorkShift(
+      id: 'vacation',
+      name: 'Отпуск',
+      category: ShiftCategory.vacation,
+      color: color ?? const Color(0xFFA5D6A7), // зелёный
+    );
+  }
+
+  static WorkShift sickLeave({Color? color}) {
+    return WorkShift(
+      id: 'sickLeave',
+      name: 'Больничный',
+      category: ShiftCategory.sickLeave,
+      color: color ?? const Color(0xFFFF8A80), // розовый
+    );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'category': category.index, 'color': color.toARGB32()};
+    return {
+      'id': id,
+      'name': name,
+      'category': category.index,
+      'color': color.toARGB32(),
+    };
   }
 
   static WorkShift fromJson(Map<String, dynamic> json) {
     return WorkShift(
       id: json['id'] as String,
       name: json['name'] as String,
-      category: ShiftCategory.values[json['category']],
-      color: Color(json['color']),
+      category: ShiftCategory.values[json['category'] as int],
+      color: Color(json['color'] as int),
     );
   }
-}
 
-class Vacation extends WorkShift {
-  static const int greenColorArgbInt = 4283215696;
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is WorkShift &&
+    runtimeType == other.runtimeType &&
+    id == other.id &&
+    name == other.name &&
+    category == other.category &&
+    color.toARGB32() == other.color.toARGB32();
 
-  Vacation({super.color = const Color(greenColorArgbInt)})
-    : super(id: 'vacation', name: 'Отпуск', category: ShiftCategory.vacation);
-}
+  @override
+  int get hashCode => Object.hash(id, name, category, color.toARGB32());
 
-class SickLeave extends WorkShift {
-  static const int redColorArgbInt = 4294198070;
-
-  SickLeave({super.color = const Color(redColorArgbInt)})
-    : super(id: 'sickLeave', name: 'Больничный', category: ShiftCategory.sickLeave);
+  @override
+  String toString() {
+    return 'WorkShift(id: $id, name: $name, category: $category, color: $color)';
+  }
 }

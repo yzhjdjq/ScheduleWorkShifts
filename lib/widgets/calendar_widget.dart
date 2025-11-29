@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:uuid/uuid.dart' show Uuid;
 
-import 'working_time_edit_widget.dart' show WorkingTimeEditWidget;
-import 'package:sws/models/schedule_exception.dart';
-import 'package:sws/models/work_shift.dart';
+import 'package:sws/widgets/working_time_edit_widget.dart' show WorkingTimeEditWidget;
+import 'package:sws/models/schedule_exception.dart' show ScheduleException;
+import 'package:sws/models/work_shift.dart' show WorkShift;
 import 'package:sws/models/working_time.dart' show WorkingTime;
-import 'package:sws/providers/schedule_provider.dart';
-import 'package:sws/providers/settings_provider.dart';
+import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
+import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
 
 class CalendarWidget extends StatelessWidget {
   final DateTime _currentDate;
@@ -19,7 +19,6 @@ class CalendarWidget extends StatelessWidget {
   final List<List<Color>> _comparisonColors;
   final bool _showShiftNames; // Новый параметр
   final ScheduleProvider _scheduleProvider; // Новый параметр
-  final SettingsProvider _settingsProvider; // Новый параметр
 
   const CalendarWidget({
     super.key,
@@ -41,8 +40,7 @@ class CalendarWidget extends StatelessWidget {
        _isComparisonMode = isComparisonMode,
        _comparisonColors = comparisonColors,
        _showShiftNames = showShiftNames,
-       _scheduleProvider = scheduleProvider,
-       _settingsProvider = settingsProvider;
+       _scheduleProvider = scheduleProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +97,7 @@ class CalendarWidget extends StatelessWidget {
                 child: Row(
                   children: List.generate(
                     7,
-                    (col) => Expanded(child: _buildCalendarCell(context, row, col, cellHeight, scheduleProvider)),
+                    (col) => Expanded(child: _buildCalendarCell(context, row, col, cellHeight)),
                   ),
                 ),
               );
@@ -115,7 +113,6 @@ class CalendarWidget extends StatelessWidget {
     int row,
     int col,
     double cellHeight,
-    ScheduleProvider scheduleProvider,
   ) {
     const int dayInWeek = 7;
     final cellIndex = row * dayInWeek + col;
@@ -136,7 +133,6 @@ class CalendarWidget extends StatelessWidget {
           scheduleProvider: _scheduleProvider,
           comparisonColors: _comparisonColors,
           fontSize: _calculateFontSize(cellHeight),
-          settingsProvider: _settingsProvider,
         );
       } else {
         // Обычный режим - получаем цвет с учетом исключений
@@ -145,7 +141,7 @@ class CalendarWidget extends StatelessWidget {
                 ? _scheduleProvider.getDayOffsetForSchedule(_selectedScheduleId, currentDay)
                 : _scheduleProvider.getDayOffsetForActiveSchedule(currentDay);
 
-        Color dayColor = _getColorWithExceptions(currentDay, dayOffset, scheduleProvider);
+        Color dayColor = _getColorWithExceptions(currentDay, dayOffset);
         Color dayCurrentColor = _getDarkenedColor(dayColor);
 
         double fontSize = _calculateFontSize(cellHeight);
@@ -159,8 +155,7 @@ class CalendarWidget extends StatelessWidget {
           showShiftNames: _showShiftNames,
           currentDay: currentDay,
           scheduleProvider: _scheduleProvider,
-          settingsProvider: _settingsProvider,
-          onTap: () => _onDayTapped(context, currentDay, scheduleProvider, _settingsProvider), // Передаем context
+          onTap: () => _onDayTapped(context, currentDay), // Передаем context
         );
       }
     }
@@ -170,13 +165,12 @@ class CalendarWidget extends StatelessWidget {
     BuildContext context,
     DateTime day,
     ScheduleProvider scheduleProvider,
-    SettingsProvider settingsProvider,
     String scheduleId,
   ) {
     final exception = scheduleProvider.getExceptionForDate(day, scheduleId);
     if (exception == null) return;
 
-    final workShift = settingsProvider.allWorkShifts.firstWhere(
+    final workShift = scheduleProvider.allWorkShifts.firstWhere(
       (shift) => shift.id == exception.workShiftId,
       orElse: () => WorkShift.createDefault(),
     );
@@ -226,7 +220,7 @@ class CalendarWidget extends StatelessWidget {
                     children: [
                       const Text('Рабочее время:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 4),
-                      Text(exception.workingTime?.getDisplayText(context) ?? '', style: const TextStyle(fontSize: 14)),
+                      Text(exception.workingTime?.getWorkingTimeText(context) ?? '', style: const TextStyle(fontSize: 14)),
                       const SizedBox(height: 8),
                       Text(
                         'Продолжительность: ${exception.workingTime?.durationText}',
@@ -251,7 +245,6 @@ class CalendarWidget extends StatelessWidget {
                           context,
                           day,
                           scheduleProvider,
-                          settingsProvider,
                           scheduleId,
                           existingException: exception,
                         );
@@ -290,18 +283,16 @@ class CalendarWidget extends StatelessWidget {
   void _onDayTapped(
     BuildContext context,
     DateTime day,
-    ScheduleProvider scheduleProvider,
-    SettingsProvider settingsProvider,
   ) {
-    final activeScheduleId = _selectedScheduleId ?? scheduleProvider.getActiveScheduleId();
+    final activeScheduleId = _selectedScheduleId ?? _scheduleProvider.getActiveScheduleId();
     if (activeScheduleId == null) return;
 
     // Проверяем, есть ли исключение для этого дня
-    if (scheduleProvider.hasExceptionForDate(day, activeScheduleId)) {
-      _showExceptionDetailsDialog(context, day, scheduleProvider, settingsProvider, activeScheduleId);
+    if (_scheduleProvider.hasExceptionForDate(day, activeScheduleId)) {
+      _showExceptionDetailsDialog(context, day, _scheduleProvider, activeScheduleId);
     } else {
       // Если исключения нет - показываем диалог настройки дня (только для обычных дней)
-      _showDaySettingsDialog(context, day, scheduleProvider, settingsProvider, activeScheduleId);
+      _showDaySettingsDialog(context, day, _scheduleProvider, activeScheduleId);
     }
   }
 
@@ -309,7 +300,6 @@ class CalendarWidget extends StatelessWidget {
     BuildContext context,
     DateTime day,
     ScheduleProvider scheduleProvider,
-    SettingsProvider settingsProvider,
     String scheduleId, {
     ScheduleException? existingException,
   }) {
@@ -321,14 +311,14 @@ class CalendarWidget extends StatelessWidget {
 
     // Если редактируем существующее исключение
     if (existingException != null) {
-      selectedShift = settingsProvider.allWorkShifts.firstWhere(
+      selectedShift = scheduleProvider.allWorkShifts.firstWhere(
         (shift) => shift.id == existingException.workShiftId,
-        orElse: () => settingsProvider.workShifts.first,
+        orElse: () => scheduleProvider.workShifts.first,
       );
       workingTime = existingException.workingTime ?? WorkingTime();
     } else {
       // Для нового исключения используем текущую смену дня
-      selectedShift = _getCurrentShiftForDay(day, scheduleProvider, settingsProvider);
+      selectedShift = _getCurrentShiftForDay(day, scheduleProvider);
     }
 
     showDialog(
@@ -352,7 +342,7 @@ class CalendarWidget extends StatelessWidget {
                         decoration: const InputDecoration(labelText: 'Смена', border: OutlineInputBorder()),
                         value: selectedShift,
                         items:
-                            settingsProvider.workShifts
+                            scheduleProvider.workShifts
                                 .where(
                                   (shift) => !shift.isStatic(), // Исключаем статические смены (отпуск/больничный)
                                 )
@@ -485,36 +475,36 @@ class CalendarWidget extends StatelessWidget {
   }
 
   // Вспомогательный метод для получения текущей смены дня
-  WorkShift _getCurrentShiftForDay(DateTime day, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
+  WorkShift _getCurrentShiftForDay(DateTime day, ScheduleProvider scheduleProvider) {
     final activeScheduleId = scheduleProvider.getActiveScheduleId();
-    if (activeScheduleId == null) return settingsProvider.workShifts.first;
+    if (activeScheduleId == null) return scheduleProvider.workShifts.first;
 
     // Получаем обычную смену для этого дня
     final totalCycleDays = scheduleProvider.getTotalCycleDaysForSchedule(activeScheduleId);
-    if (totalCycleDays == 0) return settingsProvider.workShifts.first;
+    if (totalCycleDays == 0) return scheduleProvider.workShifts.first;
 
     final dayOffset = scheduleProvider.getDayOffsetForActiveSchedule(day);
-    if (dayOffset < 0) return settingsProvider.workShifts.first;
+    if (dayOffset < 0) return scheduleProvider.workShifts.first;
 
     final cyclePosition = dayOffset % totalCycleDays;
     final sequences = scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == activeScheduleId).toList();
 
-    if (sequences.isEmpty) return settingsProvider.workShifts.first;
+    if (sequences.isEmpty) return scheduleProvider.workShifts.first;
 
     sequences.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
     int currentDay = 0;
     for (final sequence in sequences) {
       if (cyclePosition < currentDay + sequence.consecutiveDays) {
-        return settingsProvider.allWorkShifts.firstWhere(
+        return scheduleProvider.allWorkShifts.firstWhere(
           (shift) => shift.id == sequence.workShiftId,
-          orElse: () => settingsProvider.workShifts.first,
+          orElse: () => scheduleProvider.workShifts.first,
         );
       }
       currentDay += sequence.consecutiveDays;
     }
 
-    return settingsProvider.workShifts.first;
+    return scheduleProvider.workShifts.first;
   }
 
   double _calculateFontSize(double cellHeight) {
@@ -529,13 +519,13 @@ class CalendarWidget extends StatelessWidget {
     }
   }
 
-  Color _getColorWithExceptions(DateTime date, int dayOffset, ScheduleProvider scheduleProvider) {
-    final scheduleId = _selectedScheduleId ?? scheduleProvider.getActiveScheduleId() ?? '';
+  Color _getColorWithExceptions(DateTime date, int dayOffset) {
+    final scheduleId = _selectedScheduleId ?? _scheduleProvider.getActiveScheduleId() ?? '';
 
     // Проверяем исключения
-    if (scheduleProvider.hasExceptionForDate(date, scheduleId)) {
-      final exception = scheduleProvider.getExceptionForDate(date, scheduleId);
-      final workShift = _settingsProvider.allWorkShifts.firstWhere(
+    if (_scheduleProvider.hasExceptionForDate(date, scheduleId)) {
+      final exception = _scheduleProvider.getExceptionForDate(date, scheduleId);
+      final workShift = _scheduleProvider.allWorkShifts.firstWhere(
         (shift) => shift.id == exception!.workShiftId,
         orElse: () => WorkShift.createDefault(),
       );
@@ -570,8 +560,7 @@ class _CalendarCellWidget extends StatelessWidget {
   final bool _showShiftNames;
   final DateTime _currentDay;
   final ScheduleProvider _scheduleProvider;
-  final SettingsProvider _settingsProvider;
-  final VoidCallback _onTap; // Добавляем callback
+  final VoidCallback _onTap;
 
   const _CalendarCellWidget({
     required int day,
@@ -582,8 +571,7 @@ class _CalendarCellWidget extends StatelessWidget {
     required bool showShiftNames,
     required DateTime currentDay,
     required ScheduleProvider scheduleProvider,
-    required SettingsProvider settingsProvider,
-    required VoidCallback onTap, // Добавляем параметр
+    required VoidCallback onTap,
   }) : _day = day,
        _isToday = isToday,
        _dayColor = dayColor,
@@ -592,7 +580,6 @@ class _CalendarCellWidget extends StatelessWidget {
        _showShiftNames = showShiftNames,
        _currentDay = currentDay,
        _scheduleProvider = scheduleProvider,
-       _settingsProvider = settingsProvider,
        _onTap = onTap;
 
   @override
@@ -668,7 +655,7 @@ class _CalendarCellWidget extends StatelessWidget {
     // Сначала проверяем, есть ли исключение для этого дня
     if (_scheduleProvider.hasExceptionForDate(_currentDay, activeScheduleId)) {
       final exception = _scheduleProvider.getExceptionForDate(_currentDay, activeScheduleId);
-      final workShift = _settingsProvider.allWorkShifts.firstWhere(
+      final workShift = _scheduleProvider.allWorkShifts.firstWhere(
         (shift) => shift.id == exception!.workShiftId,
         orElse: () => WorkShift.createDefault(),
       );
@@ -692,7 +679,7 @@ class _CalendarCellWidget extends StatelessWidget {
     int currentDay = 0;
     for (final sequence in sequences) {
       if (cyclePosition < currentDay + sequence.consecutiveDays) {
-        final workShift = _settingsProvider.allWorkShifts.firstWhere(
+        final workShift = _scheduleProvider.allWorkShifts.firstWhere(
           (shift) => shift.id == sequence.workShiftId,
           orElse: () => WorkShift.createDefault(),
         );
@@ -733,7 +720,6 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
   final DateTime _currentDay;
   final ScheduleProvider _scheduleProvider;
   final double _fontSize;
-  final SettingsProvider _settingsProvider;
 
   const _ComparisonCalendarCellWidget({
     required int day,
@@ -742,20 +728,17 @@ class _ComparisonCalendarCellWidget extends StatelessWidget {
     required ScheduleProvider scheduleProvider,
     required List<List<Color>> comparisonColors,
     required double fontSize,
-    required SettingsProvider settingsProvider,
   }) : _day = day,
        _isToday = isToday,
        _currentDay = currentDay,
        _scheduleProvider = scheduleProvider,
-       _fontSize = fontSize,
-       _settingsProvider = settingsProvider;
+       _fontSize = fontSize;
 
   @override
   Widget build(BuildContext context) {
     final colors = _scheduleProvider.getComparisonColorsForDate(
       _currentDay,
-      _settingsProvider.workShifts,
-      _settingsProvider,
+      _scheduleProvider.workShifts,
     );
 
     Color firstColor = colors[0];

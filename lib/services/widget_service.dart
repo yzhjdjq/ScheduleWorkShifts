@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/services.dart' show MethodChannel, PlatformException;
 
 class WidgetService {
   static const platform = MethodChannel('ru.yzhjdjq.sws/widget');

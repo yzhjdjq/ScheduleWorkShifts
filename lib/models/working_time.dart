@@ -1,36 +1,21 @@
 import 'package:flutter/material.dart' show BuildContext, MaterialLocalizations, TimeOfDay;
 
 class WorkingTime {
-  TimeOfDay? startTime;
-  TimeOfDay? endTime;
-  Duration? duration;
+  final TimeOfDay? startTime;
+  final TimeOfDay? endTime;
 
-  WorkingTime();
+  const WorkingTime({this.startTime, this.endTime});
 
-  String getDisplayText(BuildContext context) {
-    if (startTime != null && endTime != null) {
-      return '${_formatTimeOfDay(startTime!, context)} - ${_formatTimeOfDay(endTime!, context)}';
-    }
-    return 'Выберите время';
-  }
+  Duration? get duration {
+    if (startTime == null || endTime == null) return null;
 
-  String _formatTimeOfDay(TimeOfDay time, BuildContext context) {
-    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
-  }
+    final startMinutes = startTime!.hour * 60 + startTime!.minute;
+    final endMinutes = endTime!.hour * 60 + endTime!.minute;
 
-  void calculateDuration() {
-    if (startTime != null && endTime != null) {
-      final startMinutes = startTime!.hour * 60 + startTime!.minute;
-      final endMinutes = endTime!.hour * 60 + endTime!.minute;
-
-      int totalMinutes;
-      if (endMinutes >= startMinutes) {
-        totalMinutes = endMinutes - startMinutes;
-      } else {
-        totalMinutes = (24 * 60 - startMinutes) + endMinutes;
-      }
-
-      duration = Duration(minutes: totalMinutes);
+    if (endMinutes >= startMinutes) {
+      return Duration(minutes: endMinutes - startMinutes);
+    } else {
+      return Duration(minutes: (24 * 60 - startMinutes) + endMinutes);
     }
   }
 
@@ -43,32 +28,60 @@ class WorkingTime {
     return '0ч 0м';
   }
 
+  String getWorkingTimeText(BuildContext context) {
+    if (startTime != null && endTime != null) {
+      return '${formatTimeOfDay(startTime!, context)} - ${formatTimeOfDay(endTime!, context)}';
+    }
+    return 'Выберите время';
+  }
+
+  static String formatTimeOfDay(TimeOfDay? time, BuildContext context) {
+    if (time == null) {
+      return '--:--';
+    }
+    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'startTime': startTime != null ? {'hour': startTime!.hour, 'minute': startTime!.minute} : null,
       'endTime': endTime != null ? {'hour': endTime!.hour, 'minute': endTime!.minute} : null,
-      'durationInMinutes': duration?.inMinutes,
     };
   }
 
   static WorkingTime fromJson(Map<String, dynamic> json) {
-    final workingTime = WorkingTime();
+    TimeOfDay? start, end;
 
-    if (json['startTime'] != null) {
-      workingTime.startTime = TimeOfDay(
-        hour: json['startTime']['hour'] as int,
-        minute: json['startTime']['minute'] as int,
-      );
+    final startJson = json['startTime'];
+    if (startJson != null) {
+      start = TimeOfDay(hour: startJson['hour'], minute: startJson['minute']);
     }
 
-    if (json['endTime'] != null) {
-      workingTime.endTime = TimeOfDay(hour: json['endTime']['hour'] as int, minute: json['endTime']['minute'] as int);
+    final endJson = json['endTime'];
+    if (endJson != null) {
+      end = TimeOfDay(hour: endJson['hour'], minute: endJson['minute']);
     }
 
-    if (json['durationInMinutes'] != null) {
-      workingTime.duration = Duration(minutes: json['durationInMinutes'] as int);
-    }
+    return WorkingTime(startTime: start, endTime: end);
+  }
 
-    return workingTime;
+  WorkingTime copyWith({TimeOfDay? startTime, TimeOfDay? endTime}) {
+    return WorkingTime(startTime: startTime ?? this.startTime, endTime: endTime ?? this.endTime);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WorkingTime &&
+          runtimeType == other.runtimeType &&
+          startTime == other.startTime &&
+          endTime == other.endTime;
+
+  @override
+  int get hashCode => Object.hash(startTime, endTime);
+
+  @override
+  String toString() {
+    return 'WorkingTime(startTime: $startTime, endTime: $endTime, duration: $duration)';
   }
 }

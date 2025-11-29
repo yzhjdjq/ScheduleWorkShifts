@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' show ReadContext, WatchContext;
 
-import 'package:sws/models/work_shift.dart';
-import 'package:sws/models/schedule.dart';
-import 'package:sws/widgets/calendar_widget.dart';
-import 'package:sws/widgets/schedule_shifts_statistics_widget.dart';
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/providers/schedule_provider.dart';
+import 'package:sws/models/work_shift.dart' show WorkShift;
+import 'package:sws/models/schedule.dart' show Schedule;
+import 'package:sws/widgets/calendar_widget.dart' show CalendarWidget;
+import 'package:sws/widgets/schedule_shifts_statistics_widget.dart' show ScheduleShiftsStatistics;
+import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
+import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
 import 'package:sws/widgets/side_drawer_of_application_widget.dart' show MainDrawer;
 
 class HomePage extends StatefulWidget {
@@ -54,12 +54,12 @@ class _HomePageState extends State<HomePage> {
 
     if (scheduleProvider.isComparisonMode) {
       periodicColors = [];
-      comparisonColors = scheduleProvider.getColorsForComparison(settingsProvider.workShifts, _currentDate);
+      comparisonColors = scheduleProvider.getColorsForComparison(scheduleProvider.workShifts, _currentDate);
     } else {
       comparisonColors = [[], []];
       periodicColors =
           activeScheduleId != null && scheduleProvider.hasSchedules
-              ? scheduleProvider.getColorsForSchedule(activeScheduleId, settingsProvider.workShifts, _currentDate)
+              ? scheduleProvider.getColorsForSchedule(activeScheduleId, scheduleProvider.workShifts, _currentDate)
               : [];
     }
 
@@ -462,7 +462,7 @@ class _HomePageState extends State<HomePage> {
       return _buildComparisonLegend(settingsProvider, scheduleProvider);
     }
 
-    final workShifts = settingsProvider.workShifts;
+    final workShifts = scheduleProvider.workShifts;
 
     final List<WorkShift> shiftsToShow =
         activeScheduleId != null && scheduleProvider.hasSchedules
@@ -499,8 +499,8 @@ class _HomePageState extends State<HomePage> {
       orElse: () => Schedule(id: '', name: 'Неизвестно', startDate: DateTime.now()),
     );
 
-    final firstShifts = _getUsedShiftsInSchedule(settingsProvider.workShifts, scheduleProvider, firstScheduleId);
-    final secondShifts = _getUsedShiftsInSchedule(settingsProvider.workShifts, scheduleProvider, secondScheduleId);
+    final firstShifts = _getUsedShiftsInSchedule(scheduleProvider.workShifts, scheduleProvider, firstScheduleId);
+    final secondShifts = _getUsedShiftsInSchedule(scheduleProvider.workShifts, scheduleProvider, secondScheduleId);
 
     return Container(
       color: Colors.white,

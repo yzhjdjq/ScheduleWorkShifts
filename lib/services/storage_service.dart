@@ -1,6 +1,6 @@
-import 'dart:convert';
+import 'dart:convert' show jsonEncode, jsonDecode;
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart' show SharedPreferences;
 
 class StorageService {
   static late final SharedPreferences _prefs;

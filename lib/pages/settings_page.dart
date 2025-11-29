@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' show Consumer;
 
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/pages/settings_schedules_page.dart';
-import 'package:sws/pages/settings_shifts_page.dart';
+import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
+import 'package:sws/pages/settings_schedules_page.dart' show SettingsSchedulesPage;
+import 'package:sws/pages/settings_shifts_page.dart' show SettingsShiftsPage;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});

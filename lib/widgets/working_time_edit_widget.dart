@@ -17,34 +17,44 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
   @override
   void initState() {
     super.initState();
-    _workingTime =
-        WorkingTime()
-          ..startTime = widget.workingTime.startTime
-          ..endTime = widget.workingTime.endTime
-          ..duration = widget.workingTime.duration;
+    _workingTime = widget.workingTime;
+  }
+
+  @override
+  void didUpdateWidget(covariant WorkingTimeEditWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workingTime != widget.workingTime) {
+      _workingTime = widget.workingTime;
+    }
   }
 
   Future<void> _selectStartTime() async {
-    final selectedTime = await showTimePicker(context: context, initialTime: _workingTime.startTime ?? TimeOfDay.now());
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: _workingTime.startTime ?? TimeOfDay.now(),
+    );
 
     if (selectedTime != null) {
+      final updatedTime = _workingTime.copyWith(startTime: selectedTime);
       setState(() {
-        _workingTime.startTime = selectedTime;
-        _workingTime.calculateDuration();
-        widget.onTimeChanged(_workingTime);
+        _workingTime = updatedTime;
       });
+      widget.onTimeChanged(updatedTime);
     }
   }
 
   Future<void> _selectEndTime() async {
-    final selectedTime = await showTimePicker(context: context, initialTime: _workingTime.endTime ?? TimeOfDay.now());
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: _workingTime.endTime ?? TimeOfDay.now(),
+    );
 
     if (selectedTime != null) {
+      final updatedTime = _workingTime.copyWith(endTime: selectedTime);
       setState(() {
-        _workingTime.endTime = selectedTime;
-        _workingTime.calculateDuration();
-        widget.onTimeChanged(_workingTime);
+        _workingTime = updatedTime;
       });
+      widget.onTimeChanged(updatedTime);
     }
   }
 
@@ -96,21 +106,27 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
         GestureDetector(
           onTap: onTap,
           child: AbsorbPointer(
-            child: TextFormField(
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                suffixIcon: const Icon(Icons.access_time),
-                hintText: time != null ? _formatTimeOfDay(time, context) : '--:--',
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                color: Colors.transparent,
               ),
-              controller: TextEditingController(text: time != null ? _formatTimeOfDay(time, context) : ''),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    WorkingTime.formatTimeOfDay(time, context),
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const Icon(Icons.access_time, size: 18, color: Colors.grey),
+                ],
+              ),
             ),
           ),
         ),
       ],
     );
-  }
-
-  String _formatTimeOfDay(TimeOfDay time, BuildContext context) {
-    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
   }
 }

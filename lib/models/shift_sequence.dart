@@ -1,32 +1,39 @@
-class ShiftSequence {
-  String id;
-  String scheduleId;
-  String workShiftId;
-  int consecutiveDays;
-  int orderIndex;
-  DateTime startDate;
-  DateTime endDate;
+import 'package:sws/models/working_time.dart' show WorkingTime;
 
-  ShiftSequence({
+class ShiftSequence {
+  final String id;
+  final String scheduleId;
+  final String workShiftId;
+  final int consecutiveDays;
+  final int orderIndex;
+  final WorkingTime workingTime;
+
+  const ShiftSequence({
     required this.id,
     required this.scheduleId,
     required this.workShiftId,
     required this.consecutiveDays,
     required this.orderIndex,
-    required this.startDate,
-    required this.endDate,
+    required this.workingTime,
   });
 
-  ShiftSequence.copy(ShiftSequence other)
-    : this(
-        id: other.id,
-        scheduleId: other.scheduleId,
-        workShiftId: other.workShiftId,
-        consecutiveDays: other.consecutiveDays,
-        orderIndex: other.orderIndex,
-        startDate: other.startDate,
-        endDate: other.endDate,
-      );
+  ShiftSequence copyWith({
+    String? id,
+    String? scheduleId,
+    String? workShiftId,
+    int? consecutiveDays,
+    int? orderIndex,
+    WorkingTime? workingTime,
+  }) {
+    return ShiftSequence(
+      id: id ?? this.id,
+      scheduleId: scheduleId ?? this.scheduleId,
+      workShiftId: workShiftId ?? this.workShiftId,
+      consecutiveDays: consecutiveDays ?? this.consecutiveDays,
+      orderIndex: orderIndex ?? this.orderIndex,
+      workingTime: workingTime ?? this.workingTime,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,8 +42,7 @@ class ShiftSequence {
       'workShiftId': workShiftId,
       'consecutiveDays': consecutiveDays,
       'orderIndex': orderIndex,
-      'startDate': startDate.toIso8601String(),
-      'endDate': endDate.toIso8601String(),
+      'workingTime': workingTime.toJson(),
     };
   }
 
@@ -47,8 +53,34 @@ class ShiftSequence {
       workShiftId: json['workShiftId'] as String,
       consecutiveDays: json['consecutiveDays'] as int,
       orderIndex: json['orderIndex'] as int,
-      startDate: DateTime.parse((json['startDate'] as String)),
-      endDate: DateTime.parse((json['endDate'] as String)),
+      workingTime: WorkingTime.fromJson(json['workingTime'] as Map<String, dynamic>),
     );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is ShiftSequence &&
+    runtimeType == other.runtimeType &&
+    id == other.id &&
+    scheduleId == other.scheduleId &&
+    workShiftId == other.workShiftId &&
+    consecutiveDays == other.consecutiveDays &&
+    orderIndex == other.orderIndex &&
+    workingTime == other.workingTime;
+
+  @override
+  int get hashCode => Object.hash(id, scheduleId, workShiftId, consecutiveDays, orderIndex, workingTime);
+
+  @override
+  String toString() {
+    return 'ShiftSequence('
+        'id: $id, '
+        'scheduleId: $scheduleId, '
+        'workShiftId: $workShiftId, '
+        'consecutiveDays: $consecutiveDays, '
+        'orderIndex: $orderIndex, '
+        'workingTime: $workingTime'
+        ')';
   }
 }
