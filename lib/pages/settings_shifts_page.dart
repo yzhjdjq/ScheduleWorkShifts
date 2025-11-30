@@ -59,8 +59,6 @@ class SettingsShiftsPage extends StatelessWidget {
     var editedShift = shift;
     var selectedColor = shift.color;
 
-    final settingsProvider = context.read<SettingsProvider>();
-
     showDialog(
       context: context,
       builder:
@@ -79,14 +77,18 @@ class SettingsShiftsPage extends StatelessWidget {
                           decoration: const InputDecoration(labelText: 'Название смены', border: OutlineInputBorder()),
                         ),
                         const SizedBox(height: 20),
-                        _buildCategoryRadioButtons(editedShift, setState, (updatedShift) {
-                          editedShift = updatedShift;
+                        _buildCategoryRadioButtons(editedShift, (updatedShift) {
+                          setState(() {
+                            editedShift = updatedShift;
+                          });
                         }),
                         const SizedBox(height: 20),
                         ColorPickerWidget(
                           shift: editedShift.copyWith(color: selectedColor),
                           onColorChanged: (color) {
-                            selectedColor = color;
+                            setState(() {
+                              selectedColor = color;
+                            });
                           },
                         ),
                       ],
@@ -104,7 +106,7 @@ class SettingsShiftsPage extends StatelessWidget {
                       if (isNewShift && onSave != null) {
                         onSave(finalShift);
                       } else {
-                        settingsProvider.updateWorkShift(finalShift);
+                        context.read<SettingsProvider>().updateWorkShift(finalShift);
                       }
                       Navigator.pop(context);
                     },
@@ -117,7 +119,7 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryRadioButtons(WorkShift shift, StateSetter setState, void Function(WorkShift) onShiftUpdated) {
+  Widget _buildCategoryRadioButtons(WorkShift shift, void Function(WorkShift) onShiftUpdated) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -134,7 +136,6 @@ class SettingsShiftsPage extends StatelessWidget {
                   if (value != null) {
                     final updated = shift.copyWith(category: value);
                     onShiftUpdated(updated);
-                    setState(() {});
                   }
                 },
                 dense: true,
@@ -149,7 +150,6 @@ class SettingsShiftsPage extends StatelessWidget {
                   if (value != null) {
                     final updated = shift.copyWith(category: value);
                     onShiftUpdated(updated);
-                    setState(() {});
                   }
                 },
                 dense: true,
