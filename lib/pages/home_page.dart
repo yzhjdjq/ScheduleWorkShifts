@@ -82,8 +82,8 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 8),
 
-          if (settingsProvider.showShiftNameLegend)
-            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider, periodicColors),
+          if (settingsProvider.showShiftNameLegend && (periodicColors.isNotEmpty || comparisonColors.isNotEmpty))
+            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider),
 
           if (settingsProvider.showShiftNameLegend) const SizedBox(height: 8),
 
@@ -107,7 +107,6 @@ class _HomePageState extends State<HomePage> {
                 comparisonColors: comparisonColors,
                 showShiftNames: settingsProvider.showShiftName,
                 scheduleProvider: scheduleProvider,
-                settingsProvider: settingsProvider,
               ),
             ),
           ),
@@ -452,9 +451,8 @@ class _HomePageState extends State<HomePage> {
     String? activeScheduleId,
     SettingsProvider settingsProvider,
     ScheduleProvider scheduleProvider,
-    List<Color> periodicColors,
   ) {
-    if (!settingsProvider.showShiftNameLegend || periodicColors.isEmpty) {
+    if (!settingsProvider.showShiftNameLegend) {
       return const SizedBox.shrink();
     }
 

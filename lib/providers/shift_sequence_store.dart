@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart' show ChangeNotifier, Color;
 import 'package:sws/models/shift_sequence.dart' show ShiftSequence;
 import 'package:sws/models/work_shift.dart' show WorkShift;
