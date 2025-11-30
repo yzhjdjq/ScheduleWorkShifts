@@ -129,38 +129,30 @@ class ScheduleProvider extends BaseProviderMixin with ChangeNotifier, _ComparedS
     return _instance!;
   }
 
-  static Future<ScheduleProvider> initialize() async {
+  static Future<ScheduleProvider> initialize({
+    required ScheduleStore scheduleStore,
+    required WorkShiftStore workShiftStore,
+    required ShiftSequenceStore shiftSequenceStore,
+    required ScheduleExceptionStore scheduleExceptionStore,
+  }) async {
     if (_instance != null) {
       return _instance!;
     }
 
-    if (!ScheduleStore.isInitialized) {
-      await ScheduleStore.initialize();
-    }
-    if (!ShiftSequenceStore.isInitialized) {
-      await ShiftSequenceStore.initialize();
-    }
-    if (!ScheduleExceptionStore.isInitialized) {
-      await ScheduleExceptionStore.initialize();
-    }
-    if (!WorkShiftStore.isInitialized) {
-      await WorkShiftStore.initialize();
-    }
-
-    _instance = ScheduleProvider();
+    _instance = ScheduleProvider._(scheduleStore, workShiftStore, shiftSequenceStore, scheduleExceptionStore);
     await _instance!._loadFromStorage();
     return _instance!;
   }
 
-  ScheduleProvider() {
+  ScheduleProvider._(
+    this._scheduleStore,
+    this._workShiftStore,
+    this._shiftSequenceStore,
+    this._scheduleExceptionStore,
+  ) {
     if (_instance != null) {
       throw Exception('ScheduleProvider already initialized.');
     }
-
-    _scheduleStore = ScheduleStore.instance;
-    _workShiftStore = WorkShiftStore.instance;
-    _shiftSequenceStore = ShiftSequenceStore.instance;
-    _scheduleExceptionStore = ScheduleExceptionStore.instance;
 
     _scheduleStore.addListener(notify);
     _workShiftStore.addListener(notify);
@@ -170,10 +162,10 @@ class ScheduleProvider extends BaseProviderMixin with ChangeNotifier, _ComparedS
 
   static bool get isInitialized => _instance != null;
 
-  static late ScheduleStore _scheduleStore;
-  static late WorkShiftStore _workShiftStore;
-  static late ShiftSequenceStore _shiftSequenceStore;
-  static late ScheduleExceptionStore _scheduleExceptionStore;
+  late final ScheduleStore _scheduleStore;
+  late final WorkShiftStore _workShiftStore;
+  late final ShiftSequenceStore _shiftSequenceStore;
+  late final ScheduleExceptionStore _scheduleExceptionStore;
 
   @override
   ShiftSequenceStore _getShiftSequenceStore() => _shiftSequenceStore;

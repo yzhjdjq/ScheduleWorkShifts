@@ -3,15 +3,33 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'package:sws/pages/home_page.dart';
+import 'package:sws/providers/schedule_exception_store.dart';
 import 'package:sws/providers/schedule_provider.dart';
+import 'package:sws/providers/schedule_store.dart' show ScheduleStore;
 import 'package:sws/providers/settings_provider.dart';
+import 'package:sws/providers/shift_sequence_store.dart';
+import 'package:sws/providers/work_shift_store.dart' show WorkShiftStore;
 import 'package:sws/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.initialize();
-  await SettingsProvider.initialize();
-  await ScheduleProvider.initialize();
+  await ScheduleStore.initialize();
+  await WorkShiftStore.initialize();
+  await ShiftSequenceStore.initialize(scheduleStore: ScheduleStore.instance);
+  await ScheduleExceptionStore.initialize();
+  await SettingsProvider.initialize(
+    scheduleStore: ScheduleStore.instance,
+    workShiftStore: WorkShiftStore.instance,
+    shiftSequenceStore: ShiftSequenceStore.instance,
+    scheduleExceptionStore: ScheduleExceptionStore.instance,
+  );
+  await ScheduleProvider.initialize(
+    scheduleStore: ScheduleStore.instance,
+    workShiftStore: WorkShiftStore.instance,
+    shiftSequenceStore: ShiftSequenceStore.instance,
+    scheduleExceptionStore: ScheduleExceptionStore.instance,
+  );
   await initializeDateFormatting('ru', null);
   runApp(const MyApp());
 }

@@ -63,36 +63,30 @@ class SettingsProvider extends BaseProviderMixin
     return _instance!;
   }
 
-  static Future<SettingsProvider> initialize() async {
+  static Future<SettingsProvider> initialize({
+    required ScheduleStore scheduleStore,
+    required WorkShiftStore workShiftStore,
+    required ShiftSequenceStore shiftSequenceStore,
+    required ScheduleExceptionStore scheduleExceptionStore,
+  }) async {
     if (_instance != null) {
       return _instance!;
     }
 
-    if (!ScheduleStore.isInitialized) {
-      await ScheduleStore.initialize();
-    }
-    if (!WorkShiftStore.isInitialized) {
-      await WorkShiftStore.initialize();
-    }
-    if (!ShiftSequenceStore.isInitialized) {
-      await ShiftSequenceStore.initialize();
-    }
-    if (!ScheduleExceptionStore.isInitialized) {
-      await ScheduleExceptionStore.initialize();
-    }
-    _instance = SettingsProvider();
+    _instance = SettingsProvider._(scheduleStore, workShiftStore, shiftSequenceStore, scheduleExceptionStore);
     await _instance!._loadFromStorage();
     return _instance!;
   }
 
-  SettingsProvider() {
+  SettingsProvider._(
+    this._scheduleStore,
+    this._workShiftStore,
+    this._shiftSequenceStore,
+    this._scheduleExceptionStore,
+  ) {
     if (_instance != null) {
       throw Exception('SettingsProvider already initialized.');
     }
-    _scheduleStore = ScheduleStore.instance;
-    _workShiftStore = WorkShiftStore.instance;
-    _shiftSequenceStore = ShiftSequenceStore.instance;
-    _scheduleExceptionStore = ScheduleExceptionStore.instance;
 
     _scheduleStore.addListener(notify);
     _workShiftStore.addListener(notify);
@@ -102,10 +96,10 @@ class SettingsProvider extends BaseProviderMixin
 
   static bool get isInitialized => _instance != null;
 
-  static late ScheduleStore _scheduleStore;
-  static late WorkShiftStore _workShiftStore;
-  static late ShiftSequenceStore _shiftSequenceStore;
-  static late ScheduleExceptionStore _scheduleExceptionStore;
+  late final ScheduleStore _scheduleStore;
+  late final WorkShiftStore _workShiftStore;
+  late final ShiftSequenceStore _shiftSequenceStore;
+  late final ScheduleExceptionStore _scheduleExceptionStore;
 
   @override
   void notify() {
@@ -122,8 +116,7 @@ class SettingsProvider extends BaseProviderMixin
 
   void addSchedule(Schedule schedule) => _scheduleStore.addSchedule(schedule);
 
-  void updateSchedule(Schedule newSchedule) =>
-      _scheduleStore.updateSchedule(newSchedule);
+  void updateSchedule(Schedule newSchedule) => _scheduleStore.updateSchedule(newSchedule);
 
   void removeSchedule(String scheduleId) {
     _scheduleStore.removeSchedule(scheduleId);

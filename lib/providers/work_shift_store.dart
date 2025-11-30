@@ -35,9 +35,9 @@ class WorkShiftStore with ChangeNotifier {
   static const String _workShiftsKey = 'workShifts';
   static const String _vacationShiftKey = 'vacationShift';
   static const String _sickLeaveShiftKey = 'sickLeaveShift';
-  List<WorkShift> _workShifts = [];
-  WorkShift _vacationShift = WorkShift.vacation();
-  WorkShift _sickLeaveShift = WorkShift.sickLeave();
+  static List<WorkShift> _workShifts = [];
+  static WorkShift _vacationShift = WorkShift.vacation();
+  static WorkShift _sickLeaveShift = WorkShift.sickLeave();
 
   void _ensureMinimumWorkShifts() {
     _workShifts.add(WorkShift.createDefault());

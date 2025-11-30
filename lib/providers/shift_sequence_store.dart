@@ -15,24 +15,26 @@ class ShiftSequenceStore with ChangeNotifier {
     return _instance!;
   }
 
-  static Future<ShiftSequenceStore> initialize() async {
+  static Future<ShiftSequenceStore> initialize({required ScheduleStore scheduleStore}) async {
     if (_instance != null) {
       return _instance!;
     }
 
-    _instance = ShiftSequenceStore();
+    _instance = ShiftSequenceStore._(scheduleStore);
     await _instance!._loadFromStorage();
     return _instance!;
   }
 
-  ShiftSequenceStore() {
+  ShiftSequenceStore._(this._scheduleStore) {
     if (_instance != null) {
       throw Exception('ShiftSequenceStore is already initialized.');
     }
   }
 
   static bool get isInitialized => _instance != null;
-  
+
+  late final ScheduleStore _scheduleStore;
+
   static const String _shiftSequenceKey = 'shiftSequence';
   static const String _activeScheduleIdKey = 'activeScheduleId';
   static List<ShiftSequence> _shiftSequences = [];
@@ -52,9 +54,7 @@ class ShiftSequenceStore with ChangeNotifier {
   List<ShiftSequence> get shiftSequences => List<ShiftSequence>.unmodifiable(_shiftSequences);
 
   List<ShiftSequence> getSequencesForSchedule(String scheduleId) {
-    return _shiftSequences
-        .where((seq) => seq.scheduleId == scheduleId)
-        .toList()
+    return _shiftSequences.where((seq) => seq.scheduleId == scheduleId).toList()
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
   }
 
@@ -82,8 +82,8 @@ class ShiftSequenceStore with ChangeNotifier {
   }
 
   void removeSequencesForShift(String shiftId) {
-   _shiftSequences.removeWhere((seq) => seq.workShiftId == shiftId);
-   _saveShiftSequences();
+    _shiftSequences.removeWhere((seq) => seq.workShiftId == shiftId);
+    _saveShiftSequences();
   }
 
   void _saveShiftSequences() {
@@ -127,7 +127,7 @@ class ShiftSequenceStore with ChangeNotifier {
     final cycleColors = <Color>[];
     for (final sequence in sequences) {
       final workShift = workShifts.firstWhere(
-            (shift) => shift.id == sequence.workShiftId,
+        (shift) => shift.id == sequence.workShiftId,
         orElse: () => workShifts.isNotEmpty ? workShifts.first : WorkShift.createDefault(),
       );
 
@@ -148,28 +148,8 @@ class ShiftSequenceStore with ChangeNotifier {
   }
 
   DateTime? getFirstDayOfSchedule(String scheduleId) {
-    try {
-      if (!ScheduleStore.isInitialized) {
-        ScheduleStore.initialize();
-        if (kDebugMode) {
-          print("[ShiftSequenceStore] Ошибка: Сначала инициализируйте ScheduleStore, а затем ShiftSequenceStore.");
-        }
-      }
-      final ScheduleStore scheduleStore = ScheduleStore.instance;
-
-      final schedule = scheduleStore.schedules.firstWhereOrNull(
-              (s) => s.id == scheduleId
-      );
-      return schedule?.startDate;
-    }
-    catch (e) {
-      if (kDebugMode) {
-        print("[ShiftSequenceStore] Сначала инициализируйте ScheduleStore, а затем ShiftSequenceStore. Ошибка: $e");
-      }
-      ScheduleStore.initialize();
-    }
-
-    return null;
+    final schedule = _scheduleStore.schedules.firstWhereOrNull((s) => s.id == scheduleId);
+    return schedule?.startDate;
   }
 
   int getTotalCycleDaysForSchedule(String scheduleId) {
