@@ -3,7 +3,7 @@ import 'package:provider/provider.dart' show ReadContext, WatchContext;
 import 'package:uuid/uuid.dart' show Uuid;
 
 import 'package:sws/models/schedule.dart' show Schedule;
-import 'package:sws/models/work_shift.dart' show WorkShift;
+import 'package:sws/models/work_shift.dart' show ShiftCategory, WorkShift;
 import 'package:sws/models/working_time.dart' show WorkingTime;
 import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
 import 'package:sws/models/shift_sequence.dart' show ShiftSequence;
@@ -450,12 +450,33 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
   Widget _buildTimeCell(_ShiftRow row) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-      child: WorkingTimeWidget(
-        workingTime: row.workingTime,
-        onTimeChanged: (newTime) {
-          setState(() {
-            row.workingTime = newTime;
-          });
+      child: Builder(
+        builder: (context) {
+          final WorkShift? shift = row.selectedShift;
+
+          if (shift != null && shift.category == ShiftCategory.dayOff) {
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              alignment: Alignment.center,
+              child: Text(
+                'Выходной день',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: shift.color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          }
+
+          return WorkingTimeWidget(
+            workingTime: row.workingTime,
+            onTimeChanged: (newTime) {
+              setState(() {
+                row.workingTime = newTime;
+              });
+            },
+          );
         },
       ),
     );
