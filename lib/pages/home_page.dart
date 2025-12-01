@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext, WatchContext;
 
-import 'package:sws/models/work_shift.dart' show WorkShift;
-import 'package:sws/models/schedule.dart' show Schedule;
-import 'package:sws/widgets/calendar_widget.dart' show CalendarWidget;
-import 'package:sws/widgets/schedule_shifts_statistics_widget.dart' show ScheduleShiftsStatistics;
-import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
-import 'package:sws/widgets/side_drawer_of_application_widget.dart' show MainDrawer;
+import 'package:sws/models/models.dart' show WorkShift, Schedule;
+import 'package:sws/widgets/widgets.dart' show CalendarWidget, MainDrawer, ScheduleShiftsStatisticsWidget;
+import 'package:sws/providers/providers.dart' show SettingsProvider, ScheduleProvider;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -111,7 +107,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          Expanded(flex: 1, child: ScheduleShiftsStatistics(currentDate: _currentDate)),
+          Expanded(flex: 1, child: ScheduleShiftsStatisticsWidget(currentDate: _currentDate)),
         ],
       ),
     );

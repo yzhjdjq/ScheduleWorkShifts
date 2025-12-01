@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
+import 'package:provider/provider.dart' show ChangeNotifierProvider, MultiProvider;
 
-import 'package:sws/pages/home_page.dart';
-import 'package:sws/providers/schedule_exception_store.dart';
-import 'package:sws/providers/schedule_provider.dart';
-import 'package:sws/providers/schedule_store.dart' show ScheduleStore;
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/providers/shift_sequence_store.dart';
-import 'package:sws/providers/work_shift_store.dart' show WorkShiftStore;
-import 'package:sws/services/storage_service.dart';
+import 'package:sws/pages/pages.dart' show HomePage;
+import 'package:sws/providers/stores/stores.dart'
+    show ScheduleStore, WorkShiftStore, ShiftSequenceStore, ScheduleExceptionStore;
+import 'package:sws/providers/providers.dart' show SettingsProvider, ScheduleProvider;
+import 'package:sws/services/services.dart' show StorageService;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

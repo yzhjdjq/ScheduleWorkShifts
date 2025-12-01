@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:sws/models/work_shift.dart';
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/widgets/color_picker_widget.dart';
+import 'package:sws/models/models.dart' show WorkShift, ShiftCategory;
+import 'package:sws/providers/providers.dart' show SettingsProvider;
+import 'package:sws/widgets/widgets.dart' show ColorPickerWidget;
 
 class SettingsShiftsPage extends StatelessWidget {
   const SettingsShiftsPage({super.key});

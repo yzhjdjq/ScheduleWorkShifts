@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart' show ChangeNotifier;
-import 'package:sws/models/schedule_exception.dart' show ScheduleException;
-import 'package:sws/services/storage_service.dart' show StorageService;
+import 'package:sws/models/models.dart' show ScheduleException;
+import 'package:sws/services/services.dart' show StorageService;
 
 class ScheduleExceptionStore with ChangeNotifier {
   static ScheduleExceptionStore? _instance;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:sws/models/working_time.dart' show WorkingTime;
-import 'package:sws/widgets/working_time_edit_widget.dart' show WorkingTimeEditWidget;
+import 'package:sws/models/models.dart' show WorkingTime;
+import 'package:sws/widgets/widgets.dart' show WorkingTimeEditWidget;
 
 class WorkingTimeWidget extends StatelessWidget {
   final WorkingTime workingTime;

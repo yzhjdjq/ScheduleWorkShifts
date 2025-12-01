@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:uuid/uuid.dart' show Uuid;
-import 'package:sws/models/schedule_exception.dart' show ScheduleException;
-import 'package:sws/models/work_shift.dart' show WorkShift;
-import 'package:sws/models/working_time.dart' show WorkingTime;
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
-import 'package:sws/widgets/working_time_edit_widget.dart' show WorkingTimeEditWidget;
+import 'package:sws/models/models.dart' show ScheduleException, WorkShift, WorkingTime;
+import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/widgets/widgets.dart' show WorkingTimeEditWidget;
 
 void showDaySettingsDialog({
   required BuildContext context,

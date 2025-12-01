@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart' show ChangeNotifier, Color, Colors;
-import 'package:sws/models/schedule.dart' show Schedule;
-import 'package:sws/models/schedule_exception.dart' show ScheduleException;
-import 'package:sws/models/shift_sequence.dart' show ShiftSequence;
-import 'package:sws/models/work_shift.dart' show WorkShift;
+import 'package:sws/models/models.dart' show Schedule, ScheduleException, ShiftSequence, WorkShift;
 import 'package:sws/providers/base_provider_mixin.dart' show BaseProviderMixin;
-import 'package:sws/providers/schedule_exception_store.dart' show ScheduleExceptionStore;
-import 'package:sws/providers/schedule_store.dart' show ScheduleStore;
-import 'package:sws/providers/shift_sequence_store.dart' show ShiftSequenceStore;
-import 'package:sws/providers/work_shift_store.dart' show WorkShiftStore;
-import 'package:sws/services/storage_service.dart' show StorageService;
-import 'package:sws/services/widget_service.dart' show WidgetService;
+import 'package:sws/providers/stores/stores.dart'
+    show ScheduleExceptionStore, ScheduleStore, ShiftSequenceStore, WorkShiftStore;
+import 'package:sws/services/services.dart' show StorageService, WidgetService;
 import 'package:uuid/uuid.dart' show Uuid;
 
 mixin _ComparedScheduleMixin on BaseProviderMixin {

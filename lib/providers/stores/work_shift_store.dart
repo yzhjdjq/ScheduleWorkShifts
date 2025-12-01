@@ -1,8 +1,8 @@
 import 'dart:ui' show Color;
 
 import 'package:flutter/material.dart' show ChangeNotifier, Colors;
-import 'package:sws/models/work_shift.dart' show ShiftCategory, WorkShift;
-import 'package:sws/services/storage_service.dart' show StorageService;
+import 'package:sws/models/models.dart' show ShiftCategory, WorkShift;
+import 'package:sws/services/services.dart' show StorageService;
 import 'package:uuid/uuid.dart' show Uuid;
 
 class WorkShiftStore with ChangeNotifier {

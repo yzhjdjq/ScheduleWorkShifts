@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext, WatchContext;
 import 'package:uuid/uuid.dart' show Uuid;
 
-import 'package:sws/models/schedule.dart' show Schedule;
-import 'package:sws/models/work_shift.dart' show ShiftCategory, WorkShift;
-import 'package:sws/models/working_time.dart' show WorkingTime;
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
-import 'package:sws/models/shift_sequence.dart' show ShiftSequence;
-import 'package:sws/widgets/working_time_widget.dart' show WorkingTimeWidget;
+import 'package:sws/models/models.dart' show Schedule, ShiftCategory, WorkShift, WorkingTime, ShiftSequence;
+import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/widgets/widgets.dart' show WorkingTimeWidget;
 
 class CreateSchedulePage extends StatefulWidget {
   const CreateSchedulePage({super.key});
@@ -460,11 +457,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
               alignment: Alignment.center,
               child: Text(
                 'Выходной день',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: shift.color,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 12, color: shift.color, fontWeight: FontWeight.bold),
               ),
             );
           }

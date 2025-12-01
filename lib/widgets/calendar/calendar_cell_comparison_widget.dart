@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
-import 'package:sws/widgets/diagonal_clipper.dart' show DiagonalClipper;
-import 'package:sws/widgets/diagonal_line_painter.dart' show DiagonalLinePainter;
+import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/widgets/calendar/calendar.dart' show DiagonalClipper, DiagonalLinePainter;
 
 class CalendarCellComparisonWidget extends StatelessWidget {
   final int day;

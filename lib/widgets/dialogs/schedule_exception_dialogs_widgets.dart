@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext;
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
+import 'package:sws/providers/providers.dart' show ScheduleProvider;
 
 void vacationDialogWidget(BuildContext context) {
   final scheduleProvider = context.read<ScheduleProvider>();

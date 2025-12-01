@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
-import 'package:sws/widgets/calendar_grid_widget.dart' show CalendarGridWidget;
-import 'package:sws/widgets/calendar_header_widget.dart' show CalendarHeaderWidget;
+import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/widgets/calendar/calendar.dart' show CalendarGridWidget, CalendarHeaderWidget;
 
 class CalendarWidget extends StatelessWidget {
   final DateTime currentDate;

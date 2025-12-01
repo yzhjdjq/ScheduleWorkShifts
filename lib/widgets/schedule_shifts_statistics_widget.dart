@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class ScheduleShiftsStatistics extends StatelessWidget {
+class ScheduleShiftsStatisticsWidget extends StatelessWidget {
   final DateTime _currentDate;
 
-  const ScheduleShiftsStatistics({super.key, required DateTime currentDate}) : _currentDate = currentDate;
+  const ScheduleShiftsStatisticsWidget({super.key, required DateTime currentDate}) : _currentDate = currentDate;
 
   @override
   Widget build(BuildContext context) {

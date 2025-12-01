@@ -1,9 +1,8 @@
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart' show ChangeNotifier, Color;
-import 'package:sws/models/shift_sequence.dart' show ShiftSequence;
-import 'package:sws/models/work_shift.dart' show WorkShift;
-import 'package:sws/providers/schedule_store.dart' show ScheduleStore;
-import 'package:sws/services/storage_service.dart' show StorageService;
+import 'package:sws/models/models.dart' show ShiftSequence, WorkShift;
+import 'package:sws/providers/stores/stores.dart' show ScheduleStore;
+import 'package:sws/services/services.dart' show StorageService;
 
 class ShiftSequenceStore with ChangeNotifier {
   static ShiftSequenceStore? _instance;

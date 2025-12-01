@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'package:sws/models/work_shift.dart' show ShiftCategory, WorkShift;
+import 'package:sws/models/models.dart' show ShiftCategory, WorkShift;
 
 class ColorPickerWidget extends StatefulWidget {
   final WorkShift shift;

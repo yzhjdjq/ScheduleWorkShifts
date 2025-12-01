@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/work_shift.dart' show WorkShift;
-import 'package:sws/providers/schedule_provider.dart' show ScheduleProvider;
-import 'package:sws/widgets/calendar_cell_empty_widget.dart' show CalendarCellEmptyWidget;
-import 'package:sws/widgets/calendar_cell_widget.dart' show CalendarCellWidget;
-import 'package:sws/widgets/calendar_cell_comparison_widget.dart' show CalendarCellComparisonWidget;
-import 'package:sws/widgets/day_settings_dialog.dart' show showDaySettingsDialog;
-import 'package:sws/widgets/exception_details_dialog.dart' show showExceptionDetailsDialog;
+import 'package:sws/models/models.dart' show WorkShift;
+import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/widgets/calendar/calendar.dart'
+    show CalendarCellEmptyWidget, CalendarCellWidget, CalendarCellComparisonWidget;
+import 'package:sws/widgets/widgets.dart' show showDaySettingsDialog, showExceptionDetailsDialog;
 
 class CalendarGridWidget extends StatelessWidget {
   final int daysInMonth;

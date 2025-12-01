@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' show ChangeNotifier;
-import 'package:sws/models/schedule.dart' show Schedule;
-import 'package:sws/services/storage_service.dart' show StorageService;
+import 'package:sws/models/models.dart' show Schedule;
+import 'package:sws/services/services.dart' show StorageService;
 
 class ScheduleStore with ChangeNotifier {
   static ScheduleStore? _instance;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show Consumer, ReadContext;
 
-import 'package:sws/providers/settings_provider.dart' show SettingsProvider;
-import 'package:sws/models/schedule.dart' show Schedule;
+import 'package:sws/providers/providers.dart' show SettingsProvider;
+import 'package:sws/models/models.dart' show Schedule;
 
 class SettingsSchedulesPage extends StatelessWidget {
   const SettingsSchedulesPage({super.key});
