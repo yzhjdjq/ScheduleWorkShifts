@@ -72,7 +72,16 @@ class CalendarGridWidget extends StatelessWidget {
                     // 🔹 Обычный режим
                     final scheduleId = selectedScheduleId ?? scheduleProvider.getActiveScheduleId();
                     if (scheduleId == null || scheduleId.isEmpty) {
-                      return const Expanded(child: CalendarCellEmptyWidget());
+                      return Expanded(child: CalendarCellWidget(
+                        day: day,
+                        currentDay: currentDay,
+                        isToday: isToday,
+                        cellHeight: cellHeight,
+                        cellColor: Colors.grey.withAlpha(77),
+                        shiftName: '',
+                        showShiftName: false,
+                        onTap: () {},
+                      ));
                     }
 
                     final dayOffset = scheduleProvider.getDayOffsetForSchedule(scheduleId, currentDay);
