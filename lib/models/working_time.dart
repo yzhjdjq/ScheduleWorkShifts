@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart' show BuildContext, MaterialLocalizations, TimeOfDay;
-
 class WorkingTime {
-  final TimeOfDay? startTime;
-  final TimeOfDay? endTime;
+  final DateTime? startTime;
+  final DateTime? endTime;
 
   const WorkingTime({this.startTime, this.endTime});
 
@@ -19,29 +17,6 @@ class WorkingTime {
     }
   }
 
-  String get durationText {
-    if (duration != null) {
-      final hours = duration!.inHours;
-      final minutes = duration!.inMinutes % 60;
-      return '$hoursч $minutesм';
-    }
-    return '0ч 0м';
-  }
-
-  String getWorkingTimeText(BuildContext context) {
-    if (startTime != null && endTime != null) {
-      return '${formatTimeOfDay(startTime!, context)} - ${formatTimeOfDay(endTime!, context)}';
-    }
-    return 'Выберите время';
-  }
-
-  static String formatTimeOfDay(TimeOfDay? time, BuildContext context) {
-    if (time == null) {
-      return '--:--';
-    }
-    return MaterialLocalizations.of(context).formatTimeOfDay(time, alwaysUse24HourFormat: true);
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'startTime': startTime != null ? {'hour': startTime!.hour, 'minute': startTime!.minute} : null,
@@ -50,22 +25,22 @@ class WorkingTime {
   }
 
   static WorkingTime fromJson(Map<String, dynamic> json) {
-    TimeOfDay? start, end;
+    DateTime? start, end;
 
     final startJson = json['startTime'];
     if (startJson != null) {
-      start = TimeOfDay(hour: startJson['hour'], minute: startJson['minute']);
+      start = DateTime.now().copyWith(hour: startJson['hour'], minute: startJson['minute']);
     }
 
     final endJson = json['endTime'];
     if (endJson != null) {
-      end = TimeOfDay(hour: endJson['hour'], minute: endJson['minute']);
+      end = DateTime.now().copyWith(hour: endJson['hour'], minute: endJson['minute']);
     }
 
     return WorkingTime(startTime: start, endTime: end);
   }
 
-  WorkingTime copyWith({TimeOfDay? startTime, TimeOfDay? endTime}) {
+  WorkingTime copyWith({DateTime? startTime, DateTime? endTime}) {
     return WorkingTime(startTime: startTime ?? this.startTime, endTime: endTime ?? this.endTime);
   }
 

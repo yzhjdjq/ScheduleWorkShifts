@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class CalendarCellWidget extends StatelessWidget {
-  final int day;
   final DateTime currentDay;
   final bool isToday;
   final double cellHeight;
@@ -12,7 +11,6 @@ class CalendarCellWidget extends StatelessWidget {
 
   const CalendarCellWidget({
     super.key,
-    required this.day,
     required this.currentDay,
     required this.isToday,
     required this.cellHeight,
@@ -21,6 +19,18 @@ class CalendarCellWidget extends StatelessWidget {
     required this.showShiftName,
     required this.onTap,
   });
+
+  const CalendarCellWidget.simpleMode({
+    super.key,
+    required this.currentDay,
+    required this.isToday,
+    required this.cellHeight,
+  }) : cellColor = const Color(0x4D757575),
+       shiftName = '',
+       showShiftName = false,
+       onTap = _emptyOnTap;
+
+  static void _emptyOnTap() {}
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +59,7 @@ class CalendarCellWidget extends StatelessWidget {
               top: isToday ? 1 : 4,
               left: isToday ? 5 : 8,
               child: Text(
-                day.toString(),
+                currentDay.day.toString(),
                 style: TextStyle(
                   color: _getTextColorForBackground(isToday ? cellColorDark : cellColor),
                   fontWeight: isToday ? FontWeight.bold : FontWeight.normal,

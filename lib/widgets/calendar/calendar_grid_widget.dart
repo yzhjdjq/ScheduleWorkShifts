@@ -1,32 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/models.dart' show WorkShift;
-import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/providers/providers.dart' show CalendarWidgetProvider, WorkShiftItemViewModel;
 import 'package:sws/widgets/calendar/calendar.dart'
     show CalendarCellEmptyWidget, CalendarCellWidget, CalendarCellComparisonWidget;
-import 'package:sws/widgets/widgets.dart' show showDaySettingsDialog, showExceptionDetailsDialog;
 
 class CalendarGridWidget extends StatelessWidget {
+  final DateTime currentDate;
   final int daysInMonth;
   final int firstWeekday;
-  final DateTime currentDate;
-  final List<Color> periodicColors;
-  final String? selectedScheduleId;
-  final bool isComparisonMode;
-  final List<List<Color>> comparisonColors;
-  final bool showShiftNames;
-  final ScheduleProvider scheduleProvider;
+  final void Function(DateTime, WorkShiftItemViewModel) onDayCellTap;
+  final CalendarWidgetProvider calendarProvider;
 
   const CalendarGridWidget({
     super.key,
+    required this.currentDate,
     required this.daysInMonth,
     required this.firstWeekday,
-    required this.currentDate,
-    required this.periodicColors,
-    required this.selectedScheduleId,
-    required this.isComparisonMode,
-    required this.comparisonColors,
-    required this.showShiftNames,
-    required this.scheduleProvider,
+    required this.onDayCellTap,
+    required this.calendarProvider,
   });
 
   @override
@@ -35,7 +25,9 @@ class CalendarGridWidget extends StatelessWidget {
       builder: (context, constraints) {
         final pads = const EdgeInsets.all(6);
         final double availableHeight = constraints.maxHeight - pads.vertical;
-        final double cellHeight = availableHeight / 5;
+        final double countRowsInCalendarGrid = 5;
+        final double cellHeight = availableHeight / countRowsInCalendarGrid;
+        final int countDaysInWeek = 7;
 
         return Container(
           padding: pads,
@@ -44,8 +36,8 @@ class CalendarGridWidget extends StatelessWidget {
               return SizedBox(
                 height: cellHeight,
                 child: Row(
-                  children: List.generate(7, (col) {
-                    final cellIndex = row * 7 + col;
+                  children: List.generate(countDaysInWeek, (col) {
+                    final cellIndex = row * countDaysInWeek + col;
                     final day = cellIndex - firstWeekday + 2;
                     final isInRange = cellIndex >= firstWeekday - 1 && cellIndex < firstWeekday - 1 + daysInMonth;
 
@@ -54,110 +46,42 @@ class CalendarGridWidget extends StatelessWidget {
                     }
 
                     final currentDay = DateTime(currentDate.year, currentDate.month, day);
-                    final isToday = _isToday(day);
+                    final isToday = calendarProvider.isToday(day, currentDate);
 
-                    // 🔹 Режим сравнения
-                    if (isComparisonMode) {
+                    if (calendarProvider.isSimpleMode) {
                       return Expanded(
-                        child: CalendarCellComparisonWidget(
-                          day: day,
-                          isToday: isToday,
+                        child: CalendarCellWidget.simpleMode(
                           currentDay: currentDay,
-                          scheduleProvider: scheduleProvider,
+                          isToday: isToday,
                           cellHeight: cellHeight,
                         ),
                       );
                     }
 
-                    // 🔹 Обычный режим
-                    final scheduleId = selectedScheduleId ?? scheduleProvider.getActiveScheduleId();
-                    if (scheduleId == null || scheduleId.isEmpty) {
-                      return Expanded(child: CalendarCellWidget(
-                        day: day,
-                        currentDay: currentDay,
-                        isToday: isToday,
-                        cellHeight: cellHeight,
-                        cellColor: Colors.grey.withAlpha(77),
-                        shiftName: '',
-                        showShiftName: false,
-                        onTap: () {},
-                      ));
+                    if (calendarProvider.isComparisonMode) {
+                      return Expanded(
+                        child: CalendarCellComparisonWidget(
+                          isToday: isToday,
+                          currentDay: currentDay,
+                          cellHeight: cellHeight,
+                          calendarProvider: calendarProvider,
+                        ),
+                      );
                     }
 
-                    final dayOffset = scheduleProvider.getDayOffsetForSchedule(scheduleId, currentDay);
-                    final totalCycleDays = scheduleProvider.getTotalCycleDaysForSchedule(scheduleId);
-
-                    final bool hasValidCycle = totalCycleDays > 0;
-                    final bool isWithinCycle = dayOffset >= 0;
-
-                    Color cellColor;
-                    String shiftName = '';
-
-                    if (scheduleProvider.hasExceptionForDate(currentDay, scheduleId)) {
-                      final exception = scheduleProvider.getExceptionForDate(currentDay, scheduleId)!;
-                      final workShift = scheduleProvider.allWorkShifts.firstWhere(
-                        (s) => s.id == exception.workShiftId,
-                        orElse: () => WorkShift.createDefault(),
-                      );
-                      cellColor = workShift.color;
-                      shiftName = workShift.name;
-                    } else if (hasValidCycle && isWithinCycle) {
-                      final periodicColors = scheduleProvider.getColorsForSchedule(
-                        scheduleId,
-                        scheduleProvider.workShifts,
-                        currentDay,
-                      );
-                      final colorIndex = dayOffset % periodicColors.length;
-                      cellColor = periodicColors[colorIndex];
-
-                      final cyclePosition = dayOffset % totalCycleDays;
-                      final sequences =
-                          scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == scheduleId).toList()
-                            ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-
-                      int currentDayIndex = 0;
-                      for (final sequence in sequences) {
-                        if (cyclePosition < currentDayIndex + sequence.consecutiveDays) {
-                          final workShift = scheduleProvider.allWorkShifts.firstWhere(
-                            (s) => s.id == sequence.workShiftId,
-                            orElse: () => WorkShift.createDefault(),
-                          );
-                          shiftName = workShift.name;
-                          break;
-                        }
-                        currentDayIndex += sequence.consecutiveDays;
-                      }
-                    } else {
-                      cellColor = Colors.grey.withAlpha(77);
-                      shiftName = '';
-                    }
+                    final (cellColor, workShift) = calendarProvider.getCellColorAndWorkShiftNameByActiveScheduleMode(
+                      currentDay,
+                    );
 
                     return Expanded(
                       child: CalendarCellWidget(
-                        day: day,
                         currentDay: currentDay,
                         isToday: isToday,
                         cellHeight: cellHeight,
                         cellColor: cellColor,
-                        shiftName: shiftName,
-                        showShiftName: showShiftNames,
-                        onTap: () {
-                          if (scheduleProvider.hasExceptionForDate(currentDay, scheduleId)) {
-                            showExceptionDetailsDialog(
-                              context: context,
-                              day: currentDay,
-                              scheduleProvider: scheduleProvider,
-                              scheduleId: scheduleId,
-                            );
-                          } else {
-                            showDaySettingsDialog(
-                              context: context,
-                              day: currentDay,
-                              scheduleProvider: scheduleProvider,
-                              scheduleId: scheduleId,
-                            );
-                          }
-                        },
+                        shiftName: workShift.name,
+                        showShiftName: calendarProvider.showShiftName(),
+                        onTap: () => onDayCellTap(currentDay, workShift),
                       ),
                     );
                   }),
@@ -168,10 +92,5 @@ class CalendarGridWidget extends StatelessWidget {
         );
       },
     );
-  }
-
-  bool _isToday(int day) {
-    final now = DateTime.now();
-    return day == now.day && currentDate.month == now.month && currentDate.year == now.year;
   }
 }

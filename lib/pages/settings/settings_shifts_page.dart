@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' show ReadContext, Consumer;
 
-import 'package:sws/models/models.dart' show WorkShift, ShiftCategory;
-import 'package:sws/providers/providers.dart' show SettingsProvider;
+import 'package:sws/providers/providers.dart'
+    show SettingsShiftsPageProvider, ShiftCategoryViewModel, WorkShiftItemViewModel;
 import 'package:sws/widgets/widgets.dart' show ColorPickerWidget;
 
 class SettingsShiftsPage extends StatelessWidget {
   const SettingsShiftsPage({super.key});
 
   void _addNewShiftBtnHandler(BuildContext context) {
-    final newShift = WorkShift.createDefault();
+    final newShift = WorkShiftItemViewModel.createDefault();
     _editShiftDialogWidget(
       context,
       newShift,
       isNewShift: true,
       onSave: (savedShift) {
-        context.read<SettingsProvider>().addWorkShift(savedShift);
+        context.read<SettingsShiftsPageProvider>().addWorkShift(savedShift);
       },
     );
   }
 
-  void _editStaticShiftDialogWidget(BuildContext context, WorkShift shift) {
+  void _editStaticShiftDialogWidget(BuildContext context, WorkShiftItemViewModel shift) {
     var selectedColor = shift.color;
 
     showDialog(
@@ -39,7 +39,7 @@ class SettingsShiftsPage extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   // Сохраняем только при нажатии
-                  context.read<SettingsProvider>().updateStaticShiftColor(shift.id, selectedColor);
+                  context.read<SettingsShiftsPageProvider>().updateStaticShiftColor(shift.id, selectedColor);
                   Navigator.pop(context);
                 },
                 child: const Text('Сохранить'),
@@ -51,9 +51,9 @@ class SettingsShiftsPage extends StatelessWidget {
 
   void _editShiftDialogWidget(
     BuildContext context,
-    WorkShift shift, {
+    WorkShiftItemViewModel shift, {
     bool isNewShift = false,
-    void Function(WorkShift)? onSave,
+    void Function(WorkShiftItemViewModel)? onSave,
   }) {
     final textController = TextEditingController(text: shift.name);
     var editedShift = shift;
@@ -106,7 +106,7 @@ class SettingsShiftsPage extends StatelessWidget {
                       if (isNewShift && onSave != null) {
                         onSave(finalShift);
                       } else {
-                        context.read<SettingsProvider>().updateWorkShift(finalShift);
+                        context.read<SettingsShiftsPageProvider>().updateWorkShift(finalShift);
                       }
                       Navigator.pop(context);
                     },
@@ -119,7 +119,7 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryRadioButtons(WorkShift shift, void Function(WorkShift) onShiftUpdated) {
+  Widget _buildCategoryRadioButtons(WorkShiftItemViewModel shift, void Function(WorkShiftItemViewModel) onShiftUpdated) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -128,9 +128,9 @@ class SettingsShiftsPage extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              child: RadioListTile<ShiftCategory>(
+              child: RadioListTile<ShiftCategoryViewModel>(
                 title: const Text('Рабочий день'),
-                value: ShiftCategory.workingDay,
+                value: ShiftCategoryViewModel.workingDay,
                 groupValue: shift.category,
                 onChanged: (value) {
                   if (value != null) {
@@ -142,9 +142,9 @@ class SettingsShiftsPage extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: RadioListTile<ShiftCategory>(
+              child: RadioListTile<ShiftCategoryViewModel>(
                 title: const Text('Выходной'),
-                value: ShiftCategory.dayOff,
+                value: ShiftCategoryViewModel.dayOff,
                 groupValue: shift.category,
                 onChanged: (value) {
                   if (value != null) {
@@ -161,7 +161,7 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  void _deleteShiftBtnHandler(BuildContext context, WorkShift shift) {
+  void _deleteShiftBtnHandler(BuildContext context, WorkShiftItemViewModel shift) {
     showDialog(
       context: context,
       builder:
@@ -172,7 +172,7 @@ class SettingsShiftsPage extends StatelessWidget {
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
               TextButton(
                 onPressed: () {
-                  context.read<SettingsProvider>().removeWorkShift(shift.id);
+                  context.read<SettingsShiftsPageProvider>().removeWorkShift(shift.id);
                   Navigator.pop(context);
                 },
                 child: const Text('Удалить'),
@@ -182,7 +182,7 @@ class SettingsShiftsPage extends StatelessWidget {
     );
   }
 
-  void _editExistingShiftBtnHandler(BuildContext context, WorkShift shift) {
+  void _editExistingShiftBtnHandler(BuildContext context, WorkShiftItemViewModel shift) {
     if (shift.isStatic()) {
       _editStaticShiftDialogWidget(context, shift);
       return;
@@ -194,7 +194,7 @@ class SettingsShiftsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Настройка смен')),
-      body: Consumer<SettingsProvider>(
+      body: Consumer<SettingsShiftsPageProvider>(
         builder: (context, provider, child) {
           final workShifts = provider.allWorkShifts;
 
@@ -227,9 +227,9 @@ class SettingsShiftsPage extends StatelessWidget {
                       shift.isStatic()
                           ? null
                           : Text(
-                            shift.category == ShiftCategory.workingDay ? 'Рабочий день' : 'Выходной',
+                            shift.category == ShiftCategoryViewModel.workingDay ? 'Рабочий день' : 'Выходной',
                             style: TextStyle(
-                              color: shift.category == ShiftCategory.workingDay ? Colors.green : Colors.orange,
+                              color: shift.category == ShiftCategoryViewModel.workingDay ? Colors.green : Colors.orange,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

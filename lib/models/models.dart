@@ -1,3 +1,5 @@
+export 'active_schedules.dart' show ActiveSchedules;
+
 export 'schedule.dart' show Schedule;
 
 export 'schedule_exception.dart' show ScheduleException;

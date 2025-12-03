@@ -1,5 +1,4 @@
 import 'dart:ui' show Color;
-import 'package:flutter/material.dart' show Colors;
 import 'package:uuid/uuid.dart' show Uuid;
 
 enum ShiftCategory { dayOff, workingDay, vacation, sickLeave }
@@ -22,13 +21,12 @@ class WorkShift {
   }
 
   WorkShift copyWith({
-    String? id,
     String? name,
     ShiftCategory? category,
     Color? color,
   }) {
     return WorkShift(
-      id: id ?? this.id,
+      id: id,
       name: name ?? this.name,
       category: category ?? this.category,
       color: color ?? this.color,
@@ -40,28 +38,31 @@ class WorkShift {
       id: const Uuid().v4(),
       name: 'В день',
       category: ShiftCategory.workingDay,
-      color: Colors.brown,
+      color: const Color(0xFF864000),
     );
   }
 
-  // Статические смены — обычные фабричные методы, возвращают WorkShift
   static WorkShift vacation({Color? color}) {
     return WorkShift(
       id: 'vacation',
       name: 'Отпуск',
       category: ShiftCategory.vacation,
-      color: color ?? const Color(0xFFA5D6A7), // зелёный
+      color: color ?? const Color(0xFF00FF00),
     );
   }
+
+  bool isVacation() => category == ShiftCategory.vacation;
 
   static WorkShift sickLeave({Color? color}) {
     return WorkShift(
       id: 'sickLeave',
       name: 'Больничный',
       category: ShiftCategory.sickLeave,
-      color: color ?? const Color(0xFFFF8A80), // розовый
+      color: color ?? const Color(0xFFFF0000),
     );
   }
+
+  bool isSickLeave() => category == ShiftCategory.sickLeave;
 
   Map<String, dynamic> toJson() {
     return {

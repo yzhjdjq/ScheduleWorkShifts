@@ -18,7 +18,6 @@ class ScheduleException {
   });
 
   ScheduleException copyWith({
-    String? id,
     String? scheduleId,
     String? workShiftId,
     DateTime? startDate,
@@ -26,7 +25,7 @@ class ScheduleException {
     WorkingTime? workingTime,
   }) {
     return ScheduleException(
-      id: id ?? this.id,
+      id: id,
       scheduleId: scheduleId ?? this.scheduleId,
       workShiftId: workShiftId ?? this.workShiftId,
       startDate: startDate ?? this.startDate,

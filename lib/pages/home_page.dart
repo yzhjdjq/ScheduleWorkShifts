@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext, WatchContext;
-
-import 'package:sws/models/models.dart' show WorkShift, Schedule;
-import 'package:sws/widgets/widgets.dart' show CalendarWidget, MainDrawer, ScheduleShiftsStatisticsWidget;
-import 'package:sws/providers/providers.dart' show SettingsProvider, ScheduleProvider;
+import 'package:sws/providers/model_providers/model_providers.dart';
+import 'package:sws/widgets/widgets.dart'
+    show CalendarWidget, MainDrawer, ScheduleShiftsStatisticsWidget, showDaySettingsDialog, showExceptionDetailsDialog;
+import 'package:sws/providers/providers.dart'
+    show CalendarWidgetProvider, HomePageProvider, ScheduleItemViewModel, WorkShiftItemViewModel;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,7 +20,7 @@ class _HomePageState extends State<HomePage> {
 
   static const Color _primaryColor = Color(0xFF0E879C);
   static const Color _primaryLight = Color(0xFF4DA8B8);
-  static const Color _textColor = Colors.white;
+  static const Color _textColor = Color(0xFFFFFFFF);
 
   @override
   void initState() {
@@ -30,58 +31,44 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = context.watch<SettingsProvider>();
-    final scheduleProvider = context.watch<ScheduleProvider>();
+    final pageProvider = context.watch<HomePageProvider>();
 
-    // Получаем активный график
-    final activeScheduleId = scheduleProvider.getActiveScheduleId();
-    Schedule? activeSchedule;
-    if (activeScheduleId != null) {
-      activeSchedule = settingsProvider.schedules.firstWhere(
-        (schedule) => schedule.id == activeScheduleId,
-        orElse:
-            () => settingsProvider.schedules.isNotEmpty ? settingsProvider.schedules.first : Schedule.createDefault(),
-      );
-    }
+    final ScheduleItemViewModel? activeSchedule = pageProvider.activeSchedule;
 
-    // Получаем цвета в зависимости от режима
     final List<Color> periodicColors;
     final List<List<Color>> comparisonColors;
 
-    if (scheduleProvider.isComparisonMode) {
+    if (pageProvider.isComparisonMode) {
       periodicColors = [];
-      comparisonColors = scheduleProvider.getColorsForComparison(scheduleProvider.workShifts, _currentDate);
+      comparisonColors = pageProvider.getColorsForComparison(_currentDate);
     } else {
       comparisonColors = [[], []];
-      periodicColors =
-          activeScheduleId != null && scheduleProvider.hasSchedules
-              ? scheduleProvider.getColorsForSchedule(activeScheduleId, scheduleProvider.workShifts, _currentDate)
-              : [];
+      periodicColors = pageProvider.getColorsForActiveSchedule(_currentDate);
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getAppBarTitle(activeSchedule, scheduleProvider, settingsProvider)),
+        title: Text(pageProvider.getAppBarTitleText()),
         actions: <Widget>[
-          if (settingsProvider.schedules.length > 1)
+          if (pageProvider.hasSchedules())
             IconButton(
-              icon: Icon(scheduleProvider.isComparisonMode ? Icons.compare : Icons.calendar_today),
+              icon: Icon(pageProvider.isComparisonMode ? Icons.compare : Icons.calendar_today),
               onPressed: () => _showScheduleSelectionDialog(context),
-              tooltip: scheduleProvider.isComparisonMode ? 'Режим сравнения' : 'Выбрать график',
+              tooltip: pageProvider.isComparisonMode ? 'Режим сравнения' : 'Выбрать график',
             ),
         ],
       ),
       drawer: const MainDrawer(color: _primaryColor),
       body: Column(
         children: <Widget>[
-          _buildMonthSwitcher(activeScheduleId, settingsProvider, scheduleProvider),
+          _buildMonthSwitcher(),
 
           const SizedBox(height: 8),
 
-          if (settingsProvider.showShiftNameLegend && (periodicColors.isNotEmpty || comparisonColors.isNotEmpty))
-            _buildColorLegend(activeScheduleId, settingsProvider, scheduleProvider),
+          if (pageProvider.showShiftNameLegend() && (periodicColors.isNotEmpty || comparisonColors.isNotEmpty))
+            _buildColorLegend(activeSchedule?.id, pageProvider),
 
-          if (settingsProvider.showShiftNameLegend) const SizedBox(height: 8),
+          if (pageProvider.showShiftNameLegend()) const SizedBox(height: 8),
 
           Expanded(
             flex: 3,
@@ -97,12 +84,8 @@ class _HomePageState extends State<HomePage> {
                 currentDate: _currentDate,
                 daysInMonth: _daysInMonth,
                 firstWeekday: _firstWeekday,
-                periodicColors: periodicColors.isNotEmpty ? periodicColors : <Color>[Colors.grey],
-                selectedScheduleId: activeScheduleId,
-                isComparisonMode: scheduleProvider.isComparisonMode,
-                comparisonColors: comparisonColors,
-                showShiftNames: settingsProvider.showShiftName,
-                scheduleProvider: scheduleProvider,
+                onDayCellTap: _onDayCellTap,
+                calendarProvider: context.read<CalendarWidgetProvider>(),
               ),
             ),
           ),
@@ -113,76 +96,80 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showComparisonSelectionDialog(BuildContext context) {
-    final settingsProvider = context.read<SettingsProvider>();
-    final scheduleProvider = context.read<ScheduleProvider>();
-
-    // Логика предзаполнения графиков
-    String? firstScheduleId;
-    String? secondScheduleId;
-
-    // Если уже активно сопоставление - используем текущие графики
-    if (scheduleProvider.isComparisonMode) {
-      firstScheduleId = scheduleProvider.comparedScheduleIds[0];
-      secondScheduleId = scheduleProvider.comparedScheduleIds[1];
+  void _onDayCellTap(DateTime date, WorkShiftItemViewModel workShift) {
+    final pageProvider = context.read<HomePageProvider>();
+    if (pageProvider.hasExceptionForDateByActiveSchedule(date)) {
+      final ScheduleExceptionItemViewModel scheduleException = pageProvider.getExceptionForDateByActiveSchedule(date)!;
+      showExceptionDetailsDialog(
+        context: context,
+        day: date,
+        scheduleException: scheduleException,
+        workShift: workShift,
+        isNotStaticShiftScheduleException: pageProvider.isNotStaticShiftScheduleException(scheduleException),
+        onEditBtnClick: _onEditDayScheduleExceptionBtnClick,
+        onDeleteBtnClick: (se) => pageProvider.removeScheduleException(se.id),
+      );
     } else {
-      // Ищем настроенные графики
-      final configuredSchedules =
-          settingsProvider.schedules.where((schedule) {
-            return scheduleProvider.shiftSequences.any((seq) => seq.scheduleId == schedule.id);
-          }).toList();
-
-      if (configuredSchedules.length >= 2) {
-        firstScheduleId = configuredSchedules[0].id;
-        secondScheduleId = configuredSchedules[1].id;
-      } else if (configuredSchedules.length == 1 && settingsProvider.schedules.length >= 2) {
-        firstScheduleId = configuredSchedules[0].id;
-        // Второй график - первый доступный, отличный от первого
-        secondScheduleId =
-            settingsProvider.schedules.where((schedule) => schedule.id != firstScheduleId).firstOrNull?.id;
-      } else if (settingsProvider.schedules.length >= 2) {
-        firstScheduleId = settingsProvider.schedules[0].id;
-        secondScheduleId = settingsProvider.schedules[1].id;
-      }
+      showDaySettingsDialog(
+        context: context,
+        day: date,
+        selectedShift: workShift,
+        selectedShiftIsException: false,
+        workShifts: pageProvider.workShifts,
+        workingTime: pageProvider.getWorkingTimeForWorkShift(workShift),
+        onDeleteExceptionBtnClick: () {},
+        onSaveExceptionBtnClick: pageProvider.addScheduleExceptionForDay,
+      );
     }
+  }
+
+  void _onEditDayScheduleExceptionBtnClick(
+    ScheduleExceptionItemViewModel scheduleException,
+    DateTime day,
+    WorkShiftItemViewModel workShift,
+  ) {
+    final pageProvider = context.read<HomePageProvider>();
+    showDaySettingsDialog(
+      context: context,
+      day: day,
+      selectedShift: workShift,
+      selectedShiftIsException: true,
+      workShifts: pageProvider.workShifts,
+      workingTime: scheduleException.workingTime ?? WorkingTimeViewModel(),
+      onDeleteExceptionBtnClick: () => pageProvider.removeScheduleException(scheduleException.id),
+      onSaveExceptionBtnClick:
+          (workShift, date, workingTime) =>
+              pageProvider.updateScheduleException(scheduleException, workShift, date, workingTime),
+    );
+  }
+
+  void _showComparisonSelectionDialog(BuildContext context) {
+    final pageProvider = context.read<HomePageProvider>();
+
+    final (firstSchedule, secondSchedule) = pageProvider.getSchedulesForComparisonSetting();
+
+    if (firstSchedule == secondSchedule) return;
+
+    var (firstScheduleState, secondScheduleState) = (firstSchedule, secondSchedule);
 
     showDialog(
       context: context,
       builder:
           (context) => StatefulBuilder(
             builder: (context, setState) {
-              // Получаем доступные графики для второго комбобокса
-              final availableSecondSchedules =
-                  settingsProvider.schedules.where((schedule) => schedule.id != firstScheduleId).toList();
+              final availableSecondSchedules = pageProvider.getAvailableSchedulesForComparison(firstScheduleState);
 
-              // Проверяем валидность текущих значений
-              final isFirstScheduleValid =
-                  firstScheduleId != null &&
-                  settingsProvider.schedules.any((schedule) => schedule.id == firstScheduleId);
-
-              final isSecondScheduleValid =
-                  secondScheduleId != null &&
-                  availableSecondSchedules.any((schedule) => schedule.id == secondScheduleId);
-
-              // Автоматически исправляем невалидные значения
-              if (!isFirstScheduleValid) {
-                firstScheduleId = settingsProvider.schedules.firstOrNull?.id;
+              if (firstScheduleState.id == secondScheduleState.id) {
+                secondScheduleState = availableSecondSchedules.firstOrNull ?? secondScheduleState;
               }
 
-              if (!isSecondScheduleValid || firstScheduleId == secondScheduleId) {
-                secondScheduleId = availableSecondSchedules.firstOrNull?.id;
-              }
+              final areSchedulesDifferent = firstScheduleState.id != secondScheduleState.id;
 
-              // Финальная проверка
-              final areSchedulesDifferent =
-                  firstScheduleId != null && secondScheduleId != null && firstScheduleId != secondScheduleId;
-
-              // Функция для обмена графиков местами
               void swapSchedules() {
                 setState(() {
-                  final temp = firstScheduleId;
-                  firstScheduleId = secondScheduleId;
-                  secondScheduleId = temp;
+                  final temp = firstScheduleState;
+                  firstScheduleState = secondScheduleState;
+                  secondScheduleState = temp;
                 });
               }
 
@@ -193,15 +180,12 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      // Выбор первого графика
                       DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Первый график', border: OutlineInputBorder()),
-                        value: firstScheduleId,
+                        value: firstScheduleState.id,
                         items:
-                            settingsProvider.schedules.map((schedule) {
-                              final hasSequences = scheduleProvider.shiftSequences.any(
-                                (seq) => seq.scheduleId == schedule.id,
-                              );
+                            pageProvider.schedules.map((schedule) {
+                              final hasSequences = pageProvider.isScheduleHasSequences(schedule);
 
                               return DropdownMenuItem<String>(
                                 value: schedule.id,
@@ -222,18 +206,21 @@ class _HomePageState extends State<HomePage> {
                             }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            firstScheduleId = value;
-                            // При изменении первого графика автоматически выбираем первый доступный второй график
-                            final newAvailableSchedules =
-                                settingsProvider.schedules.where((schedule) => schedule.id != firstScheduleId).toList();
-
-                            secondScheduleId = newAvailableSchedules.firstOrNull?.id;
+                            if(value == null) {
+                              firstScheduleState = firstSchedule;
+                            } else {
+                              final schedule = pageProvider.getScheduleById(value);
+                              firstScheduleState = schedule ?? firstSchedule;
+                            }
+                            final newAvailableSchedules = pageProvider.getAvailableSchedulesForComparison(
+                              firstScheduleState,
+                            );
+                            secondScheduleState = newAvailableSchedules.firstOrNull ?? secondSchedule;
                           });
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      // Кнопка обмена местами
                       if (areSchedulesDifferent)
                         IconButton(
                           onPressed: swapSchedules,
@@ -249,15 +236,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                       const SizedBox(height: 16),
 
-                      // Выбор второго графика
                       DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Второй график', border: OutlineInputBorder()),
-                        value: secondScheduleId,
+                        value: secondScheduleState.id,
                         items:
                             availableSecondSchedules.map((schedule) {
-                              final hasSequences = scheduleProvider.shiftSequences.any(
-                                (seq) => seq.scheduleId == schedule.id,
-                              );
+                              final hasSequences = pageProvider.isScheduleHasSequences(schedule);
 
                               return DropdownMenuItem<String>(
                                 value: schedule.id,
@@ -278,12 +262,16 @@ class _HomePageState extends State<HomePage> {
                             }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            secondScheduleId = value;
+                            if(value == null) {
+                              secondScheduleState = secondSchedule;
+                            } else {
+                              final schedule = pageProvider.getScheduleById(value);
+                              secondScheduleState = schedule ?? secondSchedule;
+                            }
                           });
                         },
                       ),
 
-                      // Информационное сообщение
                       if (availableSecondSchedules.isEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
@@ -301,7 +289,7 @@ class _HomePageState extends State<HomePage> {
                     onPressed:
                         areSchedulesDifferent && availableSecondSchedules.isNotEmpty
                             ? () {
-                              scheduleProvider.enableComparisonMode(firstScheduleId!, secondScheduleId!);
+                              pageProvider.enableComparisonMode(firstScheduleState, secondScheduleState);
                               Navigator.pop(context);
                             }
                             : null,
@@ -315,8 +303,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showScheduleSelectionDialog(BuildContext context) {
-    final settingsProvider = context.read<SettingsProvider>();
-    final scheduleProvider = context.read<ScheduleProvider>();
+    final pageProvider = context.read<HomePageProvider>();
+    const int countListItemForComparisonMenu = 1;
 
     showDialog(
       context: context,
@@ -327,11 +315,10 @@ class _HomePageState extends State<HomePage> {
               width: double.maxFinite,
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: settingsProvider.schedules.length + 1, // +1 для пункта сравнения
+                itemCount: pageProvider.schedules.length + countListItemForComparisonMenu,
                 itemBuilder: (context, index) {
-                  // Последний пункт - сопоставление графиков
-                  if (index == settingsProvider.schedules.length) {
-                    final isComparisonActive = scheduleProvider.isComparisonMode;
+                  if (index == pageProvider.schedules.length) {
+                    final isComparisonActive = pageProvider.isComparisonMode;
 
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
@@ -355,9 +342,9 @@ class _HomePageState extends State<HomePage> {
                     );
                   }
 
-                  final schedule = settingsProvider.schedules[index];
-                  final hasSequences = scheduleProvider.shiftSequences.any((seq) => seq.scheduleId == schedule.id);
-                  final isActive = !scheduleProvider.isComparisonMode && scheduleProvider.isScheduleActive(schedule.id);
+                  final schedule = pageProvider.schedules[index];
+                  final hasSequences = pageProvider.isScheduleHasSequences(schedule);
+                  final isActive = !pageProvider.isComparisonMode && pageProvider.isScheduleActive(schedule);
 
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
@@ -377,9 +364,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.vertical(top: Radius.circular(12), bottom: Radius.circular(12)),
                       ),
                       onTap: () {
-                        // Устанавливаем активный график и отключаем режим сравнения
-                        scheduleProvider.disableComparisonMode();
-                        scheduleProvider.setActiveSchedule(schedule.id);
+                        pageProvider.onActiveScheduleChange(schedule);
                         Navigator.pop(context);
                       },
                     ),
@@ -392,34 +377,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _getAppBarTitle(
-    Schedule? activeSchedule,
-    ScheduleProvider scheduleProvider,
-    SettingsProvider settingsProvider,
-  ) {
-    if (scheduleProvider.isComparisonMode) {
-      final firstSchedule = settingsProvider.schedules.firstWhere(
-        (s) => s.id == scheduleProvider.comparedScheduleIds[0],
-        orElse: () => Schedule(id: '', name: 'Неизвестно', startDate: DateTime.now()),
-      );
-      final secondSchedule = settingsProvider.schedules.firstWhere(
-        (s) => s.id == scheduleProvider.comparedScheduleIds[1],
-        orElse: () => Schedule(id: '', name: 'Неизвестно', startDate: DateTime.now()),
-      );
-      return '${firstSchedule.name} / ${secondSchedule.name}';
-    }
-
-    if (activeSchedule != null) {
-      return activeSchedule.name;
-    }
-    return 'Главная';
-  }
-
-  Widget _buildMonthSwitcher(
-    String? activeScheduleId,
-    SettingsProvider settingsProvider,
-    ScheduleProvider scheduleProvider,
-  ) {
+  Widget _buildMonthSwitcher() {
     return Container(
       color: _primaryLight,
       padding: const EdgeInsets.all(0),
@@ -443,32 +401,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildColorLegend(
-    String? activeScheduleId,
-    SettingsProvider settingsProvider,
-    ScheduleProvider scheduleProvider,
-  ) {
-    if (!settingsProvider.showShiftNameLegend) {
+  Widget _buildColorLegend(String? activeScheduleId, HomePageProvider pageProvider) {
+    if (!pageProvider.showShiftNameLegend() || !pageProvider.hasSchedules() || activeScheduleId == null) {
       return const SizedBox.shrink();
     }
 
-    if (scheduleProvider.isComparisonMode) {
-      return _buildComparisonLegend(settingsProvider, scheduleProvider);
+    if (pageProvider.isComparisonMode) {
+      return _buildComparisonLegend(pageProvider);
     }
 
-    final workShifts = scheduleProvider.workShifts;
-
-    final List<WorkShift> shiftsToShow =
-        activeScheduleId != null && scheduleProvider.hasSchedules
-            ? _getUsedShiftsInSchedule(workShifts, scheduleProvider, activeScheduleId)
-            : workShifts;
+    final List<WorkShiftItemViewModel> shiftsToShow = pageProvider.getUsedShiftsInSchedule(activeScheduleId);
 
     if (shiftsToShow.isEmpty) {
       return Container();
     }
 
     return Container(
-      color: Colors.white,
+      color: const Color(0xFFFFFFFF),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -480,21 +429,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildComparisonLegend(SettingsProvider settingsProvider, ScheduleProvider scheduleProvider) {
-    final firstScheduleId = scheduleProvider.comparedScheduleIds[0];
-    final secondScheduleId = scheduleProvider.comparedScheduleIds[1];
-
-    final firstSchedule = settingsProvider.schedules.firstWhere(
-      (s) => s.id == firstScheduleId,
-      orElse: () => Schedule(id: '', name: 'Неизвестно', startDate: DateTime.now()),
-    );
-    final secondSchedule = settingsProvider.schedules.firstWhere(
-      (s) => s.id == secondScheduleId,
-      orElse: () => Schedule(id: '', name: 'Неизвестно', startDate: DateTime.now()),
-    );
-
-    final firstShifts = _getUsedShiftsInSchedule(scheduleProvider.workShifts, scheduleProvider, firstScheduleId);
-    final secondShifts = _getUsedShiftsInSchedule(scheduleProvider.workShifts, scheduleProvider, secondScheduleId);
+  Widget _buildComparisonLegend(HomePageProvider pageProvider) {
+    final firstSchedule = pageProvider.comparedSchedules.first;
+    final secondSchedule = pageProvider.comparedSchedules.last;
+    final (firstShifts, secondShifts) = pageProvider.getUsedShiftsInComparedSchedules();
 
     return Container(
       color: Colors.white,
@@ -536,20 +474,6 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
-
-  List<WorkShift> _getUsedShiftsInSchedule(
-    List<WorkShift> allShifts,
-    ScheduleProvider scheduleProvider,
-    String scheduleId,
-  ) {
-    final usedShiftIds =
-        scheduleProvider.shiftSequences
-            .where((seq) => seq.scheduleId == scheduleId)
-            .map((seq) => seq.workShiftId)
-            .toSet();
-
-    return allShifts.where((shift) => usedShiftIds.contains(shift.id)).toList();
   }
 
   Widget _buildLegendItem(String text, Color color) {

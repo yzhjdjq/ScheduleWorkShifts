@@ -18,7 +18,6 @@ class ShiftSequence {
   });
 
   ShiftSequence copyWith({
-    String? id,
     String? scheduleId,
     String? workShiftId,
     int? consecutiveDays,
@@ -26,7 +25,7 @@ class ShiftSequence {
     WorkingTime? workingTime,
   }) {
     return ShiftSequence(
-      id: id ?? this.id,
+      id: id,
       scheduleId: scheduleId ?? this.scheduleId,
       workShiftId: workShiftId ?? this.workShiftId,
       consecutiveDays: consecutiveDays ?? this.consecutiveDays,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/models.dart' show WorkingTime;
+import 'package:sws/providers/model_providers/model_providers.dart' show WorkingTimeViewModel;
 
 class WorkingTimeEditWidget extends StatefulWidget {
-  final WorkingTime workingTime;
-  final Function(WorkingTime) onTimeChanged;
+  final WorkingTimeViewModel workingTime;
+  final Function(WorkingTimeViewModel) onTimeChanged;
 
   const WorkingTimeEditWidget({super.key, required this.workingTime, required this.onTimeChanged});
 
@@ -12,7 +12,7 @@ class WorkingTimeEditWidget extends StatefulWidget {
 }
 
 class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
-  late WorkingTime _workingTime;
+  late WorkingTimeViewModel _workingTime;
 
   @override
   void initState() {
@@ -117,7 +117,7 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    WorkingTime.formatTimeOfDay(time, context),
+                    WorkingTimeViewModel.formatTimeOfDay(time, context),
                     style: const TextStyle(fontSize: 16),
                   ),
                   const Icon(Icons.access_time, size: 18, color: Colors.grey),

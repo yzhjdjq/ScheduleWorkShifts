@@ -3,30 +3,84 @@ import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
 import 'package:provider/provider.dart' show ChangeNotifierProvider, MultiProvider;
 
 import 'package:sws/pages/pages.dart' show HomePage;
-import 'package:sws/providers/stores/stores.dart'
-    show ScheduleStore, WorkShiftStore, ShiftSequenceStore, ScheduleExceptionStore;
-import 'package:sws/providers/providers.dart' show SettingsProvider, ScheduleProvider;
+import 'package:sws/providers/model_providers/model_providers.dart'
+    show
+        ActiveSchedulesProvider,
+        ScheduleExceptionProvider,
+        ScheduleProvider,
+        ShiftNameLegendSettingProvider,
+        ShiftNameSettingProvider,
+        ShiftSequenceProvider,
+        WorkShiftProvider;
+import 'package:sws/providers/providers.dart'
+    show
+        CalendarWidgetProvider,
+        HomePageProvider,
+        ScheduleExceptionDialogsProvider,
+        CreateSchedulePageProvider,
+        SettingsPageProvider,
+        SettingsSchedulePageProvider,
+        SettingsShiftsPageProvider;
 import 'package:sws/services/services.dart' show StorageService;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await StorageService.initialize();
-  await ScheduleStore.initialize();
-  await WorkShiftStore.initialize();
-  await ShiftSequenceStore.initialize(scheduleStore: ScheduleStore.instance);
-  await ScheduleExceptionStore.initialize();
-  await SettingsProvider.initialize(
-    scheduleStore: ScheduleStore.instance,
-    workShiftStore: WorkShiftStore.instance,
-    shiftSequenceStore: ShiftSequenceStore.instance,
-    scheduleExceptionStore: ScheduleExceptionStore.instance,
+
+  await ActiveSchedulesProvider.initialize();
+  await ScheduleExceptionProvider.initialize();
+  await ScheduleProvider.initialize();
+  await ShiftNameLegendSettingProvider.initialize();
+  await ShiftNameSettingProvider.initialize();
+  await ShiftSequenceProvider.initialize();
+  await WorkShiftProvider.initialize();
+
+  await HomePageProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    shiftNameSettingProvider: ShiftNameSettingProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
   );
-  await ScheduleProvider.initialize(
-    scheduleStore: ScheduleStore.instance,
-    workShiftStore: WorkShiftStore.instance,
-    shiftSequenceStore: ShiftSequenceStore.instance,
-    scheduleExceptionStore: ScheduleExceptionStore.instance,
+  await CreateSchedulePageProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
   );
+  await SettingsPageProvider.initialize(
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    shiftNameSettingProvider: ShiftNameSettingProvider.instance,
+  );
+  await SettingsSchedulePageProvider.initialize(
+    scheduleProvider: ScheduleProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+  );
+  await SettingsShiftsPageProvider.initialize(
+    workShiftProvider: WorkShiftProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+  );
+  await CalendarWidgetProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    shiftNameSettingProvider: ShiftNameSettingProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+  );
+  await ScheduleExceptionDialogsProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+  );
+
   await initializeDateFormatting('ru', null);
   runApp(const MyApp());
 }
@@ -40,8 +94,13 @@ class MyApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => SettingsProvider.instance),
-        ChangeNotifierProvider(create: (context) => ScheduleProvider.instance),
+        ChangeNotifierProvider(create: (context) => HomePageProvider.instance),
+        ChangeNotifierProvider(create: (context) => CreateSchedulePageProvider.instance),
+        ChangeNotifierProvider(create: (context) => SettingsPageProvider.instance),
+        ChangeNotifierProvider(create: (context) => SettingsSchedulePageProvider.instance),
+        ChangeNotifierProvider(create: (context) => SettingsShiftsPageProvider.instance),
+        ChangeNotifierProvider(create: (context) => CalendarWidgetProvider.instance),
+        ChangeNotifierProvider(create: (context) => ScheduleExceptionDialogsProvider.instance),
       ],
       child: MaterialApp(
         title: 'График смен',

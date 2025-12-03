@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext;
-import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/providers/providers.dart' show ScheduleExceptionDialogsProvider;
 
 void vacationDialogWidget(BuildContext context) {
-  final scheduleProvider = context.read<ScheduleProvider>();
-  final activeScheduleId = scheduleProvider.getActiveScheduleId();
+  final widgetProvider = context.read<ScheduleExceptionDialogsProvider>();
+  final activeScheduleId = widgetProvider.getActiveScheduleId();
 
-  if (scheduleProvider.isComparisonMode) {
+  if (widgetProvider.isComparisonMode()) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Нельзя добавить отпуск в режиме сравнения графиков. Сначала выберите один график.'),
@@ -34,14 +34,14 @@ void vacationDialogWidget(BuildContext context) {
     return;
   }
 
-  _exceptionDialogWidget(context, 'Добавить отпуск', activeScheduleId, scheduleProvider.addVacation);
+  _exceptionDialogWidget(context, 'Добавить отпуск', activeScheduleId, widgetProvider.addVacation);
 }
 
 void sickLeaveDialogWidget(BuildContext context) {
-  final scheduleProvider = context.read<ScheduleProvider>();
-  final activeScheduleId = scheduleProvider.getActiveScheduleId();
+  final widgetProvider = context.read<ScheduleExceptionDialogsProvider>();
+  final activeScheduleId = widgetProvider.getActiveScheduleId();
 
-  if (scheduleProvider.isComparisonMode) {
+  if (widgetProvider.isComparisonMode()) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Нельзя добавить больничный в режиме сравнения графиков. Сначала выберите один график.'),
@@ -69,7 +69,7 @@ void sickLeaveDialogWidget(BuildContext context) {
     return;
   }
 
-  _exceptionDialogWidget(context, 'Добавить больничный', activeScheduleId, scheduleProvider.addSickLeave);
+  _exceptionDialogWidget(context, 'Добавить больничный', activeScheduleId, widgetProvider.addSickLeave);
 }
 
 void _exceptionDialogWidget(
@@ -93,7 +93,6 @@ void _exceptionDialogWidget(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    // Поле выбора даты начала
                     GestureDetector(
                       onTap: () async {
                         final selectedDate = await showDatePicker(
@@ -127,7 +126,6 @@ void _exceptionDialogWidget(
                     ),
                     const SizedBox(height: 16),
 
-                    // Поле выбора даты окончания
                     GestureDetector(
                       onTap: () async {
                         final selectedDate = await showDatePicker(

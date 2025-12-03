@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/models.dart' show ShiftCategory, WorkShift;
+import 'package:sws/providers/model_providers/model_providers.dart' show WorkShiftItemViewModel, ShiftCategoryViewModel;
 
 class ColorPickerWidget extends StatefulWidget {
-  final WorkShift shift;
+  final WorkShiftItemViewModel shift;
   final ValueChanged<Color> onColorChanged; // Для редактирования в диалоге
   final VoidCallback? onColorConfirmed; // Вызывается, когда цвет выбран
 
@@ -136,7 +136,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
           ),
           child: Center(
             child: Text(
-              widget.shift.category == ShiftCategory.workingDay ? 'Рабочий день' : 'Выходной',
+              widget.shift.category == ShiftCategoryViewModel.workingDay ? 'Рабочий день' : 'Выходной',
               style: TextStyle(
                 color: _currentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
                 fontWeight: FontWeight.bold,

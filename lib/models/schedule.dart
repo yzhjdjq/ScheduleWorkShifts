@@ -4,26 +4,21 @@ class Schedule {
   final String id;
   final String name;
   final DateTime startDate;
-  final bool isActive;
 
   const Schedule({
     required this.id,
     required this.name,
     required this.startDate,
-    this.isActive = false,
   });
 
   Schedule copyWith({
-    String? id,
     String? name,
     DateTime? startDate,
-    bool? isActive,
   }) {
     return Schedule(
-      id: id ?? this.id,
+      id: id,
       name: name ?? this.name,
       startDate: startDate ?? this.startDate,
-      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -32,7 +27,6 @@ class Schedule {
       id: const Uuid().v4(),
       name: 'График',
       startDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
-      isActive: false,
     );
   }
 
@@ -41,7 +35,6 @@ class Schedule {
       'id': id,
       'name': name,
       'startDate': startDate.toIso8601String(),
-      'isActive': isActive,
     };
   }
 
@@ -50,7 +43,6 @@ class Schedule {
       id: json['id'] as String,
       name: json['name'] as String,
       startDate: DateTime.parse(json['startDate'] as String),
-      isActive: json['isActive'] as bool,
     );
   }
 
@@ -63,14 +55,13 @@ class Schedule {
     name == other.name &&
     startDate.year == other.startDate.year &&
     startDate.month == other.startDate.month &&
-    startDate.day == other.startDate.day &&
-    isActive == other.isActive;
+    startDate.day == other.startDate.day;
 
   @override
-  int get hashCode => Object.hash(id, name, startDate.year, startDate.month, startDate.day, isActive);
+  int get hashCode => Object.hash(id, name, startDate.year, startDate.month, startDate.day);
 
   @override
   String toString() {
-    return 'Schedule(id: $id, name: $name, startDate: $startDate, isActive: $isActive)';
+    return 'Schedule(id: $id, name: $name, startDate: $startDate)';
   }
 }

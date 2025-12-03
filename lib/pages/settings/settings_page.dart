@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show Consumer;
-
-import 'package:sws/providers/providers.dart' show SettingsProvider;
+import 'package:sws/providers/providers.dart' show SettingsPageProvider;
 import 'package:sws/pages/settings/settings.dart' show SettingsSchedulesPage, SettingsShiftsPage;
 
 class SettingsPage extends StatelessWidget {
@@ -11,7 +10,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Настройки')),
-      body: Consumer<SettingsProvider>(
+      body: Consumer<SettingsPageProvider>(
         builder: (context, settings, child) {
           return ListView(
             padding: const EdgeInsets.all(8),

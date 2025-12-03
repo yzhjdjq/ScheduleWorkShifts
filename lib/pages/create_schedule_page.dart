@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart' show Provider, ReadContext;
-import 'package:sws/models/models.dart' show Schedule, ShiftSequence, WorkShift, WorkingTime;
-import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:provider/provider.dart' show ReadContext, WatchContext;
+import 'package:sws/providers/providers.dart'
+    show
+        CreateSchedulePageProvider,
+        ScheduleItemViewModel,
+        ShiftSequenceItemViewModel,
+        WorkShiftItemViewModel,
+        WorkingTimeViewModel;
 import 'package:sws/widgets/widgets.dart'
     show
         CreateScheduleActionsWidget,
@@ -19,7 +24,7 @@ class CreateSchedulePage extends StatefulWidget {
 }
 
 class _CreateSchedulePageState extends State<CreateSchedulePage> {
-  Schedule? _selectedSchedule;
+  ScheduleItemViewModel? _selectedSchedule;
   DateTime? _firstWorkingDay;
   final List<ShiftRowData> _rows = [];
 
@@ -30,40 +35,31 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
   }
 
   void _loadScheduleData() {
-    final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+    final pageProvider = context.read<CreateSchedulePageProvider>();
 
-    if (scheduleProvider.schedules.isNotEmpty) {
-      final activeId = scheduleProvider.getActiveScheduleId() ?? '';
-      _selectedSchedule = scheduleProvider.schedules.firstWhere(
-        (s) => s.id == activeId,
-        orElse: () => scheduleProvider.schedules.first,
-      );
-      _firstWorkingDay = _selectedSchedule!.startDate;
+    if (pageProvider.hasSchedules()) {
+      _selectedSchedule = pageProvider.getActiveSchedule();
+      _firstWorkingDay = _selectedSchedule?.startDate;
 
-      final sequences =
-          scheduleProvider.shiftSequences.where((s) => s.scheduleId == _selectedSchedule!.id).toList()
-            ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+      final sequences = pageProvider.getShiftSequencesForSchedule(_selectedSchedule);
 
       if (sequences.isNotEmpty) {
-        _loadSequences(sequences, scheduleProvider);
+        _loadSequences(sequences);
       } else {
-        _loadDefaults(scheduleProvider);
+        _loadDefaults();
       }
     } else {
-      _loadDefaults(scheduleProvider);
+      _loadDefaults();
     }
   }
 
-  void _loadSequences(List<ShiftSequence> sequences, ScheduleProvider provider) {
+  void _loadSequences(List<ShiftSequenceItemViewModel> sequences) {
+    final pageProvider = context.read<CreateSchedulePageProvider>();
     setState(() {
       _rows.clear();
 
       for (final seq in sequences) {
-        final workShift = provider.workShifts.firstWhere(
-          (s) => s.id == seq.workShiftId,
-          orElse: () => provider.workShifts.first,
-        );
-
+        final workShift = pageProvider.getWorkShiftFromScheduleSequence(seq);
         _rows.add(
           ShiftRowData(
             selectedShift: workShift,
@@ -75,7 +71,8 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     });
   }
 
-  void _loadDefaults(ScheduleProvider provider) {
+  void _loadDefaults() {
+    final pageProvider = context.read<CreateSchedulePageProvider>();
     setState(() {
       _firstWorkingDay = _selectedSchedule?.startDate ?? DateTime.now();
       _rows.clear();
@@ -83,16 +80,17 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       for (int i = 0; i < 2; i++) {
         _rows.add(
           ShiftRowData(
-            selectedShift: i < provider.workShifts.length ? provider.workShifts[i] : provider.workShifts.firstOrNull,
+            selectedShift:
+                i < pageProvider.workShifts.length ? pageProvider.workShifts[i] : pageProvider.workShifts.firstOrNull,
             daysCount: '1',
-            workingTime: const WorkingTime(),
+            workingTime: const WorkingTimeViewModel(),
           ),
         );
       }
     });
   }
 
-  void _addRow() => setState(() => _rows.add(ShiftRowData(daysCount: '1', workingTime: const WorkingTime())));
+  void _addRow() => setState(() => _rows.add(ShiftRowData(daysCount: '1', workingTime: const WorkingTimeViewModel())));
 
   void _removeRow() {
     if (_rows.length > 2) {
@@ -120,22 +118,20 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       }
     }
 
-    final provider = Provider.of<ScheduleProvider>(context, listen: false);
+    final pageProvider = context.read<CreateSchedulePageProvider>();
 
-    provider.updateSchedule(_selectedSchedule!.copyWith(startDate: _firstWorkingDay));
+    pageProvider.updateSchedule(_selectedSchedule!.copyWith(startDate: _firstWorkingDay));
 
-    // Удаляем старые
-    final old = provider.shiftSequences.where((s) => s.scheduleId == _selectedSchedule!.id);
+    final old = pageProvider.shiftSequences.where((s) => s.scheduleId == _selectedSchedule!.id);
     for (final s in old) {
-      provider.removeShiftSequence(s.id);
+      pageProvider.removeShiftSequence(s.id);
     }
 
-    // Добавляем новые
     for (int i = 0; i < _rows.length; i++) {
       final row = _rows[i];
       final days = int.parse(row.daysCount);
 
-      final seq = ShiftSequence(
+      final seq = ShiftSequenceItemViewModel(
         id: const Uuid().v4(),
         scheduleId: _selectedSchedule!.id,
         workShiftId: row.selectedShift!.id,
@@ -144,7 +140,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
         workingTime: row.workingTime,
       );
 
-      provider.addShiftSequence(seq);
+      pageProvider.addShiftSequence(seq);
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -172,24 +168,23 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     );
   }
 
-  void _onScheduleChanged(Schedule? newValue) {
-    final scheduleProvider = context.read<ScheduleProvider>();
+  void _onScheduleChanged(String newValue) {
+    final pageProvider = context.read<CreateSchedulePageProvider>();
 
     setState(() {
-      _selectedSchedule = newValue;
-      _firstWorkingDay = newValue?.startDate;
-
-      final savedSequences = scheduleProvider.shiftSequences.where((seq) => seq.scheduleId == newValue?.id).toList();
-
-      if (savedSequences.isNotEmpty) {
-        _loadSequences(savedSequences, scheduleProvider);
-      } else {
-        _loadDefaults(scheduleProvider);
-      }
+      _selectedSchedule = pageProvider.getScheduleById(newValue);
+      _firstWorkingDay = _selectedSchedule?.startDate;
     });
+    final savedSequences = pageProvider.getShiftSequencesForSchedule(_selectedSchedule);
+
+    if (savedSequences.isNotEmpty) {
+      _loadSequences(savedSequences);
+    } else {
+      _loadDefaults();
+    }
   }
 
-  void _onShiftChanged(WorkShift? newValue, int index) {
+  void _onShiftChanged(WorkShiftItemViewModel? newValue, int index) {
     setState(() {
       _rows[index].selectedShift = newValue;
     });
@@ -201,7 +196,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     });
   }
 
-  void _onTimeChanged(WorkingTime newValue, int index) {
+  void _onTimeChanged(WorkingTimeViewModel newValue, int index) {
     setState(() {
       _rows[index].workingTime = newValue;
     });
@@ -217,7 +212,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ScheduleProvider>(context);
+    final pageProvider = context.watch<CreateSchedulePageProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Создать график')),
@@ -227,7 +222,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ScheduleSelectorWidget(
-              schedules: provider.schedules,
+              schedules: pageProvider.schedules,
               selectedSchedule: _selectedSchedule,
               onChanged: _onScheduleChanged,
             ),
@@ -249,7 +244,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
             const SizedBox(height: 20),
             ShiftSequenceListWidget(
               rows: _rows,
-              availableShifts: provider.workShifts,
+              availableShifts: pageProvider.workShifts,
               onShiftChanged: _onShiftChanged,
               onDaysChanged: _onDaysChanged,
               onTimeChanged: _onTimeChanged,

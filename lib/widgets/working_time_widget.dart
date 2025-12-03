@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-
-import 'package:sws/models/models.dart' show WorkingTime;
+import 'package:sws/providers/providers.dart' show WorkingTimeViewModel;
 import 'package:sws/widgets/widgets.dart' show WorkingTimeEditWidget;
 
 class WorkingTimeWidget extends StatelessWidget {
-  final WorkingTime workingTime;
-  final ValueChanged<WorkingTime> onTimeChanged;
+  final WorkingTimeViewModel workingTime;
+  final ValueChanged<WorkingTimeViewModel> onTimeChanged;
 
   const WorkingTimeWidget({
     super.key,
@@ -25,7 +24,7 @@ class WorkingTimeWidget extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () => _showWorkingTimeDialog(context),
+            onPressed: () => _showWorkingTimeViewModelDialog(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
               side: BorderSide(color: Colors.grey.shade400),
@@ -80,18 +79,18 @@ class WorkingTimeWidget extends StatelessWidget {
   }
 
   /// Диалог для настройки рабочего времени
-  void _showWorkingTimeDialog(BuildContext context) {
+  void _showWorkingTimeViewModelDialog(BuildContext context) {
     // Локальная копия для редактирования
-    var tempWorkingTime = workingTime;
+    var tempWorkingTimeViewModel = workingTime;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Настройка рабочего времени'),
         content: WorkingTimeEditWidget(
-          workingTime: tempWorkingTime,
+          workingTime: tempWorkingTimeViewModel,
           onTimeChanged: (updated) {
-            tempWorkingTime = updated;
+            tempWorkingTimeViewModel = updated;
           },
         ),
         actions: [
@@ -101,8 +100,7 @@ class WorkingTimeWidget extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              // Сохраняем обновлённое значение через callback
-              onTimeChanged(tempWorkingTime);
+              onTimeChanged(tempWorkingTimeViewModel);
               Navigator.pop(context);
             },
             child: const Text('Сохранить'),

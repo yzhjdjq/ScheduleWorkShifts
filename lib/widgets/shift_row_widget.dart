@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/models.dart' show ShiftCategory, WorkShift, WorkingTime;
+import 'package:sws/providers/model_providers/model_providers.dart'
+    show ShiftCategoryViewModel, WorkShiftItemViewModel, WorkingTimeViewModel;
 import 'package:sws/widgets/widgets.dart' show WorkingTimeWidget;
 
 class ShiftRowWidget extends StatelessWidget {
-  final WorkShift? selectedShift;
-  final List<WorkShift> availableShifts;
+  final WorkShiftItemViewModel? selectedShift;
+  final List<WorkShiftItemViewModel> availableShifts;
   final String daysCount;
   final TextEditingController daysController;
-  final WorkingTime workingTime;
-  final ValueChanged<WorkShift?> onShiftChanged;
+  final WorkingTimeViewModel workingTime;
+  final ValueChanged<WorkShiftItemViewModel?> onShiftChanged;
   final ValueChanged<String> onDaysChanged;
-  final ValueChanged<WorkingTime> onTimeChanged;
+  final ValueChanged<WorkingTimeViewModel> onTimeChanged;
   final VoidCallback onRemove;
   final bool canRemove;
 
@@ -43,28 +44,29 @@ class ShiftRowWidget extends StatelessWidget {
   Widget _buildShiftCell(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-      child: DropdownButton<WorkShift>(
+      child: DropdownButton<WorkShiftItemViewModel>(
         isExpanded: true,
         value: selectedShift,
         hint: const Text('Выберите смену', style: TextStyle(fontSize: 14)),
-        items: availableShifts.map((shift) {
-          return DropdownMenuItem<WorkShift>(
-            value: shift,
-            child: Row(
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(color: shift.color, shape: BoxShape.circle),
+        items:
+            availableShifts.map((shift) {
+              return DropdownMenuItem<WorkShiftItemViewModel>(
+                value: shift,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(color: shift.color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(shift.name, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(shift.name, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
         onChanged: onShiftChanged,
       ),
     );
@@ -96,25 +98,18 @@ class ShiftRowWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
       child: Builder(
         builder: (context) {
-          if (selectedShift?.category == ShiftCategory.dayOff) {
+          if (selectedShift?.category == ShiftCategoryViewModel.dayOff) {
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               alignment: Alignment.center,
               child: Text(
                 'Выходной день',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: selectedShift?.color,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 12, color: selectedShift?.color, fontWeight: FontWeight.bold),
               ),
             );
           }
 
-          return WorkingTimeWidget(
-            workingTime: workingTime,
-            onTimeChanged: onTimeChanged,
-          );
+          return WorkingTimeWidget(workingTime: workingTime, onTimeChanged: onTimeChanged);
         },
       ),
     );
@@ -123,29 +118,27 @@ class ShiftRowWidget extends StatelessWidget {
   Widget _buildDeleteCell() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-      child: canRemove
-          ? IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              onPressed: onRemove,
-            )
-          : const SizedBox(width: 32, height: 32),
+      child:
+          canRemove
+              ? IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: onRemove,
+              )
+              : const SizedBox(width: 32, height: 32),
     );
   }
 }
 
 class ShiftRowData {
-  WorkShift? selectedShift;
+  WorkShiftItemViewModel? selectedShift;
   String daysCount;
   final TextEditingController daysController;
-  WorkingTime workingTime;
+  WorkingTimeViewModel workingTime;
 
-  ShiftRowData({
-    this.selectedShift,
-    required this.daysCount,
-    required this.workingTime,
-  }) : daysController = TextEditingController(text: daysCount) {
+  ShiftRowData({this.selectedShift, required this.daysCount, required this.workingTime})
+    : daysController = TextEditingController(text: daysCount) {
     daysController.addListener(() {
       daysCount = daysController.text;
     });

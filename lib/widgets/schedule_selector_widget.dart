@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/models.dart' show Schedule;
+import 'package:sws/providers/providers.dart' show ScheduleItemViewModel;
 
 class ScheduleSelectorWidget extends StatelessWidget {
-  final List<Schedule> schedules;
-  final Schedule? selectedSchedule;
-  final ValueChanged<Schedule?> onChanged;
+  final List<ScheduleItemViewModel> schedules;
+  final ScheduleItemViewModel? selectedSchedule;
+  final ValueChanged<String> onChanged;
 
   const ScheduleSelectorWidget({
     super.key,
@@ -27,8 +27,7 @@ class ScheduleSelectorWidget extends StatelessWidget {
           }).toList(),
       onChanged: (String? newValue) {
         if (newValue == null) return;
-        final schedule = schedules.firstWhere((s) => s.id == newValue, orElse: () => schedules.first);
-        onChanged(schedule);
+        onChanged(newValue);
       },
     );
   }

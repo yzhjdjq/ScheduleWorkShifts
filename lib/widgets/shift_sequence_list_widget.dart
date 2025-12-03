@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:sws/models/models.dart' show WorkShift, WorkingTime;
+import 'package:sws/providers/providers.dart' show WorkShiftItemViewModel, WorkingTimeViewModel;
 import 'package:sws/widgets/widgets.dart' show ShiftRowWidget, ShiftRowData;
 
 class ShiftSequenceListWidget extends StatelessWidget {
   final List<ShiftRowData> rows;
-  final List<WorkShift> availableShifts;
-  final void Function(WorkShift? newShift, int indexRow) onShiftChanged;
+  final List<WorkShiftItemViewModel> availableShifts;
+  final void Function(WorkShiftItemViewModel? newShift, int indexRow) onShiftChanged;
   final void Function(String newDays, int indexRow) onDaysChanged;
-  final void Function(WorkingTime newWorkingTime, int indexRow) onTimeChanged;
+  final void Function(WorkingTimeViewModel newWorkingTime, int indexRow) onTimeChanged;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
 

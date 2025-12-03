@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show Consumer, ReadContext;
 
-import 'package:sws/providers/providers.dart' show SettingsProvider;
-import 'package:sws/models/models.dart' show Schedule;
+import 'package:sws/providers/providers.dart' show ScheduleItemViewModel, SettingsSchedulePageProvider;
 
 class SettingsSchedulesPage extends StatelessWidget {
   const SettingsSchedulesPage({super.key});
 
   void _addNewScheduleBtnHandler(BuildContext context) {
-    final settings = context.read<SettingsProvider>();
-    final newSchedule = Schedule.createDefault();
+    final settings = context.read<SettingsSchedulePageProvider>();
+    final newSchedule = ScheduleItemViewModel.createDefault();
 
     _editScheduleBtnHandler(
       context,
@@ -21,11 +20,11 @@ class SettingsSchedulesPage extends StatelessWidget {
 
   void _editScheduleBtnHandler(
     BuildContext context,
-    Schedule schedule, {
+    ScheduleItemViewModel schedule, {
     bool isNewSchedule = false,
-    void Function(Schedule)? onSave,
+    void Function(ScheduleItemViewModel)? onSave,
   }) {
-    final settings = context.read<SettingsProvider>();
+    final settings = context.read<SettingsSchedulePageProvider>();
     final textController = TextEditingController(text: schedule.name);
 
     showDialog(
@@ -57,7 +56,7 @@ class SettingsSchedulesPage extends StatelessWidget {
     );
   }
 
-  void _deleteScheduleBtnHandler(BuildContext context, Schedule schedule) {
+  void _deleteScheduleBtnHandler(BuildContext context, ScheduleItemViewModel schedule) {
     showDialog(
       context: context,
       builder:
@@ -68,7 +67,7 @@ class SettingsSchedulesPage extends StatelessWidget {
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
               TextButton(
                 onPressed: () {
-                  context.read<SettingsProvider>().removeSchedule(schedule.id);
+                  context.read<SettingsSchedulePageProvider>().removeSchedule(schedule.id);
                   Navigator.pop(context);
                 },
                 child: const Text('Удалить'),
@@ -82,7 +81,7 @@ class SettingsSchedulesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Настройка графиков')),
-      body: Consumer<SettingsProvider>(
+      body: Consumer<SettingsSchedulePageProvider>(
         builder: (context, settings, child) {
           return ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 4),

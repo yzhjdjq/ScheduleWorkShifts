@@ -1,28 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:sws/providers/providers.dart' show ScheduleProvider;
+import 'package:sws/providers/providers.dart' show CalendarWidgetProvider;
 import 'package:sws/widgets/calendar/calendar.dart' show DiagonalClipper, DiagonalLinePainter;
 
 class CalendarCellComparisonWidget extends StatelessWidget {
-  final int day;
   final bool isToday;
   final DateTime currentDay;
-  final ScheduleProvider scheduleProvider;
   final double cellHeight;
+  final CalendarWidgetProvider calendarProvider;
 
   const CalendarCellComparisonWidget({
     super.key,
-    required this.day,
     required this.isToday,
     required this.currentDay,
-    required this.scheduleProvider,
     required this.cellHeight,
+    required this.calendarProvider,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colors = scheduleProvider.getComparisonColorsForDate(currentDay, scheduleProvider.workShifts);
-    final firstColor = colors[0];
-    final secondColor = colors[1];
+    final (firstColor, secondColor) = calendarProvider.getComparisonColorsForDate(currentDay);
 
     final firstColorDark = _getDarkenedColor(firstColor);
     final secondColorDark = _getDarkenedColor(secondColor);
@@ -45,9 +41,9 @@ class CalendarCellComparisonWidget extends StatelessWidget {
       margin: const EdgeInsets.all(1),
       decoration: decoration,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
         child: Stack(
-          children: [
+          children: <Widget>[
             ClipPath(clipper: const DiagonalClipper(), child: Container(color: isToday ? firstColorDark : firstColor)),
             ClipPath(
               clipper: const DiagonalClipper(reverse: true),
@@ -58,7 +54,7 @@ class CalendarCellComparisonWidget extends StatelessWidget {
               top: isToday ? 1 : 4,
               left: isToday ? 5 : 8,
               child: Text(
-                day.toString(),
+                currentDay.day.toString(),
                 style: TextStyle(
                   color: _getTextColorForComparison(isToday ? firstColorDark : firstColor),
                   fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
