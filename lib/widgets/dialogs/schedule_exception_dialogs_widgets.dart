@@ -1,36 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext;
-import 'package:sws/providers/providers.dart' show ScheduleExceptionDialogsProvider;
+import 'package:sws/providers/providers.dart' show ScheduleExceptionDialogsProvider, SnackBarMessageProvider;
 
 void vacationDialogWidget(BuildContext context) {
   final widgetProvider = context.read<ScheduleExceptionDialogsProvider>();
   final activeScheduleId = widgetProvider.getActiveScheduleId();
 
   if (widgetProvider.isComparisonMode()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Нельзя добавить отпуск в режиме сравнения графиков. Сначала выберите один график.'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-        ),
-      ),
+    context.read<SnackBarMessageProvider>().showWarning(
+      'Нельзя добавить отпуск в режиме сравнения графиков. Сначала выберите один график.',
     );
     return;
   }
 
   if (activeScheduleId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Сначала выберите активный график'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-        ),
-      ),
-    );
+    context.read<SnackBarMessageProvider>().showWarning('Сначала выберите активный график');
     return;
   }
 
@@ -42,30 +26,14 @@ void sickLeaveDialogWidget(BuildContext context) {
   final activeScheduleId = widgetProvider.getActiveScheduleId();
 
   if (widgetProvider.isComparisonMode()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Нельзя добавить больничный в режиме сравнения графиков. Сначала выберите один график.'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-        ),
-      ),
+    context.read<SnackBarMessageProvider>().showWarning(
+      'Нельзя добавить больничный в режиме сравнения графиков. Сначала выберите один график.',
     );
     return;
   }
 
   if (activeScheduleId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Сначала выберите активный график'),
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-        ),
-      ),
-    );
+    context.read<SnackBarMessageProvider>().showWarning('Сначала выберите активный график');
     return;
   }
 
@@ -167,36 +135,15 @@ void _exceptionDialogWidget(
                       startDate != null && endDate != null
                           ? () {
                             if (endDate!.isBefore(startDate!)) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Дата окончания не может быть раньше даты начала'),
-                                  duration: Duration(seconds: 3),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(15),
-                                      bottom: Radius.circular(15),
-                                    ),
-                                  ),
-                                ),
+                              context.read<SnackBarMessageProvider>().showWarning(
+                                'Дата окончания не может быть раньше даты начала',
                               );
                               return;
                             }
 
                             onSave(scheduleId, startDate!, endDate!);
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('$title добавлен'),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(15),
-                                    bottom: Radius.circular(15),
-                                  ),
-                                ),
-                              ),
-                            );
+                            context.read<SnackBarMessageProvider>().showSuccess('$title - был добавлен');
                           }
                           : null,
                   child: const Text('Добавить'),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
-import 'package:sws/providers/model_providers/model_providers.dart' show WorkShiftItemViewModel, WorkingTimeViewModel;
+import 'package:provider/provider.dart' show ReadContext;
+import 'package:sws/providers/providers.dart'
+    show SnackBarMessageProvider, WorkShiftItemViewModel, WorkingTimeViewModel;
 import 'package:sws/widgets/widgets.dart' show WorkingTimeEditWidget;
 
 void showDaySettingsDialog({
@@ -80,14 +82,8 @@ void showDaySettingsDialog({
                         onPressed: () {
                           onDeleteExceptionBtnClick();
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Настройки для ${day.day}.${day.month} удалены'),
-                              behavior: SnackBarBehavior.floating,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-                              ),
-                            ),
+                          context.read<SnackBarMessageProvider>().showSuccess(
+                            'Настройки для ${day.day}.${day.month} удалены',
                           );
                         },
                         style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -99,17 +95,9 @@ void showDaySettingsDialog({
                               ? () {
                                 onSaveExceptionBtnClick(selectedShiftState, day, workingTimeState);
                                 Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Настройки для ${day.day}.${day.month} '
-                                      '${selectedShiftIsException ? 'обновлены' : 'добавлены'}',
-                                    ),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-                                    ),
-                                  ),
+                                context.read<SnackBarMessageProvider>().showSuccess(
+                                  'Настройки для ${day.day}.${day.month} '
+                                  '${selectedShiftIsException ? 'обновлены' : 'добавлены'}',
                                 );
                               }
                               : null,

@@ -15,4 +15,10 @@ export 'model_providers/model_providers.dart'
         WorkShiftItemViewModel,
         WorkingTimeViewModel;
 
-export 'widget_providers/widget_providers.dart' show CalendarWidgetProvider, ScheduleExceptionDialogsProvider;
+export 'widget_providers/widget_providers.dart'
+    show
+        CalendarWidgetProvider,
+        ScheduleExceptionDialogsProvider,
+        SnackBarMessageData,
+        SnackBarMessageProvider,
+        SnackBarMessageType;

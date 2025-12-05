@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
-import 'package:sws/providers/providers.dart' show ScheduleExceptionItemViewModel, WorkShiftItemViewModel;
+import 'package:provider/provider.dart' show ReadContext;
+import 'package:sws/providers/providers.dart'
+    show ScheduleExceptionItemViewModel, SnackBarMessageProvider, WorkShiftItemViewModel;
 
 void showExceptionDetailsDialog({
   required BuildContext context,
@@ -69,15 +71,7 @@ void showExceptionDetailsDialog({
                   onPressed: () {
                     onDeleteBtnClick(scheduleException);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${workShift.name} удалён'),
-                        behavior: SnackBarBehavior.floating,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-                        ),
-                      ),
-                    );
+                    context.read<SnackBarMessageProvider>().showSuccess('${workShift.name} удалён');
                   },
                   style: TextButton.styleFrom(foregroundColor: Colors.red),
                   child: const Text('Удалить'),

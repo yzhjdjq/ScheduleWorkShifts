@@ -21,6 +21,8 @@ export 'shift_sequence_list_widget.dart' show ShiftSequenceListWidget;
 
 export 'side_drawer_of_application_widget.dart' show MainDrawer;
 
+export 'snack_bar_handler.dart' show SnackBarHandler;
+
 export 'working_time_edit_widget.dart' show WorkingTimeEditWidget;
 
 export 'working_time_widget.dart' show WorkingTimeWidget;

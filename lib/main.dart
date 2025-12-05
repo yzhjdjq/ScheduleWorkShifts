@@ -15,13 +15,15 @@ import 'package:sws/providers/model_providers/model_providers.dart'
 import 'package:sws/providers/providers.dart'
     show
         CalendarWidgetProvider,
+        CreateSchedulePageProvider,
         HomePageProvider,
         ScheduleExceptionDialogsProvider,
-        CreateSchedulePageProvider,
         SettingsPageProvider,
         SettingsSchedulePageProvider,
-        SettingsShiftsPageProvider;
+        SettingsShiftsPageProvider,
+        SnackBarMessageProvider;
 import 'package:sws/services/services.dart' show StorageService;
+import 'package:sws/widgets/widgets.dart' show SnackBarHandler;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +103,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => SettingsShiftsPageProvider.instance),
         ChangeNotifierProvider(create: (context) => CalendarWidgetProvider.instance),
         ChangeNotifierProvider(create: (context) => ScheduleExceptionDialogsProvider.instance),
+        ChangeNotifierProvider(create: (context) => SnackBarMessageProvider()),
       ],
       child: MaterialApp(
         title: 'График смен',
@@ -114,7 +117,7 @@ class MyApp extends StatelessWidget {
           ),
           useMaterial3: true,
         ),
-        home: const HomePage(),
+        home: SnackBarHandler(child: const HomePage()),
       ),
     );
   }

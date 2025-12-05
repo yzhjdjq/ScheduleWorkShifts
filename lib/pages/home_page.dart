@@ -4,7 +4,12 @@ import 'package:sws/providers/model_providers/model_providers.dart';
 import 'package:sws/widgets/widgets.dart'
     show CalendarWidget, MainDrawer, ScheduleShiftsStatisticsWidget, showDaySettingsDialog, showExceptionDetailsDialog;
 import 'package:sws/providers/providers.dart'
-    show CalendarWidgetProvider, HomePageProvider, ScheduleItemViewModel, WorkShiftItemViewModel;
+    show
+        CalendarWidgetProvider,
+        HomePageProvider,
+        ScheduleItemViewModel,
+        SnackBarMessageProvider,
+        WorkShiftItemViewModel;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -148,7 +153,10 @@ class _HomePageState extends State<HomePage> {
 
     final (firstSchedule, secondSchedule) = pageProvider.getSchedulesForComparisonSetting();
 
-    if (firstSchedule == secondSchedule) return;
+    if (firstSchedule == secondSchedule) {
+      context.read<SnackBarMessageProvider>().showWarning('Недостаточно графиков для настройки сравнения');
+      return;
+    }
 
     var (firstScheduleState, secondScheduleState) = (firstSchedule, secondSchedule);
 
@@ -206,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                             }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            if(value == null) {
+                            if (value == null) {
                               firstScheduleState = firstSchedule;
                             } else {
                               final schedule = pageProvider.getScheduleById(value);
@@ -262,7 +270,7 @@ class _HomePageState extends State<HomePage> {
                             }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            if(value == null) {
+                            if (value == null) {
                               secondScheduleState = secondSchedule;
                             } else {
                               final schedule = pageProvider.getScheduleById(value);
@@ -289,6 +297,12 @@ class _HomePageState extends State<HomePage> {
                     onPressed:
                         areSchedulesDifferent && availableSecondSchedules.isNotEmpty
                             ? () {
+                              if (!pageProvider.isScheduleHasSequences(firstScheduleState) ||
+                                  !pageProvider.isScheduleHasSequences(secondScheduleState)) {
+                                context.read<SnackBarMessageProvider>().showWarning(
+                                  'Один(оба) графика для сопоставления не настроен(-ы)',
+                                );
+                              }
                               pageProvider.enableComparisonMode(firstScheduleState, secondScheduleState);
                               Navigator.pop(context);
                             }
@@ -364,6 +378,11 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.vertical(top: Radius.circular(12), bottom: Radius.circular(12)),
                       ),
                       onTap: () {
+                        if (!hasSequences) {
+                          context.read<SnackBarMessageProvider>().showWarning(
+                            'Выбрана в качестве активной ненастроенный график',
+                          );
+                        }
                         pageProvider.onActiveScheduleChange(schedule);
                         Navigator.pop(context);
                       },

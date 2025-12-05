@@ -5,6 +5,7 @@ import 'package:sws/providers/providers.dart'
         CreateSchedulePageProvider,
         ScheduleItemViewModel,
         ShiftSequenceItemViewModel,
+        SnackBarMessageProvider,
         WorkShiftItemViewModel,
         WorkingTimeViewModel;
 import 'package:sws/widgets/widgets.dart'
@@ -101,19 +102,19 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _saveSchedule() {
     if (_selectedSchedule == null || _firstWorkingDay == null) {
-      _showError('Заполните все обязательные поля');
+      context.read<SnackBarMessageProvider>().showError('Заполните все обязательные* поля');
       return;
     }
 
     for (int i = 0; i < _rows.length; i++) {
       final row = _rows[i];
       if (row.selectedShift == null) {
-        _showError('Выберите смену в строке ${i + 1}');
+        context.read<SnackBarMessageProvider>().showError('Выберите смену в строке ${i + 1}');
         return;
       }
       final days = int.tryParse(row.daysCount);
       if (days == null || days < 1 || days > 99) {
-        _showError('Некорректное количество дней в строке ${i + 1}');
+        context.read<SnackBarMessageProvider>().showError('Некорректное количество дней в строке ${i + 1}');
         return;
       }
     }
@@ -143,29 +144,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       pageProvider.addShiftSequence(seq);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('График сохранён'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-        ),
-      ),
-    );
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
-        ),
-      ),
-    );
+    context.read<SnackBarMessageProvider>().showSuccess('График сохранён');
   }
 
   void _onScheduleChanged(String newValue) {
