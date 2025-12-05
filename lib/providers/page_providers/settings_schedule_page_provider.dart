@@ -1,4 +1,6 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' show ChangeNotifier;
+import 'package:sws/providers/model_providers/active_schedules_provider.dart';
 import 'package:sws/services/services.dart' show WidgetService;
 import 'package:sws/providers/model_providers/model_providers.dart'
     show ScheduleExceptionProvider, ScheduleProvider, ScheduleItemViewModel, ShiftSequenceProvider;
@@ -13,6 +15,7 @@ class SettingsSchedulePageProvider with ChangeNotifier {
   }
 
   static Future<SettingsSchedulePageProvider> initialize({
+    required ActiveSchedulesProvider activeSchedulesProvider,
     required ScheduleProvider scheduleProvider,
     required ShiftSequenceProvider shiftSequenceProvider,
     required ScheduleExceptionProvider scheduleExceptionProvider,
@@ -21,40 +24,67 @@ class SettingsSchedulePageProvider with ChangeNotifier {
       return _instance!;
     }
 
-    _instance = SettingsSchedulePageProvider._(scheduleProvider, shiftSequenceProvider, scheduleExceptionProvider);
+    _instance = SettingsSchedulePageProvider._internal(
+      activeSchedulesProvider,
+      scheduleProvider,
+      shiftSequenceProvider,
+      scheduleExceptionProvider,
+    );
     return _instance!;
   }
 
-  SettingsSchedulePageProvider._(this._scheduleStore, this._shiftSequenceStore, this._scheduleExceptionStore) {
+  SettingsSchedulePageProvider._internal(
+    this._activeSchedulesProvider,
+    this._scheduleProvider,
+    this._shiftSequenceProvider,
+    this._scheduleExceptionProvider,
+  ) {
     if (_instance != null) {
       throw Exception('SettingsSchedulePageProvider already initialized.');
     }
 
-    _scheduleStore.addListener(notify);
-    _shiftSequenceStore.addListener(notify);
-    _scheduleExceptionStore.addListener(notify);
+    _activeSchedulesProvider.addListener(notify);
+    _scheduleProvider.addListener(notify);
+    _shiftSequenceProvider.addListener(notify);
+    _scheduleExceptionProvider.addListener(notify);
   }
 
   static bool get isInitialized => _instance != null;
 
-  late final ScheduleProvider _scheduleStore;
-  late final ShiftSequenceProvider _shiftSequenceStore;
-  late final ScheduleExceptionProvider _scheduleExceptionStore;
+  late final ActiveSchedulesProvider _activeSchedulesProvider;
+  late final ScheduleProvider _scheduleProvider;
+  late final ShiftSequenceProvider _shiftSequenceProvider;
+  late final ScheduleExceptionProvider _scheduleExceptionProvider;
 
   void notify() {
     notifyListeners();
     WidgetService.updateWidget();
   }
 
-  List<ScheduleItemViewModel> get schedules => _scheduleStore.schedules;
+  List<ScheduleItemViewModel> get schedules => _scheduleProvider.schedules;
 
-  void addSchedule(ScheduleItemViewModel schedule) => _scheduleStore.addSchedule(schedule);
+  void addSchedule(ScheduleItemViewModel schedule) => _scheduleProvider.addSchedule(schedule);
 
-  void updateSchedule(ScheduleItemViewModel newSchedule) => _scheduleStore.updateSchedule(newSchedule);
+  void updateSchedule(ScheduleItemViewModel newSchedule) => _scheduleProvider.updateSchedule(newSchedule);
 
   void removeSchedule(String scheduleId) {
-    _scheduleStore.removeSchedule(scheduleId);
-    _shiftSequenceStore.removeSequencesForSchedule(scheduleId);
-    _scheduleExceptionStore.removeExceptionsForSchedule(scheduleId);
+    if (_activeSchedulesProvider.hasActiveSchedule && _activeSchedulesProvider.activeScheduleId == scheduleId) {
+      if (_activeSchedulesProvider.hasComparedSchedule) {
+        _activeSchedulesProvider.setActiveScheduleId(_activeSchedulesProvider.comparedScheduleId!);
+      } else {
+        final activeSchedule = _scheduleProvider.schedules.firstWhereOrNull((s) => s.id != scheduleId);
+        if (activeSchedule == null) {
+          _activeSchedulesProvider.resetActiveSchedules();
+        } else {
+          _activeSchedulesProvider.setActiveScheduleId(activeSchedule.id);
+        }
+      }
+    }
+    if (_activeSchedulesProvider.hasComparedSchedule && _activeSchedulesProvider.comparedScheduleId == scheduleId) {
+      _activeSchedulesProvider.setActiveScheduleId(_activeSchedulesProvider.activeScheduleId!);
+    }
+    _scheduleProvider.removeSchedule(scheduleId);
+    _shiftSequenceProvider.removeSequencesForSchedule(scheduleId);
+    _scheduleExceptionProvider.removeExceptionsForSchedule(scheduleId);
   }
 }

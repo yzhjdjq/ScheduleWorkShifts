@@ -58,6 +58,7 @@ void main() async {
     shiftNameSettingProvider: ShiftNameSettingProvider.instance,
   );
   await SettingsSchedulePageProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
     scheduleProvider: ScheduleProvider.instance,
     shiftSequenceProvider: ShiftSequenceProvider.instance,
     scheduleExceptionProvider: ScheduleExceptionProvider.instance,

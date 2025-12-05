@@ -49,13 +49,21 @@ class ActiveSchedulesProvider with ChangeNotifier {
 
   String? get comparedScheduleId => _activeSchedules.comparedScheduleId;
 
+  void resetActiveSchedules() {
+    _activeSchedules = const ActiveSchedules(activeScheduleId: null, comparedScheduleId: null);
+    _saveDataToRepository();
+  }
+
   void setActiveScheduleId(String activeScheduleId) {
     _activeSchedules = _activeSchedules.copyWith(activeScheduleId: activeScheduleId);
     _saveDataToRepository();
   }
 
   void setComparedScheduleIds(String activeScheduleId, String comparedScheduleId) {
-    _activeSchedules = _activeSchedules.copyWith(activeScheduleId: activeScheduleId, comparedScheduleId: comparedScheduleId);
+    _activeSchedules = _activeSchedules.copyWith(
+      activeScheduleId: activeScheduleId,
+      comparedScheduleId: comparedScheduleId,
+    );
     _saveDataToRepository();
   }
 }
