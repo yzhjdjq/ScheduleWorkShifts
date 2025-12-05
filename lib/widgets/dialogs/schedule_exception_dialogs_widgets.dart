@@ -61,66 +61,72 @@ void _exceptionDialogWidget(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    GestureDetector(
-                      onTap: () async {
-                        final selectedDate = await showDatePicker(
-                          context: context,
-                          initialDate: startDate ?? DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (selectedDate != null) {
-                          setState(() {
-                            startDate = selectedDate;
-                          });
-                        }
-                      },
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Дата начала',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: const Icon(Icons.calendar_today),
-                            hintText:
-                                startDate == null
-                                    ? 'Выберите дату'
-                                    : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
-                          ),
-                          controller: TextEditingController(
-                            text: startDate == null ? '' : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final selectedDate = await showDatePicker(
+                            context: context,
+                            initialDate: startDate ?? DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (selectedDate != null) {
+                            setState(() {
+                              startDate = selectedDate;
+                            });
+                          }
+                        },
+                        child: AbsorbPointer(
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Дата начала',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: const Icon(Icons.calendar_today),
+                              hintText:
+                                  startDate == null
+                                      ? 'Выберите дату'
+                                      : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
+                            ),
+                            controller: TextEditingController(
+                              text: startDate == null ? '' : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    GestureDetector(
-                      onTap: () async {
-                        final selectedDate = await showDatePicker(
-                          context: context,
-                          initialDate: endDate ?? (startDate ?? DateTime.now()),
-                          firstDate: startDate ?? DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (selectedDate != null) {
-                          setState(() {
-                            endDate = selectedDate;
-                          });
-                        }
-                      },
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Дата окончания',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: const Icon(Icons.calendar_today),
-                            hintText:
-                                endDate == null
-                                    ? 'Выберите дату'
-                                    : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
-                          ),
-                          controller: TextEditingController(
-                            text: endDate == null ? '' : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final selectedDate = await showDatePicker(
+                            context: context,
+                            initialDate: endDate ?? (startDate ?? DateTime.now()),
+                            firstDate: startDate ?? DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (selectedDate != null) {
+                            setState(() {
+                              endDate = selectedDate;
+                            });
+                          }
+                        },
+                        child: AbsorbPointer(
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Дата окончания',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: const Icon(Icons.calendar_today),
+                              hintText:
+                                  endDate == null
+                                      ? 'Выберите дату'
+                                      : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
+                            ),
+                            controller: TextEditingController(
+                              text: endDate == null ? '' : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
+                            ),
                           ),
                         ),
                       ),

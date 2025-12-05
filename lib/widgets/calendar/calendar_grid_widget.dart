@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sws/providers/model_providers/model_providers.dart';
 import 'package:sws/providers/providers.dart' show CalendarWidgetProvider, WorkShiftItemViewModel;
 import 'package:sws/widgets/calendar/calendar.dart'
     show CalendarCellEmptyWidget, CalendarCellWidget, CalendarCellComparisonWidget;
@@ -68,9 +69,18 @@ class CalendarGridWidget extends StatelessWidget {
                         ),
                       );
                     }
-
+                    final (Color?, WorkShiftItemViewModel?) defaultValue = (
+                      Colors.grey.withAlpha(77),
+                      WorkShiftItemViewModel(
+                        id: '',
+                        name: '',
+                        color: Colors.transparent,
+                        category: ShiftCategoryViewModel.dayOff,
+                      ),
+                    );
                     final (cellColor, workShift) = calendarProvider.getCellColorAndWorkShiftNameByActiveScheduleMode(
-                      currentDay,
+                      currentDay: currentDay,
+                      defaultValue: defaultValue,
                     );
 
                     return Expanded(
@@ -78,10 +88,11 @@ class CalendarGridWidget extends StatelessWidget {
                         currentDay: currentDay,
                         isToday: isToday,
                         cellHeight: cellHeight,
-                        cellColor: cellColor,
-                        shiftName: workShift.name,
+                        cellColor: cellColor!,
+                        shiftName: workShift!.name,
                         showShiftName: calendarProvider.showShiftName(),
-                        onTap: () => onDayCellTap(currentDay, workShift),
+                        onTap:
+                            (cellColor, workShift) == defaultValue ? null : () => onDayCellTap(currentDay, workShift),
                       ),
                     );
                   }),

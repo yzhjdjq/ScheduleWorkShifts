@@ -103,25 +103,25 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
         const SizedBox(height: 4),
-        GestureDetector(
-          onTap: onTap,
-          child: AbsorbPointer(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(Radius.circular(8)),
-                color: Colors.transparent,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    WorkingTimeViewModel.formatTimeOfDay(time, context),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const Icon(Icons.access_time, size: 18, color: Colors.grey),
-                ],
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: onTap,
+            child: AbsorbPointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: const BorderRadius.all(Radius.circular(8)),
+                  color: Colors.transparent,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(WorkingTimeViewModel.formatTimeOfDay(time, context), style: const TextStyle(fontSize: 16)),
+                    const Icon(Icons.access_time, size: 18, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
           ),

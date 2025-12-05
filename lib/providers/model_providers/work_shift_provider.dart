@@ -114,7 +114,7 @@ class WorkShiftItemViewModel {
   final ShiftCategoryViewModel category;
   final Color color;
 
-  WorkShiftItemViewModel({required this.id, required this.name, required this.category, required this.color});
+  const WorkShiftItemViewModel({required this.id, required this.name, required this.category, required this.color});
 
   static WorkShiftItemViewModel fromWorkShift(WorkShift workShift) {
     return WorkShiftItemViewModel(

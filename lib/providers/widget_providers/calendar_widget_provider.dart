@@ -2,7 +2,17 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart' show ChangeNotifier, Color, Colors;
 import 'package:sws/services/services.dart' show WidgetService;
 import 'package:sws/providers/model_providers/model_providers.dart'
-    show ActiveSchedulesProvider, ScheduleExceptionProvider, ScheduleItemViewModel, ScheduleProvider, ShiftCategoryViewModel, ShiftNameLegendSettingProvider, ShiftNameSettingProvider, ShiftSequenceProvider, WorkShiftItemViewModel, WorkShiftProvider;
+    show
+        ActiveSchedulesProvider,
+        ScheduleExceptionProvider,
+        ScheduleItemViewModel,
+        ScheduleProvider,
+        ShiftCategoryViewModel,
+        ShiftNameLegendSettingProvider,
+        ShiftNameSettingProvider,
+        ShiftSequenceProvider,
+        WorkShiftItemViewModel,
+        WorkShiftProvider;
 
 class CalendarWidgetProvider with ChangeNotifier {
   static CalendarWidgetProvider? _instance;
@@ -190,7 +200,13 @@ class CalendarWidgetProvider with ChangeNotifier {
     return _scheduleExceptionProvider.hasExceptionForDate(day, activeSchedule.id);
   }
 
-  (Color, WorkShiftItemViewModel) getCellColorAndWorkShiftNameByActiveScheduleMode(DateTime currentDay) {
+  (Color?, WorkShiftItemViewModel?) getCellColorAndWorkShiftNameByActiveScheduleMode({
+    required DateTime currentDay,
+    (Color?, WorkShiftItemViewModel?) defaultValue = (
+      const Color(0x4D757575),
+      const WorkShiftItemViewModel(id: '', name: '', color: Color(0xFF000000), category: ShiftCategoryViewModel.dayOff),
+    ),
+  }) {
     final dayOffset = _getDayOffsetForActiveSchedule(currentDay);
     final bool hasValidCycle = _getTotalCycleDaysForActiveSchedule() > 0;
     final bool isWithinCycle = dayOffset >= 0;
@@ -204,7 +220,11 @@ class CalendarWidgetProvider with ChangeNotifier {
       );
       return (workShift.color, workShift);
     } else if (hasValidCycle && isWithinCycle && activeSchedule != null) {
-      final periodicColors = _shiftSequenceProvider.getColorsForSchedule(activeSchedule.id, _workShiftProvider.workShifts, currentDay);
+      final periodicColors = _shiftSequenceProvider.getColorsForSchedule(
+        activeSchedule.id,
+        _workShiftProvider.workShifts,
+        currentDay,
+      );
       final colorIndex = dayOffset % periodicColors.length;
       final Color cellColor = periodicColors[colorIndex];
 
@@ -225,7 +245,7 @@ class CalendarWidgetProvider with ChangeNotifier {
         currentDayIndex += sequence.consecutiveDays;
       }
     }
-    return (Color(0x4D757575), WorkShiftItemViewModel(id: '', name: '', color: Color(0xFF000000), category: ShiftCategoryViewModel.dayOff));
+    return defaultValue;
   }
 
   bool showShiftName() => _shiftNameSettingProvider.showShiftName;

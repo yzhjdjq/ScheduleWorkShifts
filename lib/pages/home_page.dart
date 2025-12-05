@@ -404,16 +404,21 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           IconButton(icon: const Icon(Icons.chevron_left, color: _textColor), onPressed: _previousMonth),
-          Expanded(
-            child: GestureDetector(
-              onTap: _nowMonth,
-              child: Text(
-                _getMonthYearText(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: _textColor, fontSize: 20, fontWeight: FontWeight.normal),
+          Expanded(child: SizedBox()),
+          Flexible(
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: _nowMonth,
+                child: Text(
+                  _getMonthYearText(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: _textColor, fontSize: 20, fontWeight: FontWeight.normal),
+                ),
               ),
             ),
           ),
+          Expanded(child: SizedBox()),
           IconButton(icon: const Icon(Icons.chevron_right, color: _textColor), onPressed: _nextMonth),
         ],
       ),

@@ -7,7 +7,7 @@ class CalendarCellWidget extends StatelessWidget {
   final Color cellColor;
   final String shiftName;
   final bool showShiftName;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const CalendarCellWidget({
     super.key,
@@ -28,65 +28,66 @@ class CalendarCellWidget extends StatelessWidget {
   }) : cellColor = const Color(0x4D757575),
        shiftName = '',
        showShiftName = false,
-       onTap = _emptyOnTap;
-
-  static void _emptyOnTap() {}
+       onTap = null;
 
   @override
   Widget build(BuildContext context) {
     final cellColorDark = _getDarkenedColor(cellColor);
     final fontSize = _calculateFontSize(cellHeight);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.all(1),
-        decoration: BoxDecoration(
-          color: isToday ? cellColorDark : cellColor,
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(isToday ? 77 : 26),
-              blurRadius: isToday ? 4 : 2,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: isToday ? Border.all(color: Colors.black, width: 3) : null,
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: isToday ? 1 : 4,
-              left: isToday ? 5 : 8,
-              child: Text(
-                currentDay.day.toString(),
-                style: TextStyle(
-                  color: _getTextColorForBackground(isToday ? cellColorDark : cellColor),
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                  fontSize: fontSize,
-                  shadows:
-                      _needsTextShadow(isToday ? cellColorDark : cellColor)
-                          ? const [Shadow(color: Colors.black87, blurRadius: 2)]
-                          : null,
-                ),
+    return MouseRegion(
+      cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.all(1),
+          decoration: BoxDecoration(
+            color: isToday ? cellColorDark : cellColor,
+            borderRadius: BorderRadius.circular(4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(isToday ? 77 : 26),
+                blurRadius: isToday ? 4 : 2,
+                offset: const Offset(0, 2),
               ),
-            ),
-            if (showShiftName)
-              Center(
+            ],
+            border: isToday ? Border.all(color: Colors.black, width: 3) : null,
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: isToday ? 1 : 4,
+                left: isToday ? 5 : 8,
                 child: Text(
-                  shiftName,
-                  textAlign: TextAlign.center,
+                  currentDay.day.toString(),
                   style: TextStyle(
                     color: _getTextColorForBackground(isToday ? cellColorDark : cellColor),
-                    fontSize: fontSize * 0.8,
+                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                    fontSize: fontSize,
                     shadows:
                         _needsTextShadow(isToday ? cellColorDark : cellColor)
-                            ? const [Shadow(color: Colors.black54, blurRadius: 1)]
+                            ? const [Shadow(color: Colors.black87, blurRadius: 2)]
                             : null,
                   ),
                 ),
               ),
-          ],
+              if (showShiftName)
+                Center(
+                  child: Text(
+                    shiftName,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _getTextColorForBackground(isToday ? cellColorDark : cellColor),
+                      fontSize: fontSize * 0.8,
+                      shadows:
+                          _needsTextShadow(isToday ? cellColorDark : cellColor)
+                              ? const [Shadow(color: Colors.black54, blurRadius: 1)]
+                              : null,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
