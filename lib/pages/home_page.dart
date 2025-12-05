@@ -406,6 +406,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(icon: const Icon(Icons.chevron_left, color: _textColor), onPressed: _previousMonth),
           Expanded(child: SizedBox()),
           Flexible(
+            flex: 2,
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
@@ -418,7 +419,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Expanded(child: SizedBox()),
+          Expanded(child: SizedBox(),),
           IconButton(icon: const Icon(Icons.chevron_right, color: _textColor), onPressed: _nextMonth),
         ],
       ),

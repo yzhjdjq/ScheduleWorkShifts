@@ -11,6 +11,7 @@ import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import java.time.LocalDate
 import org.json.JSONArray
+import org.json.JSONObject
 import java.util.*
 
 class ScheduleWidget : AppWidgetProvider() {
@@ -64,9 +65,23 @@ class ScheduleWidget : AppWidgetProvider() {
 
             val workShiftsJson = prefs.getString("flutter.workShifts", "[]")
             val shiftSequenceJson = prefs.getString("flutter.shiftSequence", "[]")
-            val activeScheduleId = prefs.getString("flutter.activeScheduleId", "")
             val scheduleExceptionsJson = prefs.getString("flutter.scheduleExceptions", "[]")
             val showShiftName = prefs.getBoolean("flutter.showShiftName", true)
+
+            val activeScheduleId = try {
+                val json = prefs.getString("flutter.activeSchedules", "{}")
+                JSONObject(json).getString("activeScheduleId")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse activeScheduleId", e)
+                null
+            }
+
+            if (activeScheduleId.isNullOrBlank()) {
+                Log.w(TAG, "No active schedule ID found")
+                buildEmptyCalendar(views, context, widgetWidth)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+                return
+            }
 
             val now = LocalDate.now()
             views.setTextViewText(R.id.widget_header, formatMonthYear(now))
@@ -124,8 +139,7 @@ class ScheduleWidget : AppWidgetProvider() {
         widgetWidth: Int
     ) {
         if (BuildConfig.DEBUG) {
-            Log.d(TAG,
-                "Building calendar for ${targetMonth.year}-${targetMonth.monthValue}, today=$today")
+            Log.d(TAG, "Building calendar for ${targetMonth.year}-${targetMonth.monthValue}, today=$today")
         }
         views.removeAllViews(R.id.calendar_table)
         addWeekHeader(views, context, widgetWidth)
@@ -139,7 +153,15 @@ class ScheduleWidget : AppWidgetProvider() {
             .sortedBy { it.orderIndex }
         val exceptions = parseScheduleExceptions(scheduleExceptionsJson, activeScheduleId)
 
+
+        val scheduleStartDate = getScheduleStartDate(context, activeScheduleId) ?: run {
+            Log.w(TAG, "No schedule start date found. Using empty calendar.")
+            buildEmptyCalendar(views, context, widgetWidth)
+            return
+        }
+
         val firstOfMonth = LocalDate.of(year, month, 1)
+        val lastOfMonth = LocalDate.of(year, month, daysInMonth)
         val startDayOfWeek = firstOfMonth.dayOfWeek.getValue()
         val offset = startDayOfWeek - 1
 
@@ -164,7 +186,8 @@ class ScheduleWidget : AppWidgetProvider() {
                 date = date,
                 shiftSequence = shiftSequence,
                 workShifts = workShifts,
-                exceptions = exceptions
+                exceptions = exceptions,
+                cycleStartDate = scheduleStartDate  // Передаём из Schedule
             )
 
             val dayText = if (showShiftName && shiftInfo.name.isNotEmpty()) {
@@ -195,6 +218,31 @@ class ScheduleWidget : AppWidgetProvider() {
             views.addView(R.id.calendar_table, currentRow)
         }
     }
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun getScheduleStartDate(context: Context, scheduleId: String?): LocalDate? {
+    if (scheduleId.isNullOrBlank()) return null
+
+    return try {
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+
+        val schedulesJson = prefs.getString("flutter.schedules", null) ?: return null
+        val schedulesArray = JSONArray(schedulesJson)
+
+        for (i in 0 until schedulesArray.length()) {
+            val obj = schedulesArray.getJSONObject(i)
+            if (obj.getString("id") == scheduleId) {
+                val startDateStr = obj.getString("startDate")
+                // Берём только дату (первые 10 символов: "2025-12-05")
+                return parseLocalDate(startDateStr?.substring(0, 10))
+            }
+        }
+        null
+    } catch (e: Exception) {
+        Log.w(TAG, "Failed to parse schedule start date", e)
+        null
+    }
+}
 
     private fun getOrCreateBitmap(
         cellWidth: Int,
@@ -229,7 +277,7 @@ class ScheduleWidget : AppWidgetProvider() {
             paint.color = Color.WHITE
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 6f
-            canvas.drawRoundRect(3f, 3f, cellWidth - 6f, cellHeight - 6f, cornerRadius, cornerRadius, paint)
+            canvas.drawRoundRect(3f, 3f, cellWidth - 3f, cellHeight - 3f, cornerRadius, cornerRadius, paint)
         }
 
         bitmapCache[key] = bitmap
@@ -359,8 +407,6 @@ class ScheduleWidget : AppWidgetProvider() {
                 if (obj.getString("scheduleId") == scheduleId) {
                     list.add(ShiftSequenceItem(
                         workShiftId = obj.getString("workShiftId"),
-                        startDate = obj.getString("startDate"),
-                        endDate = obj.getString("endDate"),
                         orderIndex = obj.getInt("orderIndex"),
                         consecutiveDays = obj.optInt("consecutiveDays", 1)
                     ))
@@ -397,7 +443,8 @@ class ScheduleWidget : AppWidgetProvider() {
         date: LocalDate,
         shiftSequence: List<ShiftSequenceItem>,
         workShifts: Map<String, WorkShift>,
-        exceptions: List<ScheduleException>
+        exceptions: List<ScheduleException>,
+        cycleStartDate: LocalDate
     ): ShiftInfo {
         for (exception in exceptions) {
             val start = parseLocalDate(exception.startDate)
@@ -412,26 +459,16 @@ class ScheduleWidget : AppWidgetProvider() {
         }
 
         if (shiftSequence.isEmpty()) {
-            if (BuildConfig.DEBUG) Log.d(TAG, "shiftSequence is empty")
             return ShiftInfo(Color.DKGRAY, "")
         }
 
-        val cycleStart = parseLocalDate(shiftSequence.first().startDate) ?: run {
-            Log.w(TAG, "cycleStart is null")
+        if (date.isBefore(cycleStartDate)) {
             return ShiftInfo(Color.DKGRAY, "")
         }
 
-        if (date.isBefore(cycleStart)) {
-            if (BuildConfig.DEBUG) Log.d(TAG, "date is before cycle start")
-            return ShiftInfo(Color.DKGRAY, "")
-        }
-
-        val daysSinceStart = (date.toEpochDay() - cycleStart.toEpochDay()).toInt() + 1
+        val daysSinceStart = (date.toEpochDay() - cycleStartDate.toEpochDay()).toInt() + 1
         val totalCycleLength = shiftSequence.sumOf { it.consecutiveDays.toLong() }.toInt()
-        if (totalCycleLength == 0) {
-            Log.w(TAG, "totalCycleLength is 0")
-            return ShiftInfo(Color.DKGRAY, "")
-        }
+        if (totalCycleLength == 0) return ShiftInfo(Color.DKGRAY, "")
 
         var positionInCycle = daysSinceStart % totalCycleLength
         if (positionInCycle == 0) positionInCycle = totalCycleLength
@@ -441,16 +478,12 @@ class ScheduleWidget : AppWidgetProvider() {
             accumulated += item.consecutiveDays
             if (positionInCycle <= accumulated) {
                 val shift = workShifts[item.workShiftId]
-                val info = ShiftInfo(shift?.color ?: Color.GRAY, shift?.name ?: "")
-                if (BuildConfig.DEBUG) Log.d(TAG, "Matched shift: $info")
-                return info
+                return ShiftInfo(shift?.color ?: Color.GRAY, shift?.name ?: "")
             }
         }
 
         val fallbackShift = workShifts[shiftSequence.first().workShiftId]
-        val fallback = ShiftInfo(fallbackShift?.color ?: Color.GRAY, fallbackShift?.name ?: "")
-        if (BuildConfig.DEBUG) Log.d(TAG, "Using fallback shift: $fallback")
-        return fallback
+        return ShiftInfo(fallbackShift?.color ?: Color.GRAY, fallbackShift?.name ?: "")
     }
 
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -484,8 +517,6 @@ class ScheduleWidget : AppWidgetProvider() {
 
     data class ShiftSequenceItem(
         val workShiftId: String,
-        val startDate: String,
-        val endDate: String,
         val orderIndex: Int,
         val consecutiveDays: Int
     )
