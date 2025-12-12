@@ -93,10 +93,10 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _addRow() => setState(() => _rows.add(ShiftRowData(daysCount: '1', workingTime: const WorkingTimeViewModel())));
 
-  void _removeRow() {
+  void _removeRow(int rowIndex) {
     if (_rows.length > 2) {
-      _rows.last.dispose();
-      setState(() => _rows.removeLast());
+      _rows[rowIndex].dispose();
+      setState(() => _rows.removeAt(rowIndex));
     }
   }
 

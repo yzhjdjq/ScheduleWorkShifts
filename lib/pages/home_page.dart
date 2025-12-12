@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text(pageProvider.getAppBarTitleText()),
         actions: <Widget>[
-          if (pageProvider.hasSchedules())
+          if (pageProvider.hasSchedules() && pageProvider.schedules.length >= 2)
             IconButton(
               icon: Icon(pageProvider.isComparisonMode ? Icons.compare : Icons.calendar_today),
               onPressed: () => _showScheduleSelectionDialog(context),

@@ -9,7 +9,7 @@ class ShiftSequenceListWidget extends StatelessWidget {
   final void Function(String newDays, int indexRow) onDaysChanged;
   final void Function(WorkingTimeViewModel newWorkingTime, int indexRow) onTimeChanged;
   final VoidCallback onAdd;
-  final VoidCallback onRemove;
+  final Function(int rowIndex) onRemove;
 
   const ShiftSequenceListWidget({
     super.key,
@@ -60,7 +60,7 @@ class ShiftSequenceListWidget extends StatelessWidget {
                           onShiftChanged: (newShift) => onShiftChanged(newShift, index),
                           onDaysChanged: (newDays) => onDaysChanged(newDays, index),
                           onTimeChanged: (newWorkingTime) => onTimeChanged(newWorkingTime, index),
-                          onRemove: () => onRemove(),
+                          onRemove: () => onRemove(index),
                           canRemove: rows.length > 2,
                         );
                       },
