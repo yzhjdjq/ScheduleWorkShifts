@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=sws
-Comment=A new Flutter project.
+Name=График смен
+Comment=Schedule of work shifts
 Icon=ru.yzhjdjq.sws
 Exec=/usr/bin/ru.yzhjdjq.sws
 X-Nemo-Application-Type=silica-qt5

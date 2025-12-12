@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.READ_APP_WIDGETS" />
 
     <application
-        android:label="Schedule shifts"
+        android:label="График смен"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

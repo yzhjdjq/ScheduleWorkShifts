@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sws/sws_metadata.dart' show SwsMetadata;
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -17,7 +18,7 @@ class AboutPage extends StatelessWidget {
               const SizedBox(height: 20),
               const Text('SWS Application', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              const Text('Версия 0.2.0', style: TextStyle(fontSize: 16)),
+              const Text('Версия ${SwsMetadata.appVersion}', style: TextStyle(fontSize: 16)),
               const SizedBox(height: 20),
               Text(
                 'График рабочих смен',
