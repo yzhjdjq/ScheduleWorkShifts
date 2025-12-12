@@ -5,14 +5,36 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.graphics.*
 import android.os.Build
+import android.util.Log
 import android.util.TypedValue
 import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import java.time.LocalDate
 import org.json.JSONArray
+import org.json.JSONObject
 import java.util.*
 
 class ScheduleWidget : AppWidgetProvider() {
+    companion object {
+        const val TAG = "ScheduleWidget"
+        private const val PREFS_NAME = "WidgetPrefs"
+        private const val KEY_APPWIDGET_ID = "appWidgetId"
+        private const val MAX_CACHED_BITMAPS = 15
+
+        fun saveWidgetId(context: Context, appWidgetId: Int) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putInt(KEY_APPWIDGET_ID, appWidgetId)
+                .apply()
+        }
+
+        fun getSavedWidgetId(context: Context): Int {
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getInt(KEY_APPWIDGET_ID, -1)
+        }
+    }
+
+    private val bitmapCache = mutableMapOf<Pair<Int, Boolean>, Bitmap>()
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onUpdate(
@@ -20,7 +42,9 @@ class ScheduleWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        if (BuildConfig.DEBUG) Log.d(TAG, "onUpdate: received ${appWidgetIds.size} widget IDs")
         for (appWidgetId in appWidgetIds) {
+            saveWidgetId(context, appWidgetId)
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
     }
@@ -32,23 +56,34 @@ class ScheduleWidget : AppWidgetProvider() {
         appWidgetId: Int
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
-
         val widgetWidth = getWidgetWidth(context, appWidgetId)
+
+        if (BuildConfig.DEBUG) Log.d(TAG, "Updating widget $appWidgetId with width: $widgetWidth px")
 
         try {
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
 
             val workShiftsJson = prefs.getString("flutter.workShifts", "[]")
             val shiftSequenceJson = prefs.getString("flutter.shiftSequence", "[]")
-            val activeScheduleId = prefs.getString("flutter.activeScheduleId", "")
             val scheduleExceptionsJson = prefs.getString("flutter.scheduleExceptions", "[]")
             val showShiftName = prefs.getBoolean("flutter.showShiftName", true)
-            val showShiftNameLegend = prefs.getBoolean("flutter.showShiftNameLegend", false)
+
+            val activeScheduleId = try {
+                val json = prefs.getString("flutter.activeSchedules", "{}")
+                JSONObject(json).getString("activeScheduleId")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse activeScheduleId", e)
+                null
+            }
+
+            if (activeScheduleId.isNullOrBlank()) {
+                Log.w(TAG, "No active schedule ID found")
+                buildEmptyCalendar(views, context, widgetWidth)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+                return
+            }
 
             val now = LocalDate.now()
-            val year = now.year
-            val month = now.monthValue
-
             views.setTextViewText(R.id.widget_header, formatMonthYear(now))
 
             buildCalendarTable(
@@ -59,44 +94,28 @@ class ScheduleWidget : AppWidgetProvider() {
                 activeScheduleId = activeScheduleId,
                 scheduleExceptionsJson = scheduleExceptionsJson,
                 showShiftName = showShiftName,
-                showShiftNameLegend = showShiftNameLegend,
+                showShiftNameLegend = false,
                 today = now.dayOfMonth,
                 context = context,
                 widgetWidth = widgetWidth
             )
 
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "Error updating widget", e)
             buildEmptyCalendar(views, context, widgetWidth)
         }
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun formatMonthYear(date: LocalDate): String {
-        val monthName = when (date.monthValue) {
-            1 -> "Январь"
-            2 -> "Февраль"
-            3 -> "Март"
-            4 -> "Апрель"
-            5 -> "Май"
-            6 -> "Июнь"
-            7 -> "Июль"
-            8 -> "Август"
-            9 -> "Сентябрь"
-            10 -> "Октябрь"
-            11 -> "Ноябрь"
-            12 -> "Декабрь"
-            else -> ""
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Widget $appWidgetId updated. Bitmaps in cache: ${bitmapCache.size}")
         }
-        return "$monthName ${date.year}"
     }
 
     private fun buildEmptyCalendar(views: RemoteViews, context: Context, widgetWidth: Int) {
+        if (BuildConfig.DEBUG) Log.d(TAG, "Building empty calendar")
         views.removeAllViews(R.id.calendar_table)
         addWeekHeader(views, context, widgetWidth)
-        for (i in 0 until 5) {
+        repeat(5) {
             val row = RemoteViews(context.packageName, R.layout.calendar_row)
             repeat(7) { j ->
                 setDayCell(row, context, j, "", Color.TRANSPARENT, false, false, widgetWidth)
@@ -119,8 +138,11 @@ class ScheduleWidget : AppWidgetProvider() {
         context: Context,
         widgetWidth: Int
     ) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Building calendar for ${targetMonth.year}-${targetMonth.monthValue}, today=$today")
+        }
         views.removeAllViews(R.id.calendar_table)
-        addWeekHeader(views, context, widgetWidth) // ✅ Передаём widgetWidth
+        addWeekHeader(views, context, widgetWidth)
 
         val year = targetMonth.year
         val month = targetMonth.monthValue
@@ -131,7 +153,15 @@ class ScheduleWidget : AppWidgetProvider() {
             .sortedBy { it.orderIndex }
         val exceptions = parseScheduleExceptions(scheduleExceptionsJson, activeScheduleId)
 
+
+        val scheduleStartDate = getScheduleStartDate(context, activeScheduleId) ?: run {
+            Log.w(TAG, "No schedule start date found. Using empty calendar.")
+            buildEmptyCalendar(views, context, widgetWidth)
+            return
+        }
+
         val firstOfMonth = LocalDate.of(year, month, 1)
+        val lastOfMonth = LocalDate.of(year, month, daysInMonth)
         val startDayOfWeek = firstOfMonth.dayOfWeek.getValue()
         val offset = startDayOfWeek - 1
 
@@ -156,7 +186,8 @@ class ScheduleWidget : AppWidgetProvider() {
                 date = date,
                 shiftSequence = shiftSequence,
                 workShifts = workShifts,
-                exceptions = exceptions
+                exceptions = exceptions,
+                cycleStartDate = scheduleStartDate  // Передаём из Schedule
             )
 
             val dayText = if (showShiftName && shiftInfo.name.isNotEmpty()) {
@@ -165,7 +196,12 @@ class ScheduleWidget : AppWidgetProvider() {
                 day.toString()
             }
 
-            setDayCell(currentRow, context, dayCounter % 7, dayText, shiftInfo.color, true, isToday, widgetWidth) // ✅ Передаём widgetWidth
+            val bgColor = when {
+                shiftInfo.color != Color.TRANSPARENT -> shiftInfo.color
+                else -> Color.DKGRAY
+            }
+
+            setDayCell(currentRow, context, dayCounter % 7, dayText, bgColor, true, isToday, widgetWidth)
             dayCounter++
         }
 
@@ -174,7 +210,7 @@ class ScheduleWidget : AppWidgetProvider() {
                 views.addView(R.id.calendar_table, currentRow)
                 currentRow = RemoteViews(context.packageName, R.layout.calendar_row)
             }
-            setDayCell(currentRow, context, dayCounter % 7, "", Color.TRANSPARENT, false, false, widgetWidth) // ✅
+            setDayCell(currentRow, context, dayCounter % 7, "", Color.TRANSPARENT, false, false, widgetWidth)
             dayCounter++
         }
 
@@ -183,47 +219,77 @@ class ScheduleWidget : AppWidgetProvider() {
         }
     }
 
-    private fun createDayBackgroundBitmap(
+@RequiresApi(Build.VERSION_CODES.O)
+private fun getScheduleStartDate(context: Context, scheduleId: String?): LocalDate? {
+    if (scheduleId.isNullOrBlank()) return null
+
+    return try {
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+
+        val schedulesJson = prefs.getString("flutter.schedules", null) ?: return null
+        val schedulesArray = JSONArray(schedulesJson)
+
+        for (i in 0 until schedulesArray.length()) {
+            val obj = schedulesArray.getJSONObject(i)
+            if (obj.getString("id") == scheduleId) {
+                val startDateStr = obj.getString("startDate")
+                // Берём только дату (первые 10 символов: "2025-12-05")
+                return parseLocalDate(startDateStr?.substring(0, 10))
+            }
+        }
+        null
+    } catch (e: Exception) {
+        Log.w(TAG, "Failed to parse schedule start date", e)
+        null
+    }
+}
+
+    private fun getOrCreateBitmap(
         cellWidth: Int,
         cellHeight: Int,
         fillColor: Int,
-        isToday: Boolean = false
+        isToday: Boolean
     ): Bitmap {
-        val bitmap = Bitmap.createBitmap(cellWidth, cellHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val paint = Paint().apply {
-            isAntiAlias = true
+        val key = Pair(fillColor, isToday)
+
+        if (bitmapCache.containsKey(key)) {
+            return bitmapCache[key]!!
         }
 
+        if (bitmapCache.size >= MAX_CACHED_BITMAPS) {
+            val firstKey = bitmapCache.keys.first()
+            bitmapCache.remove(firstKey)
+            Log.w(TAG, "Bitmap cache full. Removed one entry.")
+        }
+
+        val bitmap = Bitmap.createBitmap(cellWidth, cellHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint().apply { isAntiAlias = true }
         val cornerRadius = (cellWidth * 0.08f).coerceAtLeast(8f)
 
-        // Фон со скруглёнными углами — всегда
+        // Фон
         paint.color = fillColor
         paint.style = Paint.Style.FILL
-        canvas.drawRoundRect(
-            0f, 0f, cellWidth.toFloat(), cellHeight.toFloat(),
-            cornerRadius, cornerRadius, paint
-        )
+        canvas.drawRoundRect(0f, 0f, cellWidth.toFloat(), cellHeight.toFloat(), cornerRadius, cornerRadius, paint)
 
-        // Белая обводка — только если сегодня
+        // Белая обводка, если сегодня
         if (isToday) {
             paint.color = Color.WHITE
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 6f
-            canvas.drawRoundRect(
-                3f, 3f, cellWidth.toFloat() - 6f, cellHeight.toFloat() - 6f,
-                cornerRadius, cornerRadius, paint
-            )
+            canvas.drawRoundRect(3f, 3f, cellWidth - 3f, cellHeight - 3f, cornerRadius, cornerRadius, paint)
         }
 
+        bitmapCache[key] = bitmap
         return bitmap
     }
 
     private fun addWeekHeader(views: RemoteViews, context: Context, widgetWidth: Int) {
-        val weekDays = arrayOf("ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Adding week header")
         val headerRow = RemoteViews(context.packageName, R.layout.calendar_row)
+        val weekDays = arrayOf("ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС")
         weekDays.forEachIndexed { index, day ->
-            setDayCell(headerRow, context, index, day, Color.TRANSPARENT, false, false, widgetWidth) // ✅
+            setDayCell(headerRow, context, index, day, Color.TRANSPARENT, false, false, widgetWidth)
         }
         views.addView(R.id.calendar_table, headerRow)
     }
@@ -238,17 +304,6 @@ class ScheduleWidget : AppWidgetProvider() {
         isToday: Boolean,
         widgetWidth: Int
     ) {
-        val containerId = when (position) {
-            0 -> R.id.day1_container
-            1 -> R.id.day2_container
-            2 -> R.id.day3_container
-            3 -> R.id.day4_container
-            4 -> R.id.day5_container
-            5 -> R.id.day6_container
-            6 -> R.id.day7_container
-            else -> R.id.day1_container
-        }
-
         val bgId = when (position) {
             0 -> R.id.day1_bg
             1 -> R.id.day2_bg
@@ -279,22 +334,12 @@ class ScheduleWidget : AppWidgetProvider() {
             else -> Color.TRANSPARENT
         }
 
-        // --- ВАЖНО: УДАЛЯЕМ ЭТОТ БЛОК ---
-        // if (isToday && isDay) { ... } else { setBackgroundColor }
-
-        // ВМЕСТО НЕГО — ВСЕГДА ГЕНЕРИРУЕМ BITMAP СО СКРУГЛЕНИЕМ
         val cellWidth = (widgetWidth / 7).coerceAtLeast(30)
         val cellHeight = (cellWidth * 1.2f).toInt()
 
-        val bitmap = createDayBackgroundBitmap(
-            cellWidth = cellWidth,
-            cellHeight = cellHeight,
-            fillColor = bgColor,
-            isToday = isToday  // белая рамка только если сегодня
-        )
-
+        val bitmap = getOrCreateBitmap(cellWidth, cellHeight, bgColor, isToday)
         row.setImageViewBitmap(bgId, bitmap)
-        row.setViewVisibility(bgId, android.view.View.VISIBLE) // всегда VISIBLE
+        row.setViewVisibility(bgId, android.view.View.VISIBLE)
 
         val textColor = when {
             !isDay -> Color.LTGRAY
@@ -310,6 +355,11 @@ class ScheduleWidget : AppWidgetProvider() {
         row.setTextViewTextSize(textId, TypedValue.COMPLEX_UNIT_SP, textSize)
     }
 
+    private fun getContrastColor(bg: Int): Int {
+        val darkness = 1 - (0.299 * Color.red(bg) + 0.587 * Color.green(bg) + 0.114 * Color.blue(bg)) / 255
+        return if (darkness < 0.5) Color.BLACK else Color.WHITE
+    }
+
     private fun getShiftAbbreviation(fullName: String): String {
         return when {
             fullName.contains("день", ignoreCase = true) -> "День"
@@ -320,9 +370,14 @@ class ScheduleWidget : AppWidgetProvider() {
         }
     }
 
-    private fun getContrastColor(bg: Int): Int {
-        val darkness = 1 - (0.299 * Color.red(bg) + 0.587 * Color.green(bg) + 0.114 * Color.blue(bg)) / 255
-        return if (darkness < 0.5) Color.BLACK else Color.WHITE
+    private fun formatMonthYear(date: LocalDate): String {
+        val monthName = when (date.monthValue) {
+            1 -> "Январь"; 2 -> "Февраль"; 3 -> "Март"; 4 -> "Апрель"
+            5 -> "Май"; 6 -> "Июнь"; 7 -> "Июль"; 8 -> "Август"
+            9 -> "Сентябрь"; 10 -> "Октябрь"; 11 -> "Ноябрь"; 12 -> "Декабрь"
+            else -> "Неизвестно"
+        }
+        return "$monthName ${date.year}"
     }
 
     private fun parseWorkShifts(json: String?): Map<String, WorkShift> {
@@ -338,7 +393,7 @@ class ScheduleWidget : AppWidgetProvider() {
                 )
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "Failed to parse workShifts", e)
         }
         return map
     }
@@ -350,19 +405,15 @@ class ScheduleWidget : AppWidgetProvider() {
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
                 if (obj.getString("scheduleId") == scheduleId) {
-                    list.add(
-                        ShiftSequenceItem(
-                            workShiftId = obj.getString("workShiftId"),
-                            startDate = obj.getString("startDate"),
-                            endDate = obj.getString("endDate"),
-                            orderIndex = obj.getInt("orderIndex"),
-                            consecutiveDays = obj.optInt("consecutiveDays", 1)
-                        )
-                    )
+                    list.add(ShiftSequenceItem(
+                        workShiftId = obj.getString("workShiftId"),
+                        orderIndex = obj.getInt("orderIndex"),
+                        consecutiveDays = obj.optInt("consecutiveDays", 1)
+                    ))
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "Failed to parse shiftSequence", e)
         }
         return list
     }
@@ -374,17 +425,15 @@ class ScheduleWidget : AppWidgetProvider() {
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
                 if (obj.getString("scheduleId") == scheduleId) {
-                    list.add(
-                        ScheduleException(
-                            workShiftId = obj.getString("workShiftId"),
-                            startDate = obj.getString("startDate"),
-                            endDate = obj.getString("endDate")
-                        )
-                    )
+                    list.add(ScheduleException(
+                        workShiftId = obj.getString("workShiftId"),
+                        startDate = obj.getString("startDate"),
+                        endDate = obj.getString("endDate")
+                    ))
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "Failed to parse scheduleExceptions", e)
         }
         return list
     }
@@ -394,7 +443,8 @@ class ScheduleWidget : AppWidgetProvider() {
         date: LocalDate,
         shiftSequence: List<ShiftSequenceItem>,
         workShifts: Map<String, WorkShift>,
-        exceptions: List<ScheduleException>
+        exceptions: List<ScheduleException>,
+        cycleStartDate: LocalDate
     ): ShiftInfo {
         for (exception in exceptions) {
             val start = parseLocalDate(exception.startDate)
@@ -408,16 +458,15 @@ class ScheduleWidget : AppWidgetProvider() {
             }
         }
 
-        if (shiftSequence.isEmpty()) return ShiftInfo(Color.DKGRAY, "")
+        if (shiftSequence.isEmpty()) {
+            return ShiftInfo(Color.DKGRAY, "")
+        }
 
-        val cycleStart = parseLocalDate(shiftSequence.first().startDate)
-            ?: return ShiftInfo(Color.DKGRAY, "")
+        if (date.isBefore(cycleStartDate)) {
+            return ShiftInfo(Color.DKGRAY, "")
+        }
 
-        if (date.isBefore(cycleStart)) return ShiftInfo(Color.DKGRAY, "")
-
-        val daysSinceStart = (date.toEpochDay() - cycleStart.toEpochDay()).toInt() + 1
-        if (daysSinceStart <= 0) return ShiftInfo(Color.DKGRAY, "")
-
+        val daysSinceStart = (date.toEpochDay() - cycleStartDate.toEpochDay()).toInt() + 1
         val totalCycleLength = shiftSequence.sumOf { it.consecutiveDays.toLong() }.toInt()
         if (totalCycleLength == 0) return ShiftInfo(Color.DKGRAY, "")
 
@@ -442,10 +491,12 @@ class ScheduleWidget : AppWidgetProvider() {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
         val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 200)
-        return dpToPx(context, minWidthDp.toFloat())
+        val px = dpToPx(context, minWidthDp.toFloat())
+        if (BuildConfig.DEBUG) Log.d(TAG, "Widget width: $minWidthDp dp → $px px")
+        return px
     }
 
-    private fun dpToPx(context: Context, dp: Float): Int { // ✅ Принимаем Float
+    private fun dpToPx(context: Context, dp: Float): Int {
         val density = context.resources.displayMetrics.density
         return (dp * density + 0.5f).toInt()
     }
@@ -454,6 +505,7 @@ class ScheduleWidget : AppWidgetProvider() {
     private fun parseLocalDate(dateStr: String?): LocalDate? = try {
         LocalDate.parse(dateStr?.substring(0, 10))
     } catch (e: Exception) {
+        Log.w(TAG, "Failed to parse date: $dateStr", e)
         null
     }
 
@@ -465,8 +517,6 @@ class ScheduleWidget : AppWidgetProvider() {
 
     data class ShiftSequenceItem(
         val workShiftId: String,
-        val startDate: String,
-        val endDate: String,
         val orderIndex: Int,
         val consecutiveDays: Int
     )

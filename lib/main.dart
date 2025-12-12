@@ -1,17 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
+import 'package:provider/provider.dart' show ChangeNotifierProvider, MultiProvider;
 
-import 'package:sws/pages/home_page.dart';
-import 'package:sws/providers/schedule_provider.dart';
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/services/storage_service.dart';
+import 'package:sws/pages/pages.dart' show HomePage;
+import 'package:sws/providers/model_providers/model_providers.dart'
+    show
+        ActiveSchedulesProvider,
+        ScheduleExceptionProvider,
+        ScheduleProvider,
+        ShiftNameLegendSettingProvider,
+        ShiftNameSettingProvider,
+        ShiftSequenceProvider,
+        WorkShiftProvider;
+import 'package:sws/providers/providers.dart'
+    show
+        CalendarWidgetProvider,
+        CreateSchedulePageProvider,
+        HomePageProvider,
+        ScheduleExceptionDialogsProvider,
+        SettingsPageProvider,
+        SettingsSchedulePageProvider,
+        SettingsShiftsPageProvider,
+        SnackBarMessageProvider;
+import 'package:sws/services/services.dart' show StorageService;
+import 'package:sws/widgets/widgets.dart' show SnackBarHandler;
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await StorageService.initialize();
-  await SettingsProvider.initialize();
+
+  await ActiveSchedulesProvider.initialize();
+  await ScheduleExceptionProvider.initialize();
   await ScheduleProvider.initialize();
+  await ShiftNameLegendSettingProvider.initialize();
+  await ShiftNameSettingProvider.initialize();
+  await ShiftSequenceProvider.initialize();
+  await WorkShiftProvider.initialize();
+
+  await HomePageProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    shiftNameSettingProvider: ShiftNameSettingProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+  );
+  await CreateSchedulePageProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+  );
+  await SettingsPageProvider.initialize(
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    shiftNameSettingProvider: ShiftNameSettingProvider.instance,
+  );
+  await SettingsSchedulePageProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+  );
+  await SettingsShiftsPageProvider.initialize(
+    workShiftProvider: WorkShiftProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+  );
+  await CalendarWidgetProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    shiftNameSettingProvider: ShiftNameSettingProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+  );
+  await ScheduleExceptionDialogsProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+  );
+
   await initializeDateFormatting('ru', null);
   runApp(const MyApp());
 }
@@ -21,34 +93,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Основной цвет приложения
     const Color primaryColor = Color(0xFF0E879C);
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => SettingsProvider.instance),
-        ChangeNotifierProvider(create: (context) => ScheduleProvider.instance),
+        ChangeNotifierProvider(create: (context) => HomePageProvider.instance),
+        ChangeNotifierProvider(create: (context) => CreateSchedulePageProvider.instance),
+        ChangeNotifierProvider(create: (context) => SettingsPageProvider.instance),
+        ChangeNotifierProvider(create: (context) => SettingsSchedulePageProvider.instance),
+        ChangeNotifierProvider(create: (context) => SettingsShiftsPageProvider.instance),
+        ChangeNotifierProvider(create: (context) => CalendarWidgetProvider.instance),
+        ChangeNotifierProvider(create: (context) => ScheduleExceptionDialogsProvider.instance),
+        ChangeNotifierProvider(create: (context) => SnackBarMessageProvider()),
       ],
       child: MaterialApp(
         title: 'График смен',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: primaryColor,
-            primary: primaryColor,
-          ),
+          colorScheme: ColorScheme.fromSeed(seedColor: primaryColor, primary: primaryColor),
           appBarTheme: AppBarTheme(
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
-            titleTextStyle: const TextStyle(
-              fontWeight: FontWeight.w600,
-              letterSpacing: .3,
-              fontSize: 18,
-            ),
+            titleTextStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: .3, fontSize: 18),
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           useMaterial3: true,
         ),
-        home: const HomePage(), // Стартовая страница - HomePage
+        home: SnackBarHandler(child: const HomePage()),
       ),
     );
   }

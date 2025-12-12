@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import 'package:sws/providers/settings_provider.dart';
-import 'package:sws/pages/settings_schedules_page.dart';
-import 'package:sws/pages/settings_shifts_page.dart';
+import 'package:provider/provider.dart' show Consumer;
+import 'package:sws/providers/providers.dart' show SettingsPageProvider;
+import 'package:sws/pages/settings/settings.dart' show SettingsSchedulesPage, SettingsShiftsPage;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -11,15 +9,12 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Настройки'),
-      ),
-      body: Consumer<SettingsProvider>(
+      appBar: AppBar(title: const Text('Настройки')),
+      body: Consumer<SettingsPageProvider>(
         builder: (context, settings, child) {
           return ListView(
             padding: const EdgeInsets.all(8),
-            children: [
-              // Флаг: показывать название смены
+            children: <Widget>[
               SwitchListTile(
                 title: const Text('Показывать название смены'),
                 value: settings.showShiftName,
@@ -29,7 +24,6 @@ class SettingsPage extends StatelessWidget {
               ),
               const Divider(),
 
-              // Флаг: показывать легенду календаря
               SwitchListTile(
                 title: const Text('Показывать легенду календаря'),
                 value: settings.showShiftNameLegend,
@@ -39,32 +33,20 @@ class SettingsPage extends StatelessWidget {
               ),
               const Divider(),
 
-              // Подменю: Настройка графиков
               ListTile(
                 title: const Text('Настройка графиков'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsSchedulesPage(),
-                    ),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsSchedulesPage()));
                 },
               ),
               const Divider(),
 
-              // Подменю: Настройка смен
               ListTile(
                 title: const Text('Настройка смен'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsShiftsPage(),
-                    ),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsShiftsPage()));
                 },
               ),
             ],

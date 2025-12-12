@@ -14,7 +14,7 @@ set(APPLICATION_ID "ru.yzhjdjq.sws")
 cmake_policy(SET CMP0063 NEW)
 
 # Load bundled libraries from the lib/ directory relative to the binary.
-set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
+set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 
 # Root filesystem for cross-building.
 if(FLUTTER_TARGET_PLATFORM_SYSROOT)
@@ -90,8 +90,9 @@ install(CODE "
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(INSTALL_BUNDLE_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin")
 
-install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${INSTALL_BUNDLE_BIN_DIR}"
   COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
@@ -126,3 +127,14 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Create a symbolic link from the bundle/bin/executable file
+# to the bundle/executable file so that the `flutter run` command works correctly.
+install(CODE "
+  file(REMOVE \"${CMAKE_INSTALL_PREFIX}/${BINARY_NAME}\")
+  execute_process(
+    COMMAND \"${CMAKE_COMMAND}\" -E create_symlink
+            \"${INSTALL_BUNDLE_BIN_DIR}/${BINARY_NAME}\"
+            \"${CMAKE_INSTALL_PREFIX}/${BINARY_NAME}\"
+  )
+" COMPONENT Runtime)
