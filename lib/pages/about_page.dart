@@ -26,7 +26,7 @@ class AboutPage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              const Text('© 2025 ru.yzhjdjq.sws'),
+              const Text('© 2025 Nikita Yarovoi'),
             ],
           ),
         ),

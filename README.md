@@ -1,16 +1,23 @@
-# sws
+<p align="center">
+	<img src="assets/icon/256x256.png" width="35%" height="35%" style="border-radius:10%;"/><br>
+</p>
+<br>
 
-Schedule of work shifts
+# Schedule Work Shifts (SWS)
+The application provides a calendar with the ability to display work shifts.
 
-## Getting Started
+#### Project status
+The main functionality was implemented during laboratory work on the subject of 
+"software development for cross-platform mobile systems".
 
-This project is a starting point for a Flutter application.
+## Main features
+ - Creating multiple schedules
+ - Creating multiple shifts with customizing the name and color
+ - Setting up a schedule with support for multiple shifts in a row
+ - Displaying one schedule in normal mode and two in comparison mode
+ - Android desktop widget for displaying the selected schedule in normal mode
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Supported platforms
+ - Android (minimum Android 8)
+ - Linux (x64, flatpak package)
+ - Aurora (x86_64, Aurora 5.1)
