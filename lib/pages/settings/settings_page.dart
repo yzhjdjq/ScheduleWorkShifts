@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show Consumer;
 import 'package:sws/providers/providers.dart' show SettingsPageProvider;
 import 'package:sws/pages/settings/settings.dart' show SettingsSchedulesPage, SettingsShiftsPage;
+import 'package:sws/services/services.dart' show S;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -9,14 +10,14 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Настройки')),
+      appBar: AppBar(title: Text(S.of(context).settingsBarTitle)),
       body: Consumer<SettingsPageProvider>(
         builder: (context, settings, child) {
           return ListView(
             padding: const EdgeInsets.all(8),
             children: <Widget>[
               SwitchListTile(
-                title: const Text('Показывать название смены'),
+                title: Text(S.of(context).showShiftName),
                 value: settings.showShiftName,
                 onChanged: (value) {
                   settings.showShiftName = value;
@@ -25,7 +26,7 @@ class SettingsPage extends StatelessWidget {
               const Divider(),
 
               SwitchListTile(
-                title: const Text('Показывать легенду календаря'),
+                title: Text(S.of(context).showShiftLegend),
                 value: settings.showShiftNameLegend,
                 onChanged: (value) {
                   settings.showShiftNameLegend = value;
@@ -34,7 +35,7 @@ class SettingsPage extends StatelessWidget {
               const Divider(),
 
               ListTile(
-                title: const Text('Настройка графиков'),
+                title: Text(S.of(context).settingsSchedulesBarTitle),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsSchedulesPage()));
@@ -43,7 +44,7 @@ class SettingsPage extends StatelessWidget {
               const Divider(),
 
               ListTile(
-                title: const Text('Настройка смен'),
+                title: Text(S.of(context).settingsShiftsBarTitle),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsShiftsPage()));

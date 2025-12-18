@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:provider/provider.dart' show ReadContext;
 import 'package:sws/providers/providers.dart'
-    show ScheduleExceptionItemViewModel, SnackBarMessageProvider, WorkShiftItemViewModel;
+    show
+        ScheduleExceptionItemViewModel,
+        SnackBarMessageProvider,
+        WorkShiftItemViewModel;
+import 'package:sws/services/services.dart' show S;
 
 void showExceptionDetailsDialog({
   required BuildContext context,
@@ -10,7 +14,12 @@ void showExceptionDetailsDialog({
   required ScheduleExceptionItemViewModel scheduleException,
   required WorkShiftItemViewModel workShift,
   required bool isNotStaticShiftScheduleException,
-  required void Function(ScheduleExceptionItemViewModel, DateTime, WorkShiftItemViewModel) onEditBtnClick,
+  required void Function(
+    ScheduleExceptionItemViewModel,
+    DateTime,
+    WorkShiftItemViewModel,
+  )
+  onEditBtnClick,
   required void Function(ScheduleExceptionItemViewModel) onDeleteBtnClick,
 }) {
   final format = DateFormat('d MMMM yyyy', 'ru');
@@ -30,11 +39,23 @@ void showExceptionDetailsDialog({
             children: [
               Align(
                 alignment: Alignment.center,
-                child: Text(workShift.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                child: Text(
+                  workShift.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               if (scheduleException.startDate != scheduleException.endDate) ...[
-                const Text('Период:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(
+                  '${S.of(context).period}:',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   '${scheduleException.startDate.day}.${scheduleException.startDate.month}.${scheduleException.startDate.year} - '
@@ -45,11 +66,33 @@ void showExceptionDetailsDialog({
               if (scheduleException.startDate == scheduleException.endDate &&
                   scheduleException.workingTime?.startTime != null &&
                   scheduleException.workingTime?.endTime != null) ...[
-                const Text('Рабочее время:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(
+                  '${S.of(context).workingTime}:',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(scheduleException.workingTime?.getWorkingTimeText(context) ?? ''),
+                Text(
+                  scheduleException.workingTime?.getWorkingTimeText(context) ??
+                      '',
+                ),
                 const SizedBox(height: 8),
-                Text('Продолжительность: ${scheduleException.workingTime?.durationText}'),
+                Text(
+                  <String>[
+                    S.of(context).workTimeDuration,
+                    ': ',
+                    S
+                        .of(context)
+                        .durationText(
+                          scheduleException.workingTime?.durationForText.$1 ??
+                              '0',
+                          scheduleException.workingTime?.durationForText.$2 ??
+                              '0',
+                        ),
+                  ].join(),
+                ),
               ],
             ],
           ),
@@ -63,7 +106,7 @@ void showExceptionDetailsDialog({
                       Navigator.pop(context);
                       onEditBtnClick(scheduleException, day, workShift);
                     },
-                    child: const Text('Изменить'),
+                    child: Text(S.of(context).change),
                   )
                 else
                   const SizedBox(),
@@ -71,12 +114,17 @@ void showExceptionDetailsDialog({
                   onPressed: () {
                     onDeleteBtnClick(scheduleException);
                     Navigator.pop(context);
-                    context.read<SnackBarMessageProvider>().showSuccess('${workShift.name} удалён');
+                    context.read<SnackBarMessageProvider>().showSuccess(
+                      '${workShift.name} ${S.of(context).deleted}',
+                    );
                   },
                   style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Удалить'),
+                  child: Text(S.of(context).delete),
                 ),
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(S.of(context).cancel),
+                ),
               ],
             ),
           ],

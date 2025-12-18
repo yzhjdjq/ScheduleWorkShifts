@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:sws/providers/model_providers/model_providers.dart' show WorkingTimeViewModel;
+import 'package:sws/providers/model_providers/model_providers.dart'
+    show WorkingTimeViewModel;
+import 'package:sws/services/services.dart' show S;
 
 class WorkingTimeEditWidget extends StatefulWidget {
   final WorkingTimeViewModel workingTime;
   final Function(WorkingTimeViewModel) onTimeChanged;
 
-  const WorkingTimeEditWidget({super.key, required this.workingTime, required this.onTimeChanged});
+  const WorkingTimeEditWidget({
+    super.key,
+    required this.workingTime,
+    required this.onTimeChanged,
+  });
 
   @override
   State<WorkingTimeEditWidget> createState() => _WorkingTimeEditWidgetState();
@@ -64,16 +70,21 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
       width: double.maxFinite,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          // Начало работы
-          _buildTimeField(label: 'Начало работы', time: _workingTime.startTime, onTap: _selectStartTime),
+        children: <Widget>[
+          _buildTimeField(
+            label: S.of(context).startWork,
+            time: _workingTime.startTime,
+            onTap: _selectStartTime,
+          ),
           const SizedBox(height: 12),
 
-          // Конец работы
-          _buildTimeField(label: 'Конец работы', time: _workingTime.endTime, onTap: _selectEndTime),
+          _buildTimeField(
+            label: S.of(context).endWork,
+            time: _workingTime.endTime,
+            onTap: _selectEndTime,
+          ),
           const SizedBox(height: 16),
 
-          // Отображение продолжительности
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -83,11 +94,23 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Общее рабочее время:', style: TextStyle(fontWeight: FontWeight.bold)),
+              children: <Widget>[
                 Text(
-                  _workingTime.durationText,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue),
+                  '${S.of(context).workTimeDuration}:',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  S
+                      .of(context)
+                      .durationText(
+                        _workingTime.durationForText.$1,
+                        _workingTime.durationForText.$2,
+                      ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.blue,
+                  ),
                 ),
               ],
             ),
@@ -97,11 +120,18 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
     );
   }
 
-  Widget _buildTimeField({required String label, required TimeOfDay? time, required VoidCallback onTap}) {
+  Widget _buildTimeField({
+    required String label,
+    required TimeOfDay? time,
+    required VoidCallback onTap,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+        ),
         const SizedBox(height: 4),
         MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -109,7 +139,10 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
             onTap: onTap,
             child: AbsorbPointer(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: const BorderRadius.all(Radius.circular(8)),
@@ -118,7 +151,10 @@ class _WorkingTimeEditWidgetState extends State<WorkingTimeEditWidget> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(WorkingTimeViewModel.formatTimeOfDay(time, context), style: const TextStyle(fontSize: 16)),
+                    Text(
+                      WorkingTimeViewModel.formatTimeOfDay(time, context),
+                      style: const TextStyle(fontSize: 16),
+                    ),
                     const Icon(Icons.access_time, size: 18, color: Colors.grey),
                   ],
                 ),

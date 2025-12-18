@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sws/pages/pages.dart' show AboutPage, CreateSchedulePage, SettingsPage;
+import 'package:sws/pages/pages.dart'
+    show AboutPage, CreateSchedulePage, SettingsPage;
+import 'package:sws/services/services.dart' show S;
 import 'package:sws/sws_metadata.dart' show SwsMetadata;
-import 'package:sws/widgets/widgets.dart' show sickLeaveDialogWidget, vacationDialogWidget;
+import 'package:sws/widgets/widgets.dart'
+    show sickLeaveDialogWidget, vacationDialogWidget;
 
 class MainDrawer extends StatelessWidget {
   final Color _primaryColor;
@@ -14,18 +17,23 @@ class MainDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildDrawerHeader(),
+          _buildDrawerHeader(context),
           _buildDrawerItem(
             icon: Icons.schedule,
-            title: 'Создать график',
+            title: S.of(context).createSchedule,
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateSchedulePage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateSchedulePage(),
+                ),
+              );
             },
           ),
           _buildDrawerItem(
             icon: Icons.beach_access,
-            title: 'Отпуск',
+            title: S.of(context).vacation,
             onTap: () {
               Navigator.pop(context);
               vacationDialogWidget(context);
@@ -33,7 +41,7 @@ class MainDrawer extends StatelessWidget {
           ),
           _buildDrawerItem(
             icon: Icons.medical_services,
-            title: 'Больничный',
+            title: S.of(context).sickLeave,
             onTap: () {
               Navigator.pop(context);
               sickLeaveDialogWidget(context);
@@ -41,18 +49,24 @@ class MainDrawer extends StatelessWidget {
           ),
           _buildDrawerItem(
             icon: Icons.settings,
-            title: 'Настройки',
+            title: S.of(context).settingsBarTitle,
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
             },
           ),
           _buildDrawerItem(
             icon: Icons.info,
-            title: 'О приложении',
+            title: S.of(context).aboutApp,
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutPage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AboutPage()),
+              );
             },
           ),
         ],
@@ -60,7 +74,7 @@ class MainDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerHeader() {
+  Widget _buildDrawerHeader(BuildContext context) {
     return DrawerHeader(
       decoration: BoxDecoration(color: _primaryColor),
       child: Column(
@@ -69,18 +83,38 @@ class MainDrawer extends StatelessWidget {
           CircleAvatar(
             backgroundColor: Colors.white,
             radius: 30,
-            child: Text('SWS', style: TextStyle(color: _primaryColor, fontWeight: FontWeight.bold)),
+            child: Text(
+              'SWS',
+              style: TextStyle(
+                color: _primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 10),
-          const Text('График смен', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            S.of(context).appTitle,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 5),
-          const Text('Версия ${SwsMetadata.appVersion}', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            S.of(context).version(SwsMetadata.appVersion),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerItem({required IconData icon, required String title, VoidCallback? onTap}) {
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    VoidCallback? onTap,
+  }) {
     return ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
   }
 }

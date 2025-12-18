@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
-import 'package:provider/provider.dart' show ChangeNotifierProvider, MultiProvider;
-
+import 'package:provider/provider.dart'
+    show ChangeNotifierProvider, MultiProvider;
 import 'package:sws/pages/pages.dart' show HomePage;
 import 'package:sws/providers/model_providers/model_providers.dart'
     show
@@ -22,7 +23,7 @@ import 'package:sws/providers/providers.dart'
         SettingsSchedulePageProvider,
         SettingsShiftsPageProvider,
         SnackBarMessageProvider;
-import 'package:sws/services/services.dart' show StorageService;
+import 'package:sws/services/services.dart' show S, StorageService;
 import 'package:sws/widgets/widgets.dart' show SnackBarHandler;
 
 void main() async {
@@ -84,7 +85,8 @@ void main() async {
     workShiftProvider: WorkShiftProvider.instance,
   );
 
-  await initializeDateFormatting('ru', null);
+  final locale = PlatformDispatcher.instance.locale;
+  await initializeDateFormatting(locale.toString(), null);
   runApp(const MyApp());
 }
 
@@ -98,22 +100,42 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => HomePageProvider.instance),
-        ChangeNotifierProvider(create: (context) => CreateSchedulePageProvider.instance),
-        ChangeNotifierProvider(create: (context) => SettingsPageProvider.instance),
-        ChangeNotifierProvider(create: (context) => SettingsSchedulePageProvider.instance),
-        ChangeNotifierProvider(create: (context) => SettingsShiftsPageProvider.instance),
-        ChangeNotifierProvider(create: (context) => CalendarWidgetProvider.instance),
-        ChangeNotifierProvider(create: (context) => ScheduleExceptionDialogsProvider.instance),
+        ChangeNotifierProvider(
+          create: (context) => CreateSchedulePageProvider.instance,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SettingsPageProvider.instance,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SettingsSchedulePageProvider.instance,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SettingsShiftsPageProvider.instance,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => CalendarWidgetProvider.instance,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ScheduleExceptionDialogsProvider.instance,
+        ),
         ChangeNotifierProvider(create: (context) => SnackBarMessageProvider()),
       ],
       child: MaterialApp(
-        title: 'График смен',
+        supportedLocales: S.supportedLocales,
+        localizationsDelegates: S.localizationDelegates,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: primaryColor, primary: primaryColor),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: primaryColor,
+            primary: primaryColor,
+          ),
           appBarTheme: AppBarTheme(
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
-            titleTextStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: .3, fontSize: 18),
+            titleTextStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
+              letterSpacing: .3,
+              fontSize: 18,
+            ),
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           useMaterial3: true,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show Consumer, ReadContext;
 
-import 'package:sws/providers/providers.dart' show ScheduleItemViewModel, SettingsSchedulePageProvider;
+import 'package:sws/providers/providers.dart'
+    show ScheduleItemViewModel, SettingsSchedulePageProvider;
+import 'package:sws/services/services.dart' show S;
 
 class SettingsSchedulesPage extends StatelessWidget {
   const SettingsSchedulesPage({super.key});
@@ -31,14 +33,23 @@ class SettingsSchedulesPage extends StatelessWidget {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Переименовать график'),
+            title:
+                isNewSchedule
+                    ? Text(S.of(context).createSchedule)
+                    : Text(S.of(context).renameSchedule),
             content: TextField(controller: textController),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () => Navigator.pop(   context),
+                child: Text(S.of(context).cancel),
+              ),
               TextButton(
                 onPressed: () {
                   final savedSchedule = schedule.copyWith(
-                    name: textController.text.isEmpty ? 'График' : textController.text,
+                    name:
+                        textController.text.isEmpty
+                            ? S.of(context).newScheduleName
+                            : textController.text,
                   );
 
                   if (isNewSchedule && onSave != null) {
@@ -49,28 +60,38 @@ class SettingsSchedulesPage extends StatelessWidget {
 
                   Navigator.pop(context);
                 },
-                child: Text(isNewSchedule ? 'Создать' : 'Сохранить'),
+                child: Text(
+                  isNewSchedule ? S.of(context).create : S.of(context).save,
+                ),
               ),
             ],
           ),
     );
   }
 
-  void _deleteScheduleBtnHandler(BuildContext context, ScheduleItemViewModel schedule) {
+  void _deleteScheduleBtnHandler(
+    BuildContext context,
+    ScheduleItemViewModel schedule,
+  ) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Удалить график?'),
-            content: Text('Вы уверены, что хотите удалить "${schedule.name}"?'),
+            title: Text(S.of(context).deleteScheduleQuestion),
+            content: Text(S.of(context).confirmDeleteSchedule(schedule.name)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(S.of(context).cancel),
+              ),
               TextButton(
                 onPressed: () {
-                  context.read<SettingsSchedulePageProvider>().removeSchedule(schedule.id);
+                  context.read<SettingsSchedulePageProvider>().removeSchedule(
+                    schedule.id,
+                  );
                   Navigator.pop(context);
                 },
-                child: const Text('Удалить'),
+                child: Text(S.of(context).delete),
               ),
             ],
           ),
@@ -80,7 +101,7 @@ class SettingsSchedulesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Настройка графиков')),
+      appBar: AppBar(title: Text(S.of(context).settingsSchedulesBarTitle)),
       body: Consumer<SettingsSchedulePageProvider>(
         builder: (context, settings, child) {
           return ListView.builder(
@@ -93,7 +114,8 @@ class SettingsSchedulesPage extends StatelessWidget {
                 child: ListTile(
                   title: Text(schedule.name),
                   onTap: () => _editScheduleBtnHandler(context, schedule),
-                  onLongPress: () => _deleteScheduleBtnHandler(context, schedule),
+                  onLongPress:
+                      () => _deleteScheduleBtnHandler(context, schedule),
                 ),
               );
             },

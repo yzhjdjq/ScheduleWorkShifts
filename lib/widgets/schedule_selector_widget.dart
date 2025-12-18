@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sws/providers/providers.dart' show ScheduleItemViewModel;
+import 'package:sws/services/services.dart' show S;
 
 class ScheduleSelectorWidget extends StatelessWidget {
   final List<ScheduleItemViewModel> schedules;
@@ -16,9 +17,9 @@ class ScheduleSelectorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      decoration: const InputDecoration(
-        labelText: 'График *',
-        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8.0))),
+      decoration: InputDecoration(
+        labelText: '${S.of(context).schedule} *',
+        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8.0))),
       ),
       value: selectedSchedule?.id,
       items:

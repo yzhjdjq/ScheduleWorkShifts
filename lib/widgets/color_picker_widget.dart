@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sws/providers/model_providers/model_providers.dart' show WorkShiftItemViewModel, ShiftCategoryViewModel;
+import 'package:sws/services/services.dart' show S;
 
 class ColorPickerWidget extends StatefulWidget {
   final WorkShiftItemViewModel shift;
@@ -76,7 +77,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text('Цвет:'),
+            Text('${S.of(context).color}:'),
             Slider(
               value: _hslColor.hue,
               min: 0,
@@ -90,7 +91,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text('Насыщенность:'),
+            Text('${S.of(context).saturation}:'),
             Slider(
               value: _hslColor.saturation,
               min: 0,
@@ -104,7 +105,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text('Яркость:'),
+            Text('${S.of(context).lightness}:'),
             Slider(
               value: _hslColor.lightness,
               min: 0,
@@ -123,7 +124,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('Цвет смены:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${S.of(context).shiftColor}:', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
 
         Container(
@@ -136,7 +137,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
           ),
           child: Center(
             child: Text(
-              widget.shift.category == ShiftCategoryViewModel.workingDay ? 'Рабочий день' : 'Выходной',
+              widget.shift.category == ShiftCategoryViewModel.workingDay ? S.of(context).workingDay : S.of(context).dayOff,
               style: TextStyle(
                 color: _currentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
                 fontWeight: FontWeight.bold,

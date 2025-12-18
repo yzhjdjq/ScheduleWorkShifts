@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sws/services/services.dart' show S;
 
 class FirstDayPickerWidget extends StatelessWidget {
   final DateTime? firstWorkingDay;
@@ -15,14 +16,14 @@ class FirstDayPickerWidget extends StatelessWidget {
         child: AbsorbPointer(
           child: TextFormField(
             decoration: InputDecoration(
-              labelText: 'Первый рабочий день *',
+              labelText: '${S.of(context).firstWorkingDay} *',
               border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8.0))),
               suffixIcon: const Icon(Icons.calendar_today),
             ),
             controller: TextEditingController(
               text:
                   firstWorkingDay == null
-                      ? 'Выберите дату'
+                      ? S.of(context).selectDateHint
                       : '${firstWorkingDay!.day}.${firstWorkingDay!.month}.${firstWorkingDay!.year}',
             ),
             readOnly: true,

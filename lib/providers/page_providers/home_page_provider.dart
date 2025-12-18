@@ -266,7 +266,7 @@ class HomePageProvider with ChangeNotifier {
 
   List<WorkShiftItemViewModel> get workShifts => _workShiftProvider.workShifts;
 
-  String getAppBarTitleText() {
+  String getAppBarTitleText({required String defaultValue}) {
     if (isComparisonMode) {
       final comparedSchedules = this.comparedSchedules;
       return '${comparedSchedules.first.name} / ${comparedSchedules.last.name}';
@@ -276,7 +276,7 @@ class HomePageProvider with ChangeNotifier {
       return activeSchedule!.name;
     }
 
-    return 'Главная';
+    return defaultValue;
   }
 
   bool showShiftNameLegend() => _shiftNameLegendSettingProvider.showShiftNameLegend;

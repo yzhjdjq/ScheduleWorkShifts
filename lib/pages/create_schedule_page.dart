@@ -8,6 +8,7 @@ import 'package:sws/providers/providers.dart'
         SnackBarMessageProvider,
         WorkShiftItemViewModel,
         WorkingTimeViewModel;
+import 'package:sws/services/services.dart' show S;
 import 'package:sws/widgets/widgets.dart'
     show
         CreateScheduleActionsWidget,
@@ -102,19 +103,19 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
 
   void _saveSchedule() {
     if (_selectedSchedule == null || _firstWorkingDay == null) {
-      context.read<SnackBarMessageProvider>().showError('Заполните все обязательные* поля');
+      context.read<SnackBarMessageProvider>().showError(S.of(context).fillRequiredFields);
       return;
     }
 
     for (int i = 0; i < _rows.length; i++) {
       final row = _rows[i];
       if (row.selectedShift == null) {
-        context.read<SnackBarMessageProvider>().showError('Выберите смену в строке ${i + 1}');
+        context.read<SnackBarMessageProvider>().showError(S.of(context).selectShiftInRow(i + 1));
         return;
       }
       final days = int.tryParse(row.daysCount);
       if (days == null || days < 1 || days > 99) {
-        context.read<SnackBarMessageProvider>().showError('Некорректное количество дней в строке ${i + 1}');
+        context.read<SnackBarMessageProvider>().showError(S.of(context).invalidDaysCountInRow(i + 1));
         return;
       }
     }
@@ -144,7 +145,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
       pageProvider.addShiftSequence(seq);
     }
 
-    context.read<SnackBarMessageProvider>().showSuccess('График сохранён');
+    context.read<SnackBarMessageProvider>().showSuccess(S.of(context).scheduleSaved);
   }
 
   void _onScheduleChanged(String newValue) {
@@ -194,7 +195,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
     final pageProvider = context.watch<CreateSchedulePageProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Создать график')),
+      appBar: AppBar(title: Text(S.of(context).createSchedule)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

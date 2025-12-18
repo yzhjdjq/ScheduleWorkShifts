@@ -3,6 +3,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:provider/provider.dart' show ReadContext;
 import 'package:sws/providers/providers.dart'
     show SnackBarMessageProvider, WorkShiftItemViewModel, WorkingTimeViewModel;
+import 'package:sws/services/services.dart' show S;
 import 'package:sws/widgets/widgets.dart' show WorkingTimeEditWidget;
 
 void showDaySettingsDialog({
@@ -15,7 +16,7 @@ void showDaySettingsDialog({
   required VoidCallback onDeleteExceptionBtnClick,
   required void Function(WorkShiftItemViewModel, DateTime, WorkingTimeViewModel) onSaveExceptionBtnClick,
 }) {
-  final format = DateFormat('E, d MMMM yyyy', 'ru');
+  final format = DateFormat('E, d MMMM yyyy', S.of(context).localeName);
 
   var workingTimeState = workingTime;
   var selectedShiftState = selectedShift;
@@ -33,7 +34,7 @@ void showDaySettingsDialog({
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Смена', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: S.of(context).shift, border: const OutlineInputBorder()),
                       value: selectedShiftState.id,
                       items:
                           workShifts
@@ -76,18 +77,18 @@ void showDaySettingsDialog({
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                    TextButton(onPressed: () => Navigator.pop(context), child: Text(S.of(context).cancel)),
                     if (selectedShiftIsException)
                       TextButton(
                         onPressed: () {
                           onDeleteExceptionBtnClick();
                           Navigator.pop(context);
                           context.read<SnackBarMessageProvider>().showSuccess(
-                            'Настройки для ${day.day}.${day.month} удалены',
+                            S.of(context).settingsForDayDeleted(day.day, day.month),
                           );
                         },
                         style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Удалить'),
+                        child: Text(S.of(context).delete),
                       ),
                     TextButton(
                       onPressed:
@@ -96,12 +97,13 @@ void showDaySettingsDialog({
                                 onSaveExceptionBtnClick(selectedShiftState, day, workingTimeState);
                                 Navigator.pop(context);
                                 context.read<SnackBarMessageProvider>().showSuccess(
-                                  'Настройки для ${day.day}.${day.month} '
-                                  '${selectedShiftIsException ? 'обновлены' : 'добавлены'}',
+                                  selectedShiftIsException
+                                      ? S.of(context).settingsForDayUpdated(day.day, day.month)
+                                      : S.of(context).settingsForDayAdded(day.day, day.month),
                                 );
                               }
                               : null,
-                      child: Text(selectedShiftIsException ? 'Сохранить' : 'Добавить'),
+                      child: Text(selectedShiftIsException ? S.of(context).save : S.of(context).add),
                     ),
                   ],
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sws/services/services.dart' show S;
 
 class ScheduleShiftsStatisticsWidget extends StatelessWidget {
   final DateTime _currentDate;
@@ -19,10 +20,10 @@ class ScheduleShiftsStatisticsWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "Календарные дни",
+                Text(
+                  S.of(context).calendarDays,
                   textAlign: TextAlign.left,
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal, fontSize: 12),
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.normal, fontSize: 12),
                 ),
                 Text(
                   daysInMonth.toString(),
@@ -35,7 +36,7 @@ class ScheduleShiftsStatisticsWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Рабочие дни", style: TextStyle(color: Colors.black, fontSize: 12)),
+                Text(S.of(context).workingDays, style: const TextStyle(color: Colors.black, fontSize: 12)),
                 Text((daysInMonth - 8).toString(), style: const TextStyle(color: Colors.black, fontSize: 12)),
               ],
             ),

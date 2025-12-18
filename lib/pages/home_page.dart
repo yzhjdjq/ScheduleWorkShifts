@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext, WatchContext;
-import 'package:sws/providers/model_providers/model_providers.dart';
+import 'package:sws/l10n/app_localizations.dart';
+import 'package:sws/services/services.dart' show S;
 import 'package:sws/widgets/widgets.dart'
     show CalendarWidget, MainDrawer, ScheduleShiftsStatisticsWidget, showDaySettingsDialog, showExceptionDetailsDialog;
 import 'package:sws/providers/providers.dart'
     show
         CalendarWidgetProvider,
         HomePageProvider,
+        ScheduleExceptionItemViewModel,
         ScheduleItemViewModel,
         SnackBarMessageProvider,
-        WorkShiftItemViewModel;
+        WorkShiftItemViewModel,
+        WorkingTimeViewModel;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,6 +40,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final pageProvider = context.watch<HomePageProvider>();
+    const int minimumNumberSchedulesForSelectActive = 2;
 
     final ScheduleItemViewModel? activeSchedule = pageProvider.activeSchedule;
 
@@ -53,13 +57,14 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pageProvider.getAppBarTitleText()),
+        title: Text(pageProvider.getAppBarTitleText(defaultValue: S.of(context).homePageBarTitle)),
         actions: <Widget>[
-          if (pageProvider.hasSchedules() && pageProvider.schedules.length >= 2)
+          if (pageProvider.hasSchedules() && pageProvider.schedules.length >= minimumNumberSchedulesForSelectActive)
             IconButton(
               icon: Icon(pageProvider.isComparisonMode ? Icons.compare : Icons.calendar_today),
               onPressed: () => _showScheduleSelectionDialog(context),
-              tooltip: pageProvider.isComparisonMode ? 'Режим сравнения' : 'Выбрать график',
+              tooltip:
+                  pageProvider.isComparisonMode ? S.of(context).scheduleComparisonMode : S.of(context).selectSchedule,
             ),
         ],
       ),
@@ -154,7 +159,7 @@ class _HomePageState extends State<HomePage> {
     final (firstSchedule, secondSchedule) = pageProvider.getSchedulesForComparisonSetting();
 
     if (firstSchedule == secondSchedule) {
-      context.read<SnackBarMessageProvider>().showWarning('Недостаточно графиков для настройки сравнения');
+      context.read<SnackBarMessageProvider>().showWarning(S.of(context).notEnoughSchedules);
       return;
     }
 
@@ -182,14 +187,17 @@ class _HomePageState extends State<HomePage> {
               }
 
               return AlertDialog(
-                title: const Text('Сопоставление графиков'),
+                title: Text(S.of(context).scheduleComparison),
                 content: SizedBox(
                   width: double.maxFinite,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Первый график', border: OutlineInputBorder()),
+                        decoration: InputDecoration(
+                          labelText: S.of(context).firstScheduleTitleName,
+                          border: const OutlineInputBorder(),
+                        ),
                         value: firstScheduleState.id,
                         items:
                             pageProvider.schedules.map((schedule) {
@@ -201,11 +209,11 @@ class _HomePageState extends State<HomePage> {
                                   children: <Widget>[
                                     Text(schedule.name),
                                     if (!hasSequences)
-                                      const Padding(
-                                        padding: EdgeInsets.only(left: 8.0),
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 8.0),
                                         child: Text(
-                                          '(не настроен)',
-                                          style: TextStyle(color: Colors.orange, fontSize: 12),
+                                          S.of(context).notConfigured,
+                                          style: const TextStyle(color: Colors.orange, fontSize: 12),
                                         ),
                                       ),
                                   ],
@@ -227,13 +235,14 @@ class _HomePageState extends State<HomePage> {
                           });
                         },
                       ),
+
                       const SizedBox(height: 16),
 
                       if (areSchedulesDifferent)
                         IconButton(
                           onPressed: swapSchedules,
                           icon: const Icon(Icons.swap_vert),
-                          tooltip: 'Поменять графики местами',
+                          tooltip: S.of(context).swapSchedules,
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.grey[100],
                             shape: RoundedRectangleBorder(
@@ -242,10 +251,14 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
+
                       const SizedBox(height: 16),
 
                       DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Второй график', border: OutlineInputBorder()),
+                        decoration: InputDecoration(
+                          labelText: S.of(context).secondScheduleTitleName,
+                          border: const OutlineInputBorder(),
+                        ),
                         value: secondScheduleState.id,
                         items:
                             availableSecondSchedules.map((schedule) {
@@ -257,11 +270,11 @@ class _HomePageState extends State<HomePage> {
                                   children: <Widget>[
                                     Text(schedule.name),
                                     if (!hasSequences)
-                                      const Padding(
-                                        padding: EdgeInsets.only(left: 8.0),
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 8.0),
                                         child: Text(
-                                          '(не настроен)',
-                                          style: TextStyle(color: Colors.orange, fontSize: 12),
+                                          S.of(context).notConfigured,
+                                          style: const TextStyle(color: Colors.orange, fontSize: 12),
                                         ),
                                       ),
                                   ],
@@ -284,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
-                            'Нет доступных графиков для сравнения',
+                            S.of(context).noSchedulesAvailableForCompare,
                             style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
                           ),
                         ),
@@ -292,7 +305,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 actions: <Widget>[
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text(S.of(context).cancel)),
                   TextButton(
                     onPressed:
                         areSchedulesDifferent && availableSecondSchedules.isNotEmpty
@@ -300,14 +313,14 @@ class _HomePageState extends State<HomePage> {
                               if (!pageProvider.isScheduleHasSequences(firstScheduleState) ||
                                   !pageProvider.isScheduleHasSequences(secondScheduleState)) {
                                 context.read<SnackBarMessageProvider>().showWarning(
-                                  'Один(оба) графика для сопоставления не настроен(-ы)',
+                                  S.of(context).schedulesForComparisonNotConfigured,
                                 );
                               }
                               pageProvider.enableComparisonMode(firstScheduleState, secondScheduleState);
                               Navigator.pop(context);
                             }
                             : null,
-                    child: const Text('Сопоставить'),
+                    child: Text(S.of(context).compare),
                   ),
                 ],
               );
@@ -324,7 +337,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Выберите график'),
+            title: Text(S.of(context).selectSchedule),
             content: SizedBox(
               width: double.maxFinite,
               child: ListView.builder(
@@ -341,7 +354,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       elevation: 1,
                       child: ListTile(
-                        title: const Text('Сопоставление графиков'),
+                        title: Text(S.of(context).scheduleComparison),
                         leading: const Icon(Icons.compare),
                         trailing: isComparisonActive ? const Icon(Icons.check, color: Colors.green) : null,
                         tileColor: isComparisonActive ? Colors.green.withValues(alpha: 0.1) : null,
@@ -370,8 +383,8 @@ class _HomePageState extends State<HomePage> {
                       title: Text(schedule.name),
                       subtitle:
                           hasSequences
-                              ? const Text('Настроен', style: TextStyle(color: Colors.green))
-                              : const Text('Не настроен', style: TextStyle(color: Colors.orange)),
+                              ? Text(S.of(context).configured, style: const TextStyle(color: Colors.green))
+                              : Text(S.of(context).notConfigured, style: const TextStyle(color: Colors.orange)),
                       trailing: isActive ? const Icon(Icons.check, color: Colors.green) : null,
                       tileColor: isActive ? Colors.green.withValues(alpha: 0.1) : null,
                       shape: const RoundedRectangleBorder(
@@ -380,7 +393,7 @@ class _HomePageState extends State<HomePage> {
                       onTap: () {
                         if (!hasSequences) {
                           context.read<SnackBarMessageProvider>().showWarning(
-                            'Выбрана в качестве активной ненастроенный график',
+                            S.of(context).unconfiguredScheduleSelected,
                           );
                         }
                         pageProvider.onActiveScheduleChange(schedule);
@@ -391,7 +404,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-            actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена'))],
+            actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: Text(S.of(context).cancel))],
           ),
     );
   }
@@ -404,7 +417,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           IconButton(icon: const Icon(Icons.chevron_left, color: _textColor), onPressed: _previousMonth),
-          Expanded(child: SizedBox()),
+          const Expanded(child: SizedBox()),
           Flexible(
             flex: 2,
             child: MouseRegion(
@@ -419,7 +432,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Expanded(child: SizedBox(),),
+          const Expanded(child: SizedBox()),
           IconButton(icon: const Icon(Icons.chevron_right, color: _textColor), onPressed: _nextMonth),
         ],
       ),
@@ -481,7 +494,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          // Легенда для второго графика
           Row(
             children: <Widget>[
               Container(
@@ -543,19 +555,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _getMonthYearText() {
-    const List<String> months = <String>[
-      'Январь',
-      'Февраль',
-      'Март',
-      'Апрель',
-      'Май',
-      'Июнь',
-      'Июль',
-      'Август',
-      'Сентябрь',
-      'Октябрь',
-      'Ноябрь',
-      'Декабрь',
+    final AppLocalizations str = S.of(context);
+    List<String> months = <String>[
+      str.january,
+      str.february,
+      str.march,
+      str.april,
+      str.may,
+      str.june,
+      str.july,
+      str.august,
+      str.september,
+      str.october,
+      str.november,
+      str.december,
     ];
     return '${months[_currentDate.month - 1]} ${_currentDate.year}';
   }

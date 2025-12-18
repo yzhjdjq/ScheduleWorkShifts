@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' show BuildContext, MaterialLocalizations, TimeOfDay;
 import 'package:sws/models/models.dart' show WorkingTime;
+import 'package:sws/services/services.dart' show S;
 
 class WorkingTimeViewModel {
   final TimeOfDay? startTime;
@@ -35,20 +36,20 @@ class WorkingTimeViewModel {
     }
   }
 
-  String get durationText {
+  (int hour, int minutes) get durationForText {
     if (duration != null) {
       final hours = duration!.inHours;
       final minutes = duration!.inMinutes % 60;
-      return '$hoursч $minutesм';
+      return (hours, minutes);
     }
-    return '0ч 0м';
+    return (0, 0);
   }
 
   String getWorkingTimeText(BuildContext context) {
     if (startTime != null && endTime != null) {
       return '${formatTimeOfDay(startTime!, context)} - ${formatTimeOfDay(endTime!, context)}';
     }
-    return 'Выберите время';
+    return S.of(context).selectTime;
   }
 
   static String formatTimeOfDay(TimeOfDay? time, BuildContext context) {

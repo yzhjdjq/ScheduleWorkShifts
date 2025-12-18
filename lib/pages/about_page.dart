@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sws/services/services.dart' show S;
 import 'package:sws/sws_metadata.dart' show SwsMetadata;
 
 class AboutPage extends StatelessWidget {
@@ -7,26 +8,26 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('О приложении')),
+      appBar: AppBar(title: Text(S.of(context).aboutApp)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              FlutterLogo(size: 80),
+              const FlutterLogo(size: 80),
               const SizedBox(height: 20),
-              const Text('SWS Application', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text(S.of(context).swsApplication, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              const Text('Версия ${SwsMetadata.appVersion}', style: TextStyle(fontSize: 16)),
+              Text(S.of(context).version(SwsMetadata.appVersion), style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 20),
               Text(
-                'График рабочих смен',
+                S.of(context).scheduleWorkShifts,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              const Text('© 2025 Nikita Yarovoi'),
+              Text(S.of(context).copyright),
             ],
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext;
 import 'package:sws/providers/providers.dart' show ScheduleExceptionDialogsProvider, SnackBarMessageProvider;
+import 'package:sws/services/services.dart' show S;
 
 void vacationDialogWidget(BuildContext context) {
   final widgetProvider = context.read<ScheduleExceptionDialogsProvider>();
@@ -8,17 +9,17 @@ void vacationDialogWidget(BuildContext context) {
 
   if (widgetProvider.isComparisonMode()) {
     context.read<SnackBarMessageProvider>().showWarning(
-      'Нельзя добавить отпуск в режиме сравнения графиков. Сначала выберите один график.',
+      S.of(context).comparisonModeWarningForVacation,
     );
     return;
   }
 
   if (activeScheduleId == null) {
-    context.read<SnackBarMessageProvider>().showWarning('Сначала выберите активный график');
+    context.read<SnackBarMessageProvider>().showWarning(S.of(context).noActiveSchedule);
     return;
   }
 
-  _exceptionDialogWidget(context, 'Добавить отпуск', activeScheduleId, widgetProvider.addVacation);
+  _exceptionDialogWidget(context, S.of(context).addVacation, activeScheduleId, widgetProvider.addVacation);
 }
 
 void sickLeaveDialogWidget(BuildContext context) {
@@ -27,17 +28,17 @@ void sickLeaveDialogWidget(BuildContext context) {
 
   if (widgetProvider.isComparisonMode()) {
     context.read<SnackBarMessageProvider>().showWarning(
-      'Нельзя добавить больничный в режиме сравнения графиков. Сначала выберите один график.',
+      S.of(context).comparisonModeWarningForSickLeave,
     );
     return;
   }
 
   if (activeScheduleId == null) {
-    context.read<SnackBarMessageProvider>().showWarning('Сначала выберите активный график');
+    context.read<SnackBarMessageProvider>().showWarning(S.of(context).noActiveSchedule);
     return;
   }
 
-  _exceptionDialogWidget(context, 'Добавить больничный', activeScheduleId, widgetProvider.addSickLeave);
+  _exceptionDialogWidget(context, S.of(context).addSickLeave, activeScheduleId, widgetProvider.addSickLeave);
 }
 
 void _exceptionDialogWidget(
@@ -80,12 +81,12 @@ void _exceptionDialogWidget(
                         child: AbsorbPointer(
                           child: TextFormField(
                             decoration: InputDecoration(
-                              labelText: 'Дата начала',
+                              labelText: S.of(context).startDateTitleName,
                               border: const OutlineInputBorder(),
                               suffixIcon: const Icon(Icons.calendar_today),
                               hintText:
                                   startDate == null
-                                      ? 'Выберите дату'
+                                      ? S.of(context).selectDateHint
                                       : '${startDate!.day}.${startDate!.month}.${startDate!.year}',
                             ),
                             controller: TextEditingController(
@@ -116,12 +117,12 @@ void _exceptionDialogWidget(
                         child: AbsorbPointer(
                           child: TextFormField(
                             decoration: InputDecoration(
-                              labelText: 'Дата окончания',
+                              labelText: S.of(context).endDateTitleName,
                               border: const OutlineInputBorder(),
                               suffixIcon: const Icon(Icons.calendar_today),
                               hintText:
                                   endDate == null
-                                      ? 'Выберите дату'
+                                      ? S.of(context).selectDateHint
                                       : '${endDate!.day}.${endDate!.month}.${endDate!.year}',
                             ),
                             controller: TextEditingController(
@@ -135,24 +136,24 @@ void _exceptionDialogWidget(
                 ),
               ),
               actions: <Widget>[
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text(S.of(context).cancel)),
                 TextButton(
                   onPressed:
                       startDate != null && endDate != null
                           ? () {
                             if (endDate!.isBefore(startDate!)) {
                               context.read<SnackBarMessageProvider>().showWarning(
-                                'Дата окончания не может быть раньше даты начала',
+                                S.of(context).endDateBeforeStartWarning,
                               );
                               return;
                             }
 
                             onSave(scheduleId, startDate!, endDate!);
                             Navigator.pop(context);
-                            context.read<SnackBarMessageProvider>().showSuccess('$title - был добавлен');
+                            context.read<SnackBarMessageProvider>().showSuccess(S.of(context).objectAdded(title));
                           }
                           : null,
-                  child: const Text('Добавить'),
+                  child: Text(S.of(context).add),
                 ),
               ],
             );

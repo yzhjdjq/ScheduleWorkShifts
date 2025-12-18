@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sws/services/services.dart' show S;
 
 class CreateScheduleActionsWidget extends StatelessWidget {
   final VoidCallback onAddShift;
@@ -17,7 +18,7 @@ class CreateScheduleActionsWidget extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.add),
-            label: const Text('Добавить смену'),
+            label: Text(S.of(context).addShift),
             onPressed: onAddShift,
           ),
         ),
@@ -25,7 +26,7 @@ class CreateScheduleActionsWidget extends StatelessWidget {
         Expanded(
           child: FilledButton.icon(
             icon: const Icon(Icons.save),
-            label: const Text('Сохранить'),
+            label: Text(S.of(context).save),
             onPressed: onSave,
           ),
         ),

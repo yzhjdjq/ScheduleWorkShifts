@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sws/providers/model_providers/model_providers.dart'
     show ShiftCategoryViewModel, WorkShiftItemViewModel, WorkingTimeViewModel;
+import 'package:sws/services/services.dart' show S;
 import 'package:sws/widgets/widgets.dart' show WorkingTimeWidget;
 
 class ShiftRowWidget extends StatelessWidget {
@@ -47,7 +48,7 @@ class ShiftRowWidget extends StatelessWidget {
       child: DropdownButton<WorkShiftItemViewModel>(
         isExpanded: true,
         value: selectedShift,
-        hint: const Text('Выберите смену', style: TextStyle(fontSize: 14)),
+        hint: Text(S.of(context).selectShift, style: const TextStyle(fontSize: 14)),
         items:
             availableShifts.map((shift) {
               return DropdownMenuItem<WorkShiftItemViewModel>(
@@ -103,7 +104,7 @@ class ShiftRowWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               alignment: Alignment.center,
               child: Text(
-                'Выходной день',
+                S.of(context).dayOff,
                 style: TextStyle(fontSize: 12, color: selectedShift?.color, fontWeight: FontWeight.bold),
               ),
             );
