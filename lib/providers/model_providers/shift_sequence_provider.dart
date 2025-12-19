@@ -2,13 +2,16 @@ import 'package:flutter/material.dart' show ChangeNotifier, Color;
 import 'package:sws/models/models.dart' show ShiftSequence;
 import 'package:sws/providers/model_providers/model_providers.dart'
     show ScheduleItemViewModel, WorkShiftItemViewModel, WorkingTimeViewModel;
-import 'package:sws/repositories/repositories.dart' show ShiftSequenceRepository;
+import 'package:sws/repositories/repositories.dart'
+    show ShiftSequenceRepository;
 
 class ShiftSequenceProvider with ChangeNotifier {
   static ShiftSequenceProvider? _instance;
   static ShiftSequenceProvider get instance {
     if (_instance == null) {
-      throw Exception('ShiftSequenceProvider not initialized. Call initialize() first.');
+      throw Exception(
+        'ShiftSequenceProvider not initialized. Call initialize() first.',
+      );
     }
     return _instance!;
   }
@@ -31,11 +34,14 @@ class ShiftSequenceProvider with ChangeNotifier {
 
   static bool get isInitialized => _instance != null;
 
-  static final ShiftSequenceRepository _shiftSequenceRepository = ShiftSequenceRepository();
+  static final ShiftSequenceRepository _shiftSequenceRepository =
+      ShiftSequenceRepository();
   static List<ShiftSequence> _shiftSequences = [];
 
   Future<void> _loadDataFromRepository() async {
-    _shiftSequences = await _shiftSequenceRepository.loadAll(defaultValue: _shiftSequences);
+    _shiftSequences = await _shiftSequenceRepository.loadAll(
+      defaultValue: _shiftSequences,
+    );
   }
 
   List<ShiftSequenceItemViewModel> get shiftSequences =>
@@ -43,13 +49,18 @@ class ShiftSequenceProvider with ChangeNotifier {
         _shiftSequences,
       ).map((ss) => ShiftSequenceItemViewModel.fromShiftSequence(ss)).toList();
 
-  bool hasShiftSequencesForSchedule(String scheduleId) => _shiftSequences.any((ss) => ss.scheduleId == scheduleId);
+  bool hasShiftSequencesForSchedule(String scheduleId) =>
+      _shiftSequences.any((ss) => ss.scheduleId == scheduleId);
 
-  List<ShiftSequenceItemViewModel> getShiftSequencesForSchedule(String scheduleId) {
+  List<ShiftSequenceItemViewModel> getShiftSequencesForSchedule(
+    String scheduleId,
+  ) {
     final List<ShiftSequence> sequences =
         _shiftSequences.where((seq) => seq.scheduleId == scheduleId).toList()
           ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-    return sequences.map((ss) => ShiftSequenceItemViewModel.fromShiftSequence(ss)).toList();
+    return sequences
+        .map((ss) => ShiftSequenceItemViewModel.fromShiftSequence(ss))
+        .toList();
   }
 
   void addShiftSequence(ShiftSequenceItemViewModel newSequenceItem) {
@@ -66,7 +77,9 @@ class ShiftSequenceProvider with ChangeNotifier {
   }
 
   void updateShiftSequence(ShiftSequenceItemViewModel newSequenceItem) {
-    final int index = _shiftSequences.indexWhere((sequence) => sequence.id == newSequenceItem.id);
+    final int index = _shiftSequences.indexWhere(
+      (sequence) => sequence.id == newSequenceItem.id,
+    );
 
     if (index != -1) {
       final newSequence = ShiftSequence(
@@ -102,18 +115,29 @@ class ShiftSequenceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  List<Color> getColorsForSchedule(String scheduleId, List<WorkShiftItemViewModel> workShifts, DateTime forMonth) {
+  List<Color> getColorsForSchedule(
+    String scheduleId,
+    List<WorkShiftItemViewModel> workShifts,
+    DateTime forMonth,
+  ) {
     final sequences = getShiftSequencesForSchedule(scheduleId);
     if (sequences.isEmpty) return [];
 
-    final totalCycleDays = sequences.fold(0, (sum, seq) => sum + seq.consecutiveDays);
+    final totalCycleDays = sequences.fold(
+      0,
+      (sum, seq) => sum + seq.consecutiveDays,
+    );
     if (totalCycleDays == 0) return [];
 
     final cycleColors = <Color>[];
     for (final sequence in sequences) {
       final workShift = workShifts.firstWhere(
         (shift) => shift.id == sequence.workShiftId,
-        orElse: () => workShifts.isNotEmpty ? workShifts.first : WorkShiftItemViewModel.createDefault(),
+        orElse:
+            () =>
+                workShifts.isNotEmpty
+                    ? workShifts.first
+                    : WorkShiftItemViewModel.createDefault(),
       );
 
       for (int i = 0; i < sequence.consecutiveDays; i++) {
@@ -155,14 +179,18 @@ class ShiftSequenceItemViewModel {
     required this.workingTime,
   });
 
-  static ShiftSequenceItemViewModel fromShiftSequence(ShiftSequence shiftSequence) {
+  static ShiftSequenceItemViewModel fromShiftSequence(
+    ShiftSequence shiftSequence,
+  ) {
     return ShiftSequenceItemViewModel(
       id: shiftSequence.id,
       scheduleId: shiftSequence.scheduleId,
       workShiftId: shiftSequence.workShiftId,
       consecutiveDays: shiftSequence.consecutiveDays,
       orderIndex: shiftSequence.orderIndex,
-      workingTime: WorkingTimeViewModel.fromWorkingTime(shiftSequence.workingTime),
+      workingTime: WorkingTimeViewModel.fromWorkingTime(
+        shiftSequence.workingTime,
+      ),
     );
   }
 
@@ -186,15 +214,22 @@ class ShiftSequenceItemViewModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is ShiftSequenceItemViewModel &&
-              runtimeType == other.runtimeType &&
-              id == other.id &&
-              scheduleId == other.scheduleId &&
-              workShiftId == other.workShiftId &&
-              consecutiveDays == other.consecutiveDays &&
-              orderIndex == other.orderIndex &&
-              workingTime == other.workingTime;
+      other is ShiftSequenceItemViewModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          scheduleId == other.scheduleId &&
+          workShiftId == other.workShiftId &&
+          consecutiveDays == other.consecutiveDays &&
+          orderIndex == other.orderIndex &&
+          workingTime == other.workingTime;
 
   @override
-  int get hashCode => Object.hash(id, scheduleId, workShiftId, consecutiveDays, orderIndex, workingTime);
+  int get hashCode => Object.hash(
+    id,
+    scheduleId,
+    workShiftId,
+    consecutiveDays,
+    orderIndex,
+    workingTime,
+  );
 }

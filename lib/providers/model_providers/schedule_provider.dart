@@ -8,7 +8,9 @@ class ScheduleProvider with ChangeNotifier {
   static ScheduleProvider? _instance;
   static ScheduleProvider get instance {
     if (_instance == null) {
-      throw Exception('ScheduleProvider is not initialized. Call initialize() first.');
+      throw Exception(
+        'ScheduleProvider is not initialized. Call initialize() first.',
+      );
     }
     return _instance!;
   }
@@ -39,20 +41,43 @@ class ScheduleProvider with ChangeNotifier {
   }
 
   List<ScheduleItemViewModel> get schedules =>
-      List.unmodifiable(_schedules).map((s) => ScheduleItemViewModel.fromSchedule(s)).toList();
+      List.unmodifiable(
+        _schedules,
+      ).map((s) => ScheduleItemViewModel.fromSchedule(s)).toList();
 
   ScheduleItemViewModel getScheduleById(String id) =>
-      ScheduleItemViewModel.fromSchedule(_schedules.firstWhere((s) => s.id == id));
+      ScheduleItemViewModel.fromSchedule(
+        _schedules.firstWhere((s) => s.id == id),
+      );
+
+  ScheduleItemViewModel firstWithout(ScheduleItemViewModel excludedSchedule) =>
+      ScheduleItemViewModel.fromSchedule(
+        _schedules.firstWhere((s) => s.id != excludedSchedule.id),
+      );
+
+  List<ScheduleItemViewModel> schedulesWithout(
+    ScheduleItemViewModel excludedSchedule,
+  ) =>
+      _schedules
+          .where((s) => s.id != excludedSchedule.id)
+          .map((s) => ScheduleItemViewModel.fromSchedule(s))
+          .toList();
 
   void addSchedule(ScheduleItemViewModel scheduleItem) {
-    final schedule = Schedule(id: scheduleItem.id, name: scheduleItem.name, startDate: scheduleItem.startDate);
+    final schedule = Schedule(
+      id: scheduleItem.id,
+      name: scheduleItem.name,
+      startDate: scheduleItem.startDate,
+    );
     _schedules.add(schedule);
     _scheduleRepo.saveAll(_schedules);
     notifyListeners();
   }
 
   void updateSchedule(ScheduleItemViewModel newScheduleItem) {
-    final int index = _schedules.indexWhere((schedule) => schedule.id == newScheduleItem.id);
+    final int index = _schedules.indexWhere(
+      (schedule) => schedule.id == newScheduleItem.id,
+    );
 
     if (index != -1) {
       final newSchedule = Schedule(
@@ -72,7 +97,8 @@ class ScheduleProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool hasSchedule(String scheduleId) => _schedules.any((s) => s.id == scheduleId);
+  bool hasSchedule(String scheduleId) =>
+      _schedules.any((s) => s.id == scheduleId);
 
   bool hasSchedules() => _schedules.isNotEmpty;
 
@@ -95,22 +121,38 @@ class ScheduleItemViewModel {
   final String name;
   final DateTime startDate;
 
-  ScheduleItemViewModel({required this.id, required this.name, required this.startDate});
+  ScheduleItemViewModel({
+    required this.id,
+    required this.name,
+    required this.startDate,
+  });
 
   static ScheduleItemViewModel fromSchedule(Schedule schedule) {
-    return ScheduleItemViewModel(id: schedule.id, name: schedule.name, startDate: schedule.startDate);
+    return ScheduleItemViewModel(
+      id: schedule.id,
+      name: schedule.name,
+      startDate: schedule.startDate,
+    );
   }
 
   static ScheduleItemViewModel createDefault() {
     return ScheduleItemViewModel(
       id: const Uuid().v4(),
       name: 'График',
-      startDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+      startDate: DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+      ),
     );
   }
 
   ScheduleItemViewModel copyWith({String? name, DateTime? startDate}) {
-    return ScheduleItemViewModel(id: id, name: name ?? this.name, startDate: startDate ?? this.startDate);
+    return ScheduleItemViewModel(
+      id: id,
+      name: name ?? this.name,
+      startDate: startDate ?? this.startDate,
+    );
   }
 
   @override
@@ -125,5 +167,6 @@ class ScheduleItemViewModel {
           startDate.day == other.startDate.day;
 
   @override
-  int get hashCode => Object.hash(id, name, startDate.year, startDate.month, startDate.day);
+  int get hashCode =>
+      Object.hash(id, name, startDate.year, startDate.month, startDate.day);
 }

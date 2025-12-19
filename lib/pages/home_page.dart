@@ -3,7 +3,12 @@ import 'package:provider/provider.dart' show ReadContext, WatchContext;
 import 'package:sws/l10n/app_localizations.dart';
 import 'package:sws/services/services.dart' show S;
 import 'package:sws/widgets/widgets.dart'
-    show CalendarWidget, MainDrawer, ScheduleShiftsStatisticsWidget, showDaySettingsDialog, showExceptionDetailsDialog;
+    show
+        CalendarWidget,
+        MainDrawer,
+        ScheduleShiftsStatisticsWidget,
+        showDaySettingsDialog,
+        showExceptionDetailsDialog;
 import 'package:sws/providers/providers.dart'
     show
         CalendarWidgetProvider,
@@ -57,14 +62,26 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pageProvider.getAppBarTitleText(defaultValue: S.of(context).homePageBarTitle)),
+        title: Text(
+          pageProvider.getAppBarTitleText(
+            defaultValue: S.of(context).homePageBarTitle,
+          ),
+        ),
         actions: <Widget>[
-          if (pageProvider.hasSchedules() && pageProvider.schedules.length >= minimumNumberSchedulesForSelectActive)
+          if (pageProvider.hasSchedules() &&
+              pageProvider.schedules.length >=
+                  minimumNumberSchedulesForSelectActive)
             IconButton(
-              icon: Icon(pageProvider.isComparisonMode ? Icons.compare : Icons.calendar_today),
+              icon: Icon(
+                pageProvider.isComparisonMode
+                    ? Icons.compare
+                    : Icons.calendar_today,
+              ),
               onPressed: () => _showScheduleSelectionDialog(context),
               tooltip:
-                  pageProvider.isComparisonMode ? S.of(context).scheduleComparisonMode : S.of(context).selectSchedule,
+                  pageProvider.isComparisonMode
+                      ? S.of(context).scheduleComparisonMode
+                      : S.of(context).selectSchedule,
             ),
         ],
       ),
@@ -75,7 +92,8 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 8),
 
-          if (pageProvider.showShiftNameLegend() && (periodicColors.isNotEmpty || comparisonColors.isNotEmpty))
+          if (pageProvider.showShiftNameLegend() &&
+              (periodicColors.isNotEmpty || comparisonColors.isNotEmpty))
             _buildColorLegend(activeSchedule?.id, pageProvider),
 
           if (pageProvider.showShiftNameLegend()) const SizedBox(height: 8),
@@ -100,7 +118,10 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          Expanded(flex: 1, child: ScheduleShiftsStatisticsWidget(currentDate: _currentDate)),
+          Expanded(
+            flex: 1,
+            child: ScheduleShiftsStatisticsWidget(currentDate: _currentDate),
+          ),
         ],
       ),
     );
@@ -109,13 +130,15 @@ class _HomePageState extends State<HomePage> {
   void _onDayCellTap(DateTime date, WorkShiftItemViewModel workShift) {
     final pageProvider = context.read<HomePageProvider>();
     if (pageProvider.hasExceptionForDateByActiveSchedule(date)) {
-      final ScheduleExceptionItemViewModel scheduleException = pageProvider.getExceptionForDateByActiveSchedule(date)!;
+      final ScheduleExceptionItemViewModel scheduleException =
+          pageProvider.getExceptionForDateByActiveSchedule(date)!;
       showExceptionDetailsDialog(
         context: context,
         day: date,
         scheduleException: scheduleException,
         workShift: workShift,
-        isNotStaticShiftScheduleException: pageProvider.isNotStaticShiftScheduleException(scheduleException),
+        isNotStaticShiftScheduleException: pageProvider
+            .isNotStaticShiftScheduleException(scheduleException),
         onEditBtnClick: _onEditDayScheduleExceptionBtnClick,
         onDeleteBtnClick: (se) => pageProvider.removeScheduleException(se.id),
       );
@@ -126,7 +149,9 @@ class _HomePageState extends State<HomePage> {
         selectedShift: workShift,
         selectedShiftIsException: false,
         workShifts: pageProvider.workShifts,
-        workingTime: pageProvider.getWorkingTimeForWorkShift(workShift),
+        workingTime: pageProvider.getWorkingTimeForWorkShiftInActiveSchedule(
+          workShift,
+        ),
         onDeleteExceptionBtnClick: () {},
         onSaveExceptionBtnClick: pageProvider.addScheduleExceptionForDay,
       );
@@ -146,37 +171,52 @@ class _HomePageState extends State<HomePage> {
       selectedShiftIsException: true,
       workShifts: pageProvider.workShifts,
       workingTime: scheduleException.workingTime ?? WorkingTimeViewModel(),
-      onDeleteExceptionBtnClick: () => pageProvider.removeScheduleException(scheduleException.id),
+      onDeleteExceptionBtnClick:
+          () => pageProvider.removeScheduleException(scheduleException.id),
       onSaveExceptionBtnClick:
           (workShift, date, workingTime) =>
-              pageProvider.updateScheduleException(scheduleException, workShift, date, workingTime),
+              pageProvider.updateScheduleException(
+                scheduleException,
+                workShift,
+                date,
+                workingTime,
+              ),
     );
   }
 
   void _showComparisonSelectionDialog(BuildContext context) {
     final pageProvider = context.read<HomePageProvider>();
 
-    final (firstSchedule, secondSchedule) = pageProvider.getSchedulesForComparisonSetting();
+    final (firstSchedule, secondSchedule) =
+        pageProvider.getSchedulesForComparisonSetting();
 
     if (firstSchedule == secondSchedule) {
-      context.read<SnackBarMessageProvider>().showWarning(S.of(context).notEnoughSchedules);
+      context.read<SnackBarMessageProvider>().showWarning(
+        S.of(context).notEnoughSchedules,
+      );
       return;
     }
 
-    var (firstScheduleState, secondScheduleState) = (firstSchedule, secondSchedule);
+    var (firstScheduleState, secondScheduleState) = (
+      firstSchedule,
+      secondSchedule,
+    );
 
     showDialog(
       context: context,
       builder:
           (context) => StatefulBuilder(
             builder: (context, setState) {
-              final availableSecondSchedules = pageProvider.getAvailableSchedulesForComparison(firstScheduleState);
+              final availableSecondSchedules = pageProvider
+                  .getAvailableSchedulesForComparison(firstScheduleState);
 
               if (firstScheduleState.id == secondScheduleState.id) {
-                secondScheduleState = availableSecondSchedules.firstOrNull ?? secondScheduleState;
+                secondScheduleState =
+                    availableSecondSchedules.firstOrNull ?? secondScheduleState;
               }
 
-              final areSchedulesDifferent = firstScheduleState.id != secondScheduleState.id;
+              final areSchedulesDifferent =
+                  firstScheduleState.id != secondScheduleState.id;
 
               void swapSchedules() {
                 setState(() {
@@ -201,7 +241,8 @@ class _HomePageState extends State<HomePage> {
                         value: firstScheduleState.id,
                         items:
                             pageProvider.schedules.map((schedule) {
-                              final hasSequences = pageProvider.isScheduleHasSequences(schedule);
+                              final hasSequences = pageProvider
+                                  .isScheduleHasSequences(schedule);
 
                               return DropdownMenuItem<String>(
                                 value: schedule.id,
@@ -210,10 +251,15 @@ class _HomePageState extends State<HomePage> {
                                     Text(schedule.name),
                                     if (!hasSequences)
                                       Padding(
-                                        padding: const EdgeInsets.only(left: 8.0),
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                        ),
                                         child: Text(
                                           S.of(context).notConfigured,
-                                          style: const TextStyle(color: Colors.orange, fontSize: 12),
+                                          style: const TextStyle(
+                                            color: Colors.orange,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
                                   ],
@@ -225,13 +271,18 @@ class _HomePageState extends State<HomePage> {
                             if (value == null) {
                               firstScheduleState = firstSchedule;
                             } else {
-                              final schedule = pageProvider.getScheduleById(value);
+                              final schedule = pageProvider.getScheduleById(
+                                value,
+                              );
                               firstScheduleState = schedule ?? firstSchedule;
                             }
-                            final newAvailableSchedules = pageProvider.getAvailableSchedulesForComparison(
-                              firstScheduleState,
-                            );
-                            secondScheduleState = newAvailableSchedules.firstOrNull ?? secondSchedule;
+                            final newAvailableSchedules = pageProvider
+                                .getAvailableSchedulesForComparison(
+                                  firstScheduleState,
+                                );
+                            secondScheduleState =
+                                newAvailableSchedules.firstOrNull ??
+                                secondSchedule;
                           });
                         },
                       ),
@@ -262,7 +313,8 @@ class _HomePageState extends State<HomePage> {
                         value: secondScheduleState.id,
                         items:
                             availableSecondSchedules.map((schedule) {
-                              final hasSequences = pageProvider.isScheduleHasSequences(schedule);
+                              final hasSequences = pageProvider
+                                  .isScheduleHasSequences(schedule);
 
                               return DropdownMenuItem<String>(
                                 value: schedule.id,
@@ -271,10 +323,15 @@ class _HomePageState extends State<HomePage> {
                                     Text(schedule.name),
                                     if (!hasSequences)
                                       Padding(
-                                        padding: const EdgeInsets.only(left: 8.0),
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                        ),
                                         child: Text(
                                           S.of(context).notConfigured,
-                                          style: const TextStyle(color: Colors.orange, fontSize: 12),
+                                          style: const TextStyle(
+                                            color: Colors.orange,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
                                   ],
@@ -286,7 +343,9 @@ class _HomePageState extends State<HomePage> {
                             if (value == null) {
                               secondScheduleState = secondSchedule;
                             } else {
-                              final schedule = pageProvider.getScheduleById(value);
+                              final schedule = pageProvider.getScheduleById(
+                                value,
+                              );
                               secondScheduleState = schedule ?? secondSchedule;
                             }
                           });
@@ -298,25 +357,43 @@ class _HomePageState extends State<HomePage> {
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             S.of(context).noSchedulesAvailableForCompare,
-                            style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                     ],
                   ),
                 ),
                 actions: <Widget>[
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text(S.of(context).cancel)),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(S.of(context).cancel),
+                  ),
                   TextButton(
                     onPressed:
-                        areSchedulesDifferent && availableSecondSchedules.isNotEmpty
+                        areSchedulesDifferent &&
+                                availableSecondSchedules.isNotEmpty
                             ? () {
-                              if (!pageProvider.isScheduleHasSequences(firstScheduleState) ||
-                                  !pageProvider.isScheduleHasSequences(secondScheduleState)) {
-                                context.read<SnackBarMessageProvider>().showWarning(
-                                  S.of(context).schedulesForComparisonNotConfigured,
-                                );
+                              if (!pageProvider.isScheduleHasSequences(
+                                    firstScheduleState,
+                                  ) ||
+                                  !pageProvider.isScheduleHasSequences(
+                                    secondScheduleState,
+                                  )) {
+                                context
+                                    .read<SnackBarMessageProvider>()
+                                    .showWarning(
+                                      S
+                                          .of(context)
+                                          .schedulesForComparisonNotConfigured,
+                                    );
                               }
-                              pageProvider.enableComparisonMode(firstScheduleState, secondScheduleState);
+                              pageProvider.enableComparisonMode(
+                                firstScheduleState,
+                                secondScheduleState,
+                              );
                               Navigator.pop(context);
                             }
                             : null,
@@ -342,24 +419,41 @@ class _HomePageState extends State<HomePage> {
               width: double.maxFinite,
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: pageProvider.schedules.length + countListItemForComparisonMenu,
+                itemCount:
+                    pageProvider.schedules.length +
+                    countListItemForComparisonMenu,
                 itemBuilder: (context, index) {
                   if (index == pageProvider.schedules.length) {
                     final isComparisonActive = pageProvider.isComparisonMode;
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 0,
+                      ),
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(12), bottom: Radius.circular(12)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(12),
+                          bottom: Radius.circular(12),
+                        ),
                       ),
                       elevation: 1,
                       child: ListTile(
                         title: Text(S.of(context).scheduleComparison),
                         leading: const Icon(Icons.compare),
-                        trailing: isComparisonActive ? const Icon(Icons.check, color: Colors.green) : null,
-                        tileColor: isComparisonActive ? Colors.green.withValues(alpha: 0.1) : null,
+                        trailing:
+                            isComparisonActive
+                                ? const Icon(Icons.check, color: Colors.green)
+                                : null,
+                        tileColor:
+                            isComparisonActive
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : null,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(12), bottom: Radius.circular(12)),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(12),
+                            bottom: Radius.circular(12),
+                          ),
                         ),
                         onTap: () {
                           Navigator.pop(context);
@@ -370,25 +464,48 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   final schedule = pageProvider.schedules[index];
-                  final hasSequences = pageProvider.isScheduleHasSequences(schedule);
-                  final isActive = !pageProvider.isComparisonMode && pageProvider.isScheduleActive(schedule);
+                  final hasSequences = pageProvider.isScheduleHasSequences(
+                    schedule,
+                  );
+                  final isActive =
+                      !pageProvider.isComparisonMode &&
+                      pageProvider.isScheduleActive(schedule);
 
                   return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 0,
+                    ),
                     shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(12), bottom: Radius.circular(12)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(12),
+                        bottom: Radius.circular(12),
+                      ),
                     ),
                     elevation: 1,
                     child: ListTile(
                       title: Text(schedule.name),
                       subtitle:
                           hasSequences
-                              ? Text(S.of(context).configured, style: const TextStyle(color: Colors.green))
-                              : Text(S.of(context).notConfigured, style: const TextStyle(color: Colors.orange)),
-                      trailing: isActive ? const Icon(Icons.check, color: Colors.green) : null,
-                      tileColor: isActive ? Colors.green.withValues(alpha: 0.1) : null,
+                              ? Text(
+                                S.of(context).configured,
+                                style: const TextStyle(color: Colors.green),
+                              )
+                              : Text(
+                                S.of(context).notConfigured,
+                                style: const TextStyle(color: Colors.orange),
+                              ),
+                      trailing:
+                          isActive
+                              ? const Icon(Icons.check, color: Colors.green)
+                              : null,
+                      tileColor:
+                          isActive ? Colors.green.withValues(alpha: 0.1) : null,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(12), bottom: Radius.circular(12)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(12),
+                          bottom: Radius.circular(12),
+                        ),
                       ),
                       onTap: () {
                         if (!hasSequences) {
@@ -404,7 +521,12 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-            actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: Text(S.of(context).cancel))],
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(S.of(context).cancel),
+              ),
+            ],
           ),
     );
   }
@@ -416,7 +538,10 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          IconButton(icon: const Icon(Icons.chevron_left, color: _textColor), onPressed: _previousMonth),
+          IconButton(
+            icon: const Icon(Icons.chevron_left, color: _textColor),
+            onPressed: _previousMonth,
+          ),
           const Expanded(child: SizedBox()),
           Flexible(
             flex: 2,
@@ -427,20 +552,32 @@ class _HomePageState extends State<HomePage> {
                 child: Text(
                   _getMonthYearText(),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: _textColor, fontSize: 20, fontWeight: FontWeight.normal),
+                  style: const TextStyle(
+                    color: _textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
               ),
             ),
           ),
           const Expanded(child: SizedBox()),
-          IconButton(icon: const Icon(Icons.chevron_right, color: _textColor), onPressed: _nextMonth),
+          IconButton(
+            icon: const Icon(Icons.chevron_right, color: _textColor),
+            onPressed: _nextMonth,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildColorLegend(String? activeScheduleId, HomePageProvider pageProvider) {
-    if (!pageProvider.showShiftNameLegend() || !pageProvider.hasSchedules() || activeScheduleId == null) {
+  Widget _buildColorLegend(
+    String? activeScheduleId,
+    HomePageProvider pageProvider,
+  ) {
+    if (!pageProvider.showShiftNameLegend() ||
+        !pageProvider.hasSchedules() ||
+        activeScheduleId == null) {
       return const SizedBox.shrink();
     }
 
@@ -448,7 +585,8 @@ class _HomePageState extends State<HomePage> {
       return _buildComparisonLegend(pageProvider);
     }
 
-    final List<WorkShiftItemViewModel> shiftsToShow = pageProvider.getUsedShiftsInSchedule(activeScheduleId);
+    final List<WorkShiftItemViewModel> shiftsToShow = pageProvider
+        .getUsedShiftsInSchedule(activeScheduleId);
 
     if (shiftsToShow.isEmpty) {
       return Container();
@@ -470,7 +608,8 @@ class _HomePageState extends State<HomePage> {
   Widget _buildComparisonLegend(HomePageProvider pageProvider) {
     final firstSchedule = pageProvider.comparedSchedules.first;
     final secondSchedule = pageProvider.comparedSchedules.last;
-    final (firstShifts, secondShifts) = pageProvider.getUsedShiftsInComparedSchedules();
+    final (firstShifts, secondShifts) =
+        pageProvider.getUsedShiftsInComparedSchedules();
 
     return Container(
       color: Colors.white,
@@ -482,15 +621,29 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: _primaryLight, borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _primaryLight,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                   child: Text(
                     firstSchedule.name,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                ...firstShifts.map((shift) => Expanded(child: _buildLegendItem(shift.name, shift.color))),
+                ...firstShifts.map(
+                  (shift) => Expanded(
+                    child: _buildLegendItem(shift.name, shift.color),
+                  ),
+                ),
               ],
             ),
           ),
@@ -498,14 +651,24 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: _primaryLight, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(
+                  color: _primaryLight,
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 child: Text(
                   secondSchedule.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              ...secondShifts.map((shift) => Expanded(child: _buildLegendItem(shift.name, shift.color))),
+              ...secondShifts.map(
+                (shift) =>
+                    Expanded(child: _buildLegendItem(shift.name, shift.color)),
+              ),
             ],
           ),
         ],
@@ -520,10 +683,19 @@ class _HomePageState extends State<HomePage> {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
         ),
         const SizedBox(width: 4),
-        Flexible(child: Text(text, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))),
+        Flexible(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
       ],
     );
   }

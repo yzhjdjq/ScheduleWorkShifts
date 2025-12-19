@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart' show ChangeNotifier;
 import 'package:sws/providers/model_providers/model_providers.dart'
-    show ActiveSchedulesProvider, ScheduleProvider, WorkShiftProvider, WorkingTimeViewModel;
-import 'package:sws/providers/model_providers/schedule_exception_provider.dart';
-import 'package:sws/services/services.dart' show WidgetService;
-import 'package:uuid/uuid.dart' show Uuid;
+    show
+        ActiveSchedulesProvider,
+        ScheduleExceptionProvider,
+        ScheduleProvider,
+        WorkShiftProvider;
+import 'package:sws/services/services.dart' show ScheduleService, WidgetService;
 
 class ScheduleExceptionDialogsProvider with ChangeNotifier {
   static ScheduleExceptionDialogsProvider? _instance;
   static ScheduleExceptionDialogsProvider get instance {
     if (_instance == null) {
-      throw Exception('ScheduleExceptionDialogsProvider not initialized. Call initialize() first.');
+      throw Exception(
+        'ScheduleExceptionDialogsProvider not initialized. Call initialize() first.',
+      );
     }
     return _instance!;
   }
@@ -17,6 +21,7 @@ class ScheduleExceptionDialogsProvider with ChangeNotifier {
   static Future<ScheduleExceptionDialogsProvider> initialize({
     required ActiveSchedulesProvider activeSchedulesProvider,
     required ScheduleProvider scheduleProvider,
+    required ScheduleService scheduleService,
     required ScheduleExceptionProvider scheduleExceptionProvider,
     required WorkShiftProvider workShiftProvider,
   }) async {
@@ -27,6 +32,7 @@ class ScheduleExceptionDialogsProvider with ChangeNotifier {
     _instance = ScheduleExceptionDialogsProvider._internal(
       activeSchedulesProvider,
       scheduleProvider,
+      scheduleService,
       scheduleExceptionProvider,
       workShiftProvider,
     );
@@ -36,6 +42,7 @@ class ScheduleExceptionDialogsProvider with ChangeNotifier {
   ScheduleExceptionDialogsProvider._internal(
     this._activeSchedulesProvider,
     this._scheduleProvider,
+    this._scheduleService,
     this._scheduleExceptionProvider,
     this._workShiftProvider,
   ) {
@@ -53,6 +60,7 @@ class ScheduleExceptionDialogsProvider with ChangeNotifier {
 
   late final ActiveSchedulesProvider _activeSchedulesProvider;
   late final ScheduleProvider _scheduleProvider;
+  late final ScheduleService _scheduleService;
   late final ScheduleExceptionProvider _scheduleExceptionProvider;
   late final WorkShiftProvider _workShiftProvider;
 
@@ -65,29 +73,9 @@ class ScheduleExceptionDialogsProvider with ChangeNotifier {
 
   bool isComparisonMode() => _activeSchedulesProvider.hasComparedSchedule;
 
-  void addVacation(String scheduleId, DateTime startDate, DateTime endDate) {
-    if (!_scheduleProvider.hasSchedule(scheduleId)) return;
-    final vacationException = ScheduleExceptionItemViewModel(
-      id: Uuid().v4(),
-      scheduleId: scheduleId,
-      workShiftId: _workShiftProvider.vacationShift.id,
-      startDate: startDate,
-      endDate: endDate,
-      workingTime: WorkingTimeViewModel(),
-    );
-    _scheduleExceptionProvider.addScheduleException(vacationException);
-  }
+  void addVacation(String scheduleId, DateTime startDate, DateTime endDate) =>
+      _scheduleService.addVacation(scheduleId, startDate, endDate);
 
-  void addSickLeave(String scheduleId, DateTime startDate, DateTime endDate) {
-    if (!_scheduleProvider.hasSchedule(scheduleId)) return;
-    final sickLeaveException = ScheduleExceptionItemViewModel(
-      id: Uuid().v4(),
-      scheduleId: scheduleId,
-      workShiftId: _workShiftProvider.sickLeaveShift.id,
-      startDate: startDate,
-      endDate: endDate,
-      workingTime: WorkingTimeViewModel(),
-    );
-    _scheduleExceptionProvider.addScheduleException(sickLeaveException);
-  }
+  void addSickLeave(String scheduleId, DateTime startDate, DateTime endDate) =>
+      _scheduleService.addSickLeave(scheduleId, startDate, endDate);
 }

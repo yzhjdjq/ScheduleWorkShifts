@@ -8,7 +8,9 @@ class WorkShiftProvider with ChangeNotifier {
   static WorkShiftProvider? _instance;
   static WorkShiftProvider get instance {
     if (_instance == null) {
-      throw Exception('WorkShiftStore not initialized. Call initialize() first.');
+      throw Exception(
+        'WorkShiftStore not initialized. Call initialize() first.',
+      );
     }
     return _instance!;
   }
@@ -31,13 +33,22 @@ class WorkShiftProvider with ChangeNotifier {
 
   static bool get isInitialized => _instance != null;
 
-  static final WorkShiftRepository _workShiftsRepository = WorkShiftRepository();
+  static final WorkShiftRepository _workShiftsRepository =
+      WorkShiftRepository();
   static List<WorkShift> _workShifts = [];
-  static List<WorkShift> _staticShifts = [WorkShift.vacation(), WorkShift.sickLeave()];
+  static List<WorkShift> _staticShifts = [
+    WorkShift.vacation(),
+    WorkShift.sickLeave(),
+  ];
 
   List<WorkShift> _ensureMinimumWorkShifts() => [
     WorkShift.createDefault(),
-    WorkShift(id: const Uuid().v4(), name: 'Выходной', category: ShiftCategory.dayOff, color: const Color(0xFF00AA00)),
+    WorkShift(
+      id: const Uuid().v4(),
+      name: 'Выходной',
+      category: ShiftCategory.dayOff,
+      color: const Color(0xFF00AA00),
+    ),
   ];
 
   Future<void> _loadDataFromRepository() async {
@@ -55,7 +66,9 @@ class WorkShiftProvider with ChangeNotifier {
   }
 
   List<WorkShiftItemViewModel> get workShifts =>
-      List.unmodifiable(_workShifts).map((ws) => WorkShiftItemViewModel.fromWorkShift(ws)).toList();
+      List.unmodifiable(
+        _workShifts,
+      ).map((ws) => WorkShiftItemViewModel.fromWorkShift(ws)).toList();
 
   List<WorkShiftItemViewModel> get allWorkShifts =>
       List.unmodifiable([
@@ -64,10 +77,17 @@ class WorkShiftProvider with ChangeNotifier {
       ]).map((ws) => WorkShiftItemViewModel.fromWorkShift(ws)).toList();
 
   WorkShiftItemViewModel get vacationShift =>
-      WorkShiftItemViewModel.fromWorkShift(_staticShifts.firstWhere((ws) => ws.isVacation()));
+      WorkShiftItemViewModel.fromWorkShift(
+        _staticShifts.firstWhere((ws) => ws.isVacation()),
+      );
 
   WorkShiftItemViewModel get sickLeaveShift =>
-      WorkShiftItemViewModel.fromWorkShift(_staticShifts.firstWhere((ws) => ws.isSickLeave()));
+      WorkShiftItemViewModel.fromWorkShift(
+        _staticShifts.firstWhere((ws) => ws.isSickLeave()),
+      );
+
+  WorkShiftItemViewModel workShiftById(String id) =>
+      allWorkShifts.firstWhere((shift) => shift.id == id);
 
   void addWorkShift(WorkShiftItemViewModel shiftItem) {
     final shift = WorkShift(
@@ -81,7 +101,9 @@ class WorkShiftProvider with ChangeNotifier {
   }
 
   void updateWorkShift(WorkShiftItemViewModel newShiftItem) {
-    final int index = _workShifts.indexWhere((shift) => shift.id == newShiftItem.id);
+    final int index = _workShifts.indexWhere(
+      (shift) => shift.id == newShiftItem.id,
+    );
 
     if (index != -1) {
       final newShift = WorkShift(
@@ -96,7 +118,9 @@ class WorkShiftProvider with ChangeNotifier {
   }
 
   void updateStaticShiftColor(String id, Color newColor) {
-    _staticShifts.firstWhere((shift) => shift.id == id).copyWith(color: newColor);
+    _staticShifts
+        .firstWhere((shift) => shift.id == id)
+        .copyWith(color: newColor);
     _saveToStorage();
   }
 
@@ -114,7 +138,12 @@ class WorkShiftItemViewModel {
   final ShiftCategoryViewModel category;
   final Color color;
 
-  const WorkShiftItemViewModel({required this.id, required this.name, required this.category, required this.color});
+  const WorkShiftItemViewModel({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.color,
+  });
 
   static WorkShiftItemViewModel fromWorkShift(WorkShift workShift) {
     return WorkShiftItemViewModel(
@@ -135,7 +164,11 @@ class WorkShiftItemViewModel {
     );
   }
 
-  WorkShiftItemViewModel copyWith({String? name, ShiftCategoryViewModel? category, Color? color}) {
+  WorkShiftItemViewModel copyWith({
+    String? name,
+    ShiftCategoryViewModel? category,
+    Color? color,
+  }) {
     return WorkShiftItemViewModel(
       id: id,
       name: name ?? this.name,
@@ -144,17 +177,23 @@ class WorkShiftItemViewModel {
     );
   }
 
-  bool isStatic() => WorkShift(id: id, name: name, category: category, color: color).isStatic();
+  bool isStatic() =>
+      WorkShift(
+        id: id,
+        name: name,
+        category: category,
+        color: color,
+      ).isStatic();
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is WorkShiftItemViewModel &&
-              runtimeType == other.runtimeType &&
-              id == other.id &&
-              name == other.name &&
-              category == other.category &&
-              color.toARGB32() == other.color.toARGB32();
+      other is WorkShiftItemViewModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          category == other.category &&
+          color.toARGB32() == other.color.toARGB32();
 
   @override
   int get hashCode => Object.hash(id, name, category, color.toARGB32());

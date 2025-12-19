@@ -14,7 +14,9 @@ class CreateSchedulePageProvider with ChangeNotifier {
   static CreateSchedulePageProvider? _instance;
   static CreateSchedulePageProvider get instance {
     if (_instance == null) {
-      throw Exception('SchedulePageProvider not initialized. Call initialize() first.');
+      throw Exception(
+        'SchedulePageProvider not initialized. Call initialize() first.',
+      );
     }
     return _instance!;
   }
@@ -85,21 +87,31 @@ class CreateSchedulePageProvider with ChangeNotifier {
 
   List<ScheduleItemViewModel> get schedules => _scheduleProvider.schedules;
 
-  ScheduleItemViewModel? getScheduleById(String id) => _scheduleProvider.getScheduleById(id);
+  ScheduleItemViewModel? getScheduleById(String id) =>
+      _scheduleProvider.getScheduleById(id);
 
-  void updateSchedule(ScheduleItemViewModel schedule) => _scheduleProvider.updateSchedule(schedule);
+  void updateSchedule(ScheduleItemViewModel schedule) =>
+      _scheduleProvider.updateSchedule(schedule);
 
-  List<ShiftSequenceItemViewModel> getShiftSequencesForSchedule(ScheduleItemViewModel? schedule) =>
-      schedule == null ? [] : _shiftSequenceProvider.getShiftSequencesForSchedule(schedule.id);
+  List<ShiftSequenceItemViewModel> getShiftSequencesForSchedule(
+    ScheduleItemViewModel? schedule,
+  ) =>
+      schedule == null
+          ? []
+          : _shiftSequenceProvider.getShiftSequencesForSchedule(schedule.id);
 
-  WorkShiftItemViewModel getWorkShiftFromScheduleSequence(ShiftSequenceItemViewModel sequence) =>
-      workShifts.firstWhere((s) => s.id == sequence.workShiftId, orElse: () => workShifts.first);
+  WorkShiftItemViewModel getWorkShiftFromScheduleSequence(
+    ShiftSequenceItemViewModel sequence,
+  ) => _workShiftProvider.workShiftById(sequence.workShiftId);
 
   List<WorkShiftItemViewModel> get workShifts => _workShiftProvider.workShifts;
 
-  List<ShiftSequenceItemViewModel> get shiftSequences => _shiftSequenceProvider.shiftSequences;
+  List<ShiftSequenceItemViewModel> get shiftSequences =>
+      _shiftSequenceProvider.shiftSequences;
 
-  void addShiftSequence(ShiftSequenceItemViewModel newSequence) => _shiftSequenceProvider.addShiftSequence(newSequence);
+  void addShiftSequence(ShiftSequenceItemViewModel newSequence) =>
+      _shiftSequenceProvider.addShiftSequence(newSequence);
 
-  void removeShiftSequence(String id) => _shiftSequenceProvider.removeShiftSequence(id);
+  void removeShiftSequence(String id) =>
+      _shiftSequenceProvider.removeShiftSequence(id);
 }

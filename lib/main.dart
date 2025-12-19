@@ -23,7 +23,8 @@ import 'package:sws/providers/providers.dart'
         SettingsSchedulePageProvider,
         SettingsShiftsPageProvider,
         SnackBarMessageProvider;
-import 'package:sws/services/services.dart' show S, StorageService;
+import 'package:sws/services/services.dart'
+    show S, ScheduleService, StorageService;
 import 'package:sws/widgets/widgets.dart' show SnackBarHandler;
 
 void main() async {
@@ -39,10 +40,19 @@ void main() async {
   await ShiftSequenceProvider.initialize();
   await WorkShiftProvider.initialize();
 
+  await ScheduleService.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
+  );
+
   await HomePageProvider.initialize(
     activeSchedulesProvider: ActiveSchedulesProvider.instance,
     scheduleExceptionProvider: ScheduleExceptionProvider.instance,
     scheduleProvider: ScheduleProvider.instance,
+    scheduleService: ScheduleService.instance,
     shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
     shiftNameSettingProvider: ShiftNameSettingProvider.instance,
     shiftSequenceProvider: ShiftSequenceProvider.instance,
@@ -65,14 +75,16 @@ void main() async {
     scheduleExceptionProvider: ScheduleExceptionProvider.instance,
   );
   await SettingsShiftsPageProvider.initialize(
-    workShiftProvider: WorkShiftProvider.instance,
-    shiftSequenceProvider: ShiftSequenceProvider.instance,
     scheduleExceptionProvider: ScheduleExceptionProvider.instance,
+    scheduleService: ScheduleService.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+    workShiftProvider: WorkShiftProvider.instance,
   );
   await CalendarWidgetProvider.initialize(
     activeSchedulesProvider: ActiveSchedulesProvider.instance,
     scheduleExceptionProvider: ScheduleExceptionProvider.instance,
     scheduleProvider: ScheduleProvider.instance,
+    scheduleService: ScheduleService.instance,
     shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
     shiftNameSettingProvider: ShiftNameSettingProvider.instance,
     shiftSequenceProvider: ShiftSequenceProvider.instance,
@@ -82,6 +94,7 @@ void main() async {
     activeSchedulesProvider: ActiveSchedulesProvider.instance,
     scheduleExceptionProvider: ScheduleExceptionProvider.instance,
     scheduleProvider: ScheduleProvider.instance,
+    scheduleService: ScheduleService.instance,
     workShiftProvider: WorkShiftProvider.instance,
   );
 

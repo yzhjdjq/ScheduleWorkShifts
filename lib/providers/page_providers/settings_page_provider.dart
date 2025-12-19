@@ -7,7 +7,9 @@ class SettingsPageProvider with ChangeNotifier {
   static SettingsPageProvider? _instance;
   static SettingsPageProvider get instance {
     if (_instance == null) {
-      throw Exception('SettingsPageProvider not initialized. Call initialize() first.');
+      throw Exception(
+        'SettingsPageProvider not initialized. Call initialize() first.',
+      );
     }
     return _instance!;
   }
@@ -20,11 +22,17 @@ class SettingsPageProvider with ChangeNotifier {
       return _instance!;
     }
 
-    _instance = SettingsPageProvider._internal(shiftNameLegendSettingProvider, shiftNameSettingProvider);
+    _instance = SettingsPageProvider._internal(
+      shiftNameLegendSettingProvider,
+      shiftNameSettingProvider,
+    );
     return _instance!;
   }
 
-  SettingsPageProvider._internal(this._shiftNameLegendSettingProvider, this._shiftNameSettingProvider) {
+  SettingsPageProvider._internal(
+    this._shiftNameLegendSettingProvider,
+    this._shiftNameSettingProvider,
+  ) {
     if (_instance != null) {
       throw Exception('SettingsPageProvider already initialized.');
     }
@@ -43,9 +51,12 @@ class SettingsPageProvider with ChangeNotifier {
   late final ShiftNameLegendSettingProvider _shiftNameLegendSettingProvider;
   late final ShiftNameSettingProvider _shiftNameSettingProvider;
 
-  bool get showShiftNameLegend => _shiftNameLegendSettingProvider.showShiftNameLegend;
-  set showShiftNameLegend(bool value) => _shiftNameLegendSettingProvider.showShiftNameLegend = value;
+  bool get showShiftNameLegend =>
+      _shiftNameLegendSettingProvider.showShiftNameLegend;
+  set showShiftNameLegend(bool value) =>
+      _shiftNameLegendSettingProvider.showShiftNameLegend = value;
 
   bool get showShiftName => _shiftNameSettingProvider.showShiftName;
-  set showShiftName(bool value) => _shiftNameSettingProvider.showShiftName = value;
+  set showShiftName(bool value) =>
+      _shiftNameSettingProvider.showShiftName = value;
 }
