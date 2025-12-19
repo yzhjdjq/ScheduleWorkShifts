@@ -78,7 +78,7 @@
   "swapSchedules": "Swap Schedules",
   "configured": "configured",
   "notConfigured": "not configured",
-  "compare": "compare",
+  "compare": "Compare",
 
   "durationText": "{hour}h {minutes}m",
   "selectTime": "Select time",

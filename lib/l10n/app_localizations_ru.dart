@@ -237,7 +237,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notConfigured => 'не настроен';
 
   @override
-  String get compare => 'сопоставить';
+  String get compare => 'Сопоставить';
 
   @override
   String durationText(Object hour, Object minutes) {

@@ -17,7 +17,7 @@ class MainDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildDrawerHeader(context),
+          _MainDrawerHeader(primaryColor: _primaryColor),
           _buildDrawerItem(
             icon: Icons.schedule,
             title: S.of(context).createSchedule,
@@ -74,7 +74,23 @@ class MainDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerHeader(BuildContext context) {
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
+  }
+}
+
+class _MainDrawerHeader extends StatelessWidget {
+  final Color _primaryColor;
+
+  const _MainDrawerHeader({required Color primaryColor})
+    : _primaryColor = primaryColor;
+
+  @override
+  Widget build(BuildContext context) {
     return DrawerHeader(
       decoration: BoxDecoration(color: _primaryColor),
       child: Column(
@@ -108,13 +124,5 @@ class MainDrawer extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildDrawerItem({
-    required IconData icon,
-    required String title,
-    VoidCallback? onTap,
-  }) {
-    return ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
   }
 }

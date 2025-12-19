@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show WatchContext;
-import 'package:sws/providers/providers.dart' show SnackBarMessageProvider, SnackBarMessageData, SnackBarMessageType;
+import 'package:sws/providers/providers.dart'
+    show SnackBarMessageProvider, SnackBarMessageData, SnackBarMessageType;
 
 class SnackBarHandler extends StatelessWidget {
   final Widget child;
@@ -24,7 +25,11 @@ class SnackBarHandler extends StatelessWidget {
     );
   }
 
-  void _showSnackBar(BuildContext context, SnackBarMessageData message, SnackBarMessageProvider provider) {
+  void _showSnackBar(
+    BuildContext context,
+    SnackBarMessageData message,
+    SnackBarMessageProvider provider,
+  ) {
     final theme = Theme.of(context);
     Color backgroundColor;
 
@@ -48,7 +53,10 @@ class SnackBarHandler extends StatelessWidget {
       duration: message.duration ?? const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15), bottom: Radius.circular(15)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(15),
+          bottom: Radius.circular(15),
+        ),
       ),
       backgroundColor: backgroundColor,
       action:

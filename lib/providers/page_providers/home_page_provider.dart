@@ -97,66 +97,10 @@ class HomePageProvider with ChangeNotifier {
 
   ScheduleItemViewModel? get activeSchedule => _scheduleService.activeSchedule;
 
-  ScheduleItemViewModel? getScheduleById(String id) =>
-      _scheduleProvider.getScheduleById(id);
-
-  bool isScheduleActive(ScheduleItemViewModel schedule) =>
-      activeSchedule?.id == schedule.id;
-
   bool get isComparisonMode => _activeSchedulesProvider.hasComparedSchedule;
 
   List<ScheduleItemViewModel> get comparedSchedules =>
       _scheduleService.comparedSchedules;
-
-  void enableComparisonMode(
-    ScheduleItemViewModel activeSchedule,
-    ScheduleItemViewModel comparedSchedule,
-  ) => _activeSchedulesProvider.setComparedScheduleIds(
-    activeSchedule.id,
-    comparedSchedule.id,
-  );
-
-  bool isScheduleHasSequences(ScheduleItemViewModel schedule) =>
-      _shiftSequenceProvider.hasShiftSequencesForSchedule(schedule.id);
-
-  (ScheduleItemViewModel, ScheduleItemViewModel)
-  getSchedulesForComparisonSetting() {
-    if (isComparisonMode) {
-      final List<ScheduleItemViewModel> comparedSchedules =
-          this.comparedSchedules;
-      return (comparedSchedules.first, comparedSchedules.last);
-    } else {
-      final configuredSchedules = _scheduleService.configuredSchedules;
-
-      if (configuredSchedules.length >= 2) {
-        return (configuredSchedules.first, configuredSchedules[1]);
-      } else if (configuredSchedules.length == 1 &&
-          _scheduleProvider.schedules.length >= 2) {
-        final ScheduleItemViewModel secondScheduleId = _scheduleProvider
-            .firstWithout(configuredSchedules.first);
-        return (configuredSchedules.first, secondScheduleId);
-      } else if (_scheduleProvider.schedules.length >= 2) {
-        return (
-          _scheduleProvider.schedules.first,
-          _scheduleProvider.schedules[1],
-        );
-      } else if (_scheduleProvider.schedules.length == 1) {
-        return (
-          _scheduleProvider.schedules.first,
-          _scheduleProvider.schedules.first,
-        );
-      }
-    }
-    final schedule = ScheduleItemViewModel.createDefault();
-    return (schedule, schedule);
-  }
-
-  List<ScheduleItemViewModel> getAvailableSchedulesForComparison(
-    ScheduleItemViewModel firstSchedule,
-  ) => _scheduleProvider.schedulesWithout(firstSchedule);
-
-  void onActiveScheduleChange(ScheduleItemViewModel activeSchedule) =>
-      _activeSchedulesProvider.setActiveScheduleId(activeSchedule.id);
 
   bool hasExceptionForDateByActiveSchedule(DateTime date) =>
       _scheduleService.hasExceptionForDateByActiveSchedule(date);
@@ -202,16 +146,6 @@ class HomePageProvider with ChangeNotifier {
   List<List<Color>> getColorsForComparison(DateTime forMonth) =>
       _scheduleService.getColorsForComparison(forMonth);
 
-  List<WorkShiftItemViewModel> getUsedShiftsInSchedule(String scheduleId) =>
-      _scheduleService.getUsedShiftsInSchedule(scheduleId);
-
-  (List<WorkShiftItemViewModel>, List<WorkShiftItemViewModel>)
-  getUsedShiftsInComparedSchedules() {
-    final firstUsedShifts = getUsedShiftsInSchedule(comparedSchedules.first.id);
-    final secondUsedShifts = getUsedShiftsInSchedule(comparedSchedules.last.id);
-    return (firstUsedShifts, secondUsedShifts);
-  }
-
   WorkingTimeViewModel getWorkingTimeForWorkShiftInActiveSchedule(
     WorkShiftItemViewModel workShift,
   ) => _scheduleService.getWorkingTimeForWorkShiftInActiveSchedule(workShift);
@@ -230,7 +164,4 @@ class HomePageProvider with ChangeNotifier {
 
     return defaultValue;
   }
-
-  bool showShiftNameLegend() =>
-      _shiftNameLegendSettingProvider.showShiftNameLegend;
 }

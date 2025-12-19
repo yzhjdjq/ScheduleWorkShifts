@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sws/services/services.dart' show S;
+import 'package:sws/widgets/shift_sequence_list/shift_sequence_list_columns_width.dart'
+    show ShiftSequenceListColumnsWidth;
 
 class ShiftSequenceHeaderWidget extends StatelessWidget {
   const ShiftSequenceHeaderWidget({super.key});
@@ -8,10 +10,10 @@ class ShiftSequenceHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Table(
       columnWidths: const {
-        0: FlexColumnWidth(3),
-        1: FlexColumnWidth(1),
-        2: FlexColumnWidth(3),
-        3: FixedColumnWidth(48),
+        0: FlexColumnWidth(ShiftSequenceListColumnsWidth.shiftColumn),
+        1: FlexColumnWidth(ShiftSequenceListColumnsWidth.daysColumn),
+        2: FlexColumnWidth(ShiftSequenceListColumnsWidth.timeColumn),
+        3: FixedColumnWidth(ShiftSequenceListColumnsWidth.removeIconColumn),
       },
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [

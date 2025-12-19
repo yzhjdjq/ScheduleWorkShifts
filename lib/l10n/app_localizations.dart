@@ -530,7 +530,7 @@ abstract class AppLocalizations {
   /// No description provided for @compare.
   ///
   /// In ru, this message translates to:
-  /// **'сопоставить'**
+  /// **'Сопоставить'**
   String get compare;
 
   /// No description provided for @durationText.

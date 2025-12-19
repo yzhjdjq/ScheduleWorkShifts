@@ -19,10 +19,12 @@ import 'package:sws/providers/providers.dart'
         CreateSchedulePageProvider,
         HomePageProvider,
         ScheduleExceptionDialogsProvider,
+        ScheduleSelectionDialogsProvider,
         SettingsPageProvider,
         SettingsSchedulePageProvider,
         SettingsShiftsPageProvider,
-        SnackBarMessageProvider;
+        SnackBarMessageProvider,
+        WorkShiftColorLegendWidgetProvider;
 import 'package:sws/services/services.dart'
     show S, ScheduleService, StorageService;
 import 'package:sws/widgets/widgets.dart' show SnackBarHandler;
@@ -97,6 +99,18 @@ void main() async {
     scheduleService: ScheduleService.instance,
     workShiftProvider: WorkShiftProvider.instance,
   );
+  await ScheduleSelectionDialogsProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    scheduleService: ScheduleService.instance,
+    shiftSequenceProvider: ShiftSequenceProvider.instance,
+  );
+  await WorkShiftColorLegendWidgetProvider.initialize(
+    activeSchedulesProvider: ActiveSchedulesProvider.instance,
+    shiftNameLegendSettingProvider: ShiftNameLegendSettingProvider.instance,
+    scheduleProvider: ScheduleProvider.instance,
+    scheduleService: ScheduleService.instance,
+  );
 
   final locale = PlatformDispatcher.instance.locale;
   await initializeDateFormatting(locale.toString(), null);
@@ -131,7 +145,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => ScheduleExceptionDialogsProvider.instance,
         ),
+        ChangeNotifierProvider(
+          create: (context) => ScheduleSelectionDialogsProvider.instance,
+        ),
         ChangeNotifierProvider(create: (context) => SnackBarMessageProvider()),
+        ChangeNotifierProvider(
+          create: (context) => WorkShiftColorLegendWidgetProvider.instance,
+        ),
       ],
       child: MaterialApp(
         supportedLocales: S.supportedLocales,

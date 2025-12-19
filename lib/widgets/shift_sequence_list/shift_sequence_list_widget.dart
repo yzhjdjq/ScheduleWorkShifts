@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sws/providers/providers.dart'
     show WorkShiftItemViewModel, WorkingTimeViewModel;
-import 'package:sws/widgets/widgets.dart'
-    show ShiftRowData, ShiftRowWidget, ShiftSequenceHeaderWidget;
+import 'package:sws/widgets/shift_sequence_list/shift_row_widget.dart'
+    show ShiftRowWidget;
+import 'package:sws/widgets/shift_sequence_list/shift_sequence_header_widget.dart'
+    show ShiftSequenceHeaderWidget;
+import 'package:sws/widgets/widgets.dart' show ShiftRowData;
 
 class ShiftSequenceListWidget extends StatelessWidget {
   final List<ShiftRowData> rows;

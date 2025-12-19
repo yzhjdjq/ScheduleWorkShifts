@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sws/providers/model_providers/model_providers.dart'
     show ShiftCategoryViewModel, WorkShiftItemViewModel, WorkingTimeViewModel;
 import 'package:sws/services/services.dart' show S;
+import 'package:sws/widgets/shift_sequence_list/shift_sequence_list_columns_width.dart';
 import 'package:sws/widgets/widgets.dart' show WorkingTimeWidget;
 
 class ShiftRowWidget extends StatelessWidget {
@@ -34,9 +35,18 @@ class ShiftRowWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(flex: 3, child: _buildShiftCell(context)),
-        Expanded(flex: 1, child: _buildDaysCell()),
-        Expanded(flex: 3, child: _buildTimeCell(context)),
+        Expanded(
+          flex: ShiftSequenceListColumnsWidth.shiftColumn.toInt(),
+          child: _buildShiftCell(context),
+        ),
+        Expanded(
+          flex: ShiftSequenceListColumnsWidth.daysColumn.toInt(),
+          child: _buildDaysCell(),
+        ),
+        Expanded(
+          flex: ShiftSequenceListColumnsWidth.timeColumn.toInt(),
+          child: _buildTimeCell(context),
+        ),
         _buildDeleteCell(),
       ],
     );
@@ -48,7 +58,10 @@ class ShiftRowWidget extends StatelessWidget {
       child: DropdownButton<WorkShiftItemViewModel>(
         isExpanded: true,
         value: selectedShift,
-        hint: Text(S.of(context).selectShift, style: const TextStyle(fontSize: 14)),
+        hint: Text(
+          S.of(context).selectShift,
+          style: const TextStyle(fontSize: 14),
+        ),
         items:
             availableShifts.map((shift) {
               return DropdownMenuItem<WorkShiftItemViewModel>(
@@ -58,11 +71,18 @@ class ShiftRowWidget extends StatelessWidget {
                     Container(
                       width: 10,
                       height: 10,
-                      decoration: BoxDecoration(color: shift.color, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: shift.color,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Flexible(
-                      child: Text(shift.name, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        shift.name,
+                        style: const TextStyle(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -105,12 +125,19 @@ class ShiftRowWidget extends StatelessWidget {
               alignment: Alignment.center,
               child: Text(
                 S.of(context).dayOff,
-                style: TextStyle(fontSize: 12, color: selectedShift?.color, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: selectedShift?.color,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             );
           }
 
-          return WorkingTimeWidget(workingTime: workingTime, onTimeChanged: onTimeChanged);
+          return WorkingTimeWidget(
+            workingTime: workingTime,
+            onTimeChanged: onTimeChanged,
+          );
         },
       ),
     );
@@ -138,8 +165,11 @@ class ShiftRowData {
   final TextEditingController daysController;
   WorkingTimeViewModel workingTime;
 
-  ShiftRowData({this.selectedShift, required this.daysCount, required this.workingTime})
-    : daysController = TextEditingController(text: daysCount) {
+  ShiftRowData({
+    this.selectedShift,
+    required this.daysCount,
+    required this.workingTime,
+  }) : daysController = TextEditingController(text: daysCount) {
     daysController.addListener(() {
       daysCount = daysController.text;
     });

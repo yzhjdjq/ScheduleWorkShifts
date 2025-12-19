@@ -78,7 +78,7 @@
   "swapSchedules": "Поменять графики местами",
   "configured": "настроен",
   "notConfigured": "не настроен",
-  "compare": "сопоставить",
+  "compare": "Сопоставить",
 
   "durationText": "{hour}ч {minutes}м",
   "selectTime": "Выберите время",

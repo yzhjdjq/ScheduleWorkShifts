@@ -20,7 +20,7 @@ class CalendarHeaderWidget extends StatelessWidget {
 
     return Container(
       color: Colors.grey.withAlpha(51),
-      margin: const EdgeInsets.symmetric(horizontal: 6),
+      margin: const EdgeInsets.only(left: 6, top: 8, right: 6, bottom: 0),
       child: Row(
         children:
             weekDays.map((day) {

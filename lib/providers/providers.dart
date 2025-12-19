@@ -19,6 +19,8 @@ export 'widget_providers/widget_providers.dart'
     show
         CalendarWidgetProvider,
         ScheduleExceptionDialogsProvider,
+        ScheduleSelectionDialogsProvider,
         SnackBarMessageData,
         SnackBarMessageProvider,
-        SnackBarMessageType;
+        SnackBarMessageType,
+        WorkShiftColorLegendWidgetProvider;

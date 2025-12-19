@@ -237,7 +237,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notConfigured => 'not configured';
 
   @override
-  String get compare => 'compare';
+  String get compare => 'Compare';
 
   @override
   String durationText(Object hour, Object minutes) {

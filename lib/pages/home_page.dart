@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' show ReadContext, WatchContext;
-import 'package:sws/l10n/app_localizations.dart';
 import 'package:sws/services/services.dart' show S;
+import 'package:sws/widgets/month_switcher_widget.dart';
 import 'package:sws/widgets/widgets.dart'
     show
         CalendarWidget,
         MainDrawer,
         ScheduleShiftsStatisticsWidget,
         showDaySettingsDialog,
-        showExceptionDetailsDialog;
+        showExceptionDetailsDialog,
+        showScheduleSelectionDialog;
 import 'package:sws/providers/providers.dart'
     show
         CalendarWidgetProvider,
         HomePageProvider,
         ScheduleExceptionItemViewModel,
         ScheduleItemViewModel,
-        SnackBarMessageProvider,
         WorkShiftItemViewModel,
         WorkingTimeViewModel;
+import 'package:sws/widgets/work_shift_color_legend_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -49,17 +50,6 @@ class _HomePageState extends State<HomePage> {
 
     final ScheduleItemViewModel? activeSchedule = pageProvider.activeSchedule;
 
-    final List<Color> periodicColors;
-    final List<List<Color>> comparisonColors;
-
-    if (pageProvider.isComparisonMode) {
-      periodicColors = [];
-      comparisonColors = pageProvider.getColorsForComparison(_currentDate);
-    } else {
-      comparisonColors = [[], []];
-      periodicColors = pageProvider.getColorsForActiveSchedule(_currentDate);
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -77,7 +67,7 @@ class _HomePageState extends State<HomePage> {
                     ? Icons.compare
                     : Icons.calendar_today,
               ),
-              onPressed: () => _showScheduleSelectionDialog(context),
+              onPressed: () => showScheduleSelectionDialog(context),
               tooltip:
                   pageProvider.isComparisonMode
                       ? S.of(context).scheduleComparisonMode
@@ -88,24 +78,28 @@ class _HomePageState extends State<HomePage> {
       drawer: const MainDrawer(color: _primaryColor),
       body: Column(
         children: <Widget>[
-          _buildMonthSwitcher(),
+          MonthSwitcherWidget(
+            colorWidget: _primaryLight,
+            colorText: _textColor,
+            currentDate: _currentDate,
+            onNextMonthBtnClicked: _onNextMonthBtnClicked,
+            onNowMonthBtnClicked: _onNowMonthBtnClicked,
+            onPreviousMonthBtnClicked: _onPreviousMonthBtnClicked,
+          ),
 
-          const SizedBox(height: 8),
-
-          if (pageProvider.showShiftNameLegend() &&
-              (periodicColors.isNotEmpty || comparisonColors.isNotEmpty))
-            _buildColorLegend(activeSchedule?.id, pageProvider),
-
-          if (pageProvider.showShiftNameLegend()) const SizedBox(height: 8),
+          WorkShiftColorLegendWidget(
+            activeScheduleId: activeSchedule?.id,
+            primaryLight: _primaryLight,
+          ),
 
           Expanded(
             flex: 3,
             child: GestureDetector(
               onHorizontalDragEnd: (details) {
                 if (details.primaryVelocity! > 0) {
-                  _previousMonth();
+                  _onPreviousMonthBtnClicked();
                 } else if (details.primaryVelocity! < 0) {
-                  _nextMonth();
+                  _onNextMonthBtnClicked();
                 }
               },
               child: CalendarWidget(
@@ -184,564 +178,29 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showComparisonSelectionDialog(BuildContext context) {
-    final pageProvider = context.read<HomePageProvider>();
-
-    final (firstSchedule, secondSchedule) =
-        pageProvider.getSchedulesForComparisonSetting();
-
-    if (firstSchedule == secondSchedule) {
-      context.read<SnackBarMessageProvider>().showWarning(
-        S.of(context).notEnoughSchedules,
-      );
-      return;
-    }
-
-    var (firstScheduleState, secondScheduleState) = (
-      firstSchedule,
-      secondSchedule,
-    );
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => StatefulBuilder(
-            builder: (context, setState) {
-              final availableSecondSchedules = pageProvider
-                  .getAvailableSchedulesForComparison(firstScheduleState);
-
-              if (firstScheduleState.id == secondScheduleState.id) {
-                secondScheduleState =
-                    availableSecondSchedules.firstOrNull ?? secondScheduleState;
-              }
-
-              final areSchedulesDifferent =
-                  firstScheduleState.id != secondScheduleState.id;
-
-              void swapSchedules() {
-                setState(() {
-                  final temp = firstScheduleState;
-                  firstScheduleState = secondScheduleState;
-                  secondScheduleState = temp;
-                });
-              }
-
-              return AlertDialog(
-                title: Text(S.of(context).scheduleComparison),
-                content: SizedBox(
-                  width: double.maxFinite,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: S.of(context).firstScheduleTitleName,
-                          border: const OutlineInputBorder(),
-                        ),
-                        value: firstScheduleState.id,
-                        items:
-                            pageProvider.schedules.map((schedule) {
-                              final hasSequences = pageProvider
-                                  .isScheduleHasSequences(schedule);
-
-                              return DropdownMenuItem<String>(
-                                value: schedule.id,
-                                child: Row(
-                                  children: <Widget>[
-                                    Text(schedule.name),
-                                    if (!hasSequences)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 8.0,
-                                        ),
-                                        child: Text(
-                                          S.of(context).notConfigured,
-                                          style: const TextStyle(
-                                            color: Colors.orange,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == null) {
-                              firstScheduleState = firstSchedule;
-                            } else {
-                              final schedule = pageProvider.getScheduleById(
-                                value,
-                              );
-                              firstScheduleState = schedule ?? firstSchedule;
-                            }
-                            final newAvailableSchedules = pageProvider
-                                .getAvailableSchedulesForComparison(
-                                  firstScheduleState,
-                                );
-                            secondScheduleState =
-                                newAvailableSchedules.firstOrNull ??
-                                secondSchedule;
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      if (areSchedulesDifferent)
-                        IconButton(
-                          onPressed: swapSchedules,
-                          icon: const Icon(Icons.swap_vert),
-                          tooltip: S.of(context).swapSchedules,
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.grey[100],
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(color: Colors.grey[300]!),
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: S.of(context).secondScheduleTitleName,
-                          border: const OutlineInputBorder(),
-                        ),
-                        value: secondScheduleState.id,
-                        items:
-                            availableSecondSchedules.map((schedule) {
-                              final hasSequences = pageProvider
-                                  .isScheduleHasSequences(schedule);
-
-                              return DropdownMenuItem<String>(
-                                value: schedule.id,
-                                child: Row(
-                                  children: <Widget>[
-                                    Text(schedule.name),
-                                    if (!hasSequences)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 8.0,
-                                        ),
-                                        child: Text(
-                                          S.of(context).notConfigured,
-                                          style: const TextStyle(
-                                            color: Colors.orange,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == null) {
-                              secondScheduleState = secondSchedule;
-                            } else {
-                              final schedule = pageProvider.getScheduleById(
-                                value,
-                              );
-                              secondScheduleState = schedule ?? secondSchedule;
-                            }
-                          });
-                        },
-                      ),
-
-                      if (availableSecondSchedules.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            S.of(context).noSchedulesAvailableForCompare,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(S.of(context).cancel),
-                  ),
-                  TextButton(
-                    onPressed:
-                        areSchedulesDifferent &&
-                                availableSecondSchedules.isNotEmpty
-                            ? () {
-                              if (!pageProvider.isScheduleHasSequences(
-                                    firstScheduleState,
-                                  ) ||
-                                  !pageProvider.isScheduleHasSequences(
-                                    secondScheduleState,
-                                  )) {
-                                context
-                                    .read<SnackBarMessageProvider>()
-                                    .showWarning(
-                                      S
-                                          .of(context)
-                                          .schedulesForComparisonNotConfigured,
-                                    );
-                              }
-                              pageProvider.enableComparisonMode(
-                                firstScheduleState,
-                                secondScheduleState,
-                              );
-                              Navigator.pop(context);
-                            }
-                            : null,
-                    child: Text(S.of(context).compare),
-                  ),
-                ],
-              );
-            },
-          ),
-    );
-  }
-
-  void _showScheduleSelectionDialog(BuildContext context) {
-    final pageProvider = context.read<HomePageProvider>();
-    const int countListItemForComparisonMenu = 1;
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(S.of(context).selectSchedule),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount:
-                    pageProvider.schedules.length +
-                    countListItemForComparisonMenu,
-                itemBuilder: (context, index) {
-                  if (index == pageProvider.schedules.length) {
-                    final isComparisonActive = pageProvider.isComparisonMode;
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 0,
-                      ),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(12),
-                          bottom: Radius.circular(12),
-                        ),
-                      ),
-                      elevation: 1,
-                      child: ListTile(
-                        title: Text(S.of(context).scheduleComparison),
-                        leading: const Icon(Icons.compare),
-                        trailing:
-                            isComparisonActive
-                                ? const Icon(Icons.check, color: Colors.green)
-                                : null,
-                        tileColor:
-                            isComparisonActive
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : null,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(12),
-                            bottom: Radius.circular(12),
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showComparisonSelectionDialog(context);
-                        },
-                      ),
-                    );
-                  }
-
-                  final schedule = pageProvider.schedules[index];
-                  final hasSequences = pageProvider.isScheduleHasSequences(
-                    schedule,
-                  );
-                  final isActive =
-                      !pageProvider.isComparisonMode &&
-                      pageProvider.isScheduleActive(schedule);
-
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 0,
-                    ),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(12),
-                        bottom: Radius.circular(12),
-                      ),
-                    ),
-                    elevation: 1,
-                    child: ListTile(
-                      title: Text(schedule.name),
-                      subtitle:
-                          hasSequences
-                              ? Text(
-                                S.of(context).configured,
-                                style: const TextStyle(color: Colors.green),
-                              )
-                              : Text(
-                                S.of(context).notConfigured,
-                                style: const TextStyle(color: Colors.orange),
-                              ),
-                      trailing:
-                          isActive
-                              ? const Icon(Icons.check, color: Colors.green)
-                              : null,
-                      tileColor:
-                          isActive ? Colors.green.withValues(alpha: 0.1) : null,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(12),
-                          bottom: Radius.circular(12),
-                        ),
-                      ),
-                      onTap: () {
-                        if (!hasSequences) {
-                          context.read<SnackBarMessageProvider>().showWarning(
-                            S.of(context).unconfiguredScheduleSelected,
-                          );
-                        }
-                        pageProvider.onActiveScheduleChange(schedule);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(S.of(context).cancel),
-              ),
-            ],
-          ),
-    );
-  }
-
-  Widget _buildMonthSwitcher() {
-    return Container(
-      color: _primaryLight,
-      padding: const EdgeInsets.all(0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.chevron_left, color: _textColor),
-            onPressed: _previousMonth,
-          ),
-          const Expanded(child: SizedBox()),
-          Flexible(
-            flex: 2,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: _nowMonth,
-                child: Text(
-                  _getMonthYearText(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: _textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const Expanded(child: SizedBox()),
-          IconButton(
-            icon: const Icon(Icons.chevron_right, color: _textColor),
-            onPressed: _nextMonth,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildColorLegend(
-    String? activeScheduleId,
-    HomePageProvider pageProvider,
-  ) {
-    if (!pageProvider.showShiftNameLegend() ||
-        !pageProvider.hasSchedules() ||
-        activeScheduleId == null) {
-      return const SizedBox.shrink();
-    }
-
-    if (pageProvider.isComparisonMode) {
-      return _buildComparisonLegend(pageProvider);
-    }
-
-    final List<WorkShiftItemViewModel> shiftsToShow = pageProvider
-        .getUsedShiftsInSchedule(activeScheduleId);
-
-    if (shiftsToShow.isEmpty) {
-      return Container();
-    }
-
-    return Container(
-      color: const Color(0xFFFFFFFF),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children:
-            shiftsToShow.map((shift) {
-              return Expanded(child: _buildLegendItem(shift.name, shift.color));
-            }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildComparisonLegend(HomePageProvider pageProvider) {
-    final firstSchedule = pageProvider.comparedSchedules.first;
-    final secondSchedule = pageProvider.comparedSchedules.last;
-    final (firstShifts, secondShifts) =
-        pageProvider.getUsedShiftsInComparedSchedules();
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      child: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _primaryLight,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    firstSchedule.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ...firstShifts.map(
-                  (shift) => Expanded(
-                    child: _buildLegendItem(shift.name, shift.color),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _primaryLight,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  secondSchedule.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ...secondShifts.map(
-                (shift) =>
-                    Expanded(child: _buildLegendItem(shift.name, shift.color)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(String text, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            text,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _calculateCalendarData() {
     _daysInMonth = DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
     _firstWeekday = DateTime(_currentDate.year, _currentDate.month, 1).weekday;
   }
 
-  void _previousMonth() {
+  void _onPreviousMonthBtnClicked() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month - 1, 1);
       _calculateCalendarData();
     });
   }
 
-  void _nowMonth() {
+  void _onNowMonthBtnClicked() {
     setState(() {
       _currentDate = DateTime.now();
       _calculateCalendarData();
     });
   }
 
-  void _nextMonth() {
+  void _onNextMonthBtnClicked() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month + 1, 1);
       _calculateCalendarData();
     });
-  }
-
-  String _getMonthYearText() {
-    final AppLocalizations str = S.of(context);
-    List<String> months = <String>[
-      str.january,
-      str.february,
-      str.march,
-      str.april,
-      str.may,
-      str.june,
-      str.july,
-      str.august,
-      str.september,
-      str.october,
-      str.november,
-      str.december,
-    ];
-    return '${months[_currentDate.month - 1]} ${_currentDate.year}';
   }
 }
